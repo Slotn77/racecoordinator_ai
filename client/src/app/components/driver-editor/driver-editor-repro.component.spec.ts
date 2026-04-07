@@ -1,0 +1,203 @@
+
+import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
+import { DriverEditorComponent } from './driver-editor.component';
+import { DataService } from 'src/app/data.service';
+import { TranslationService } from 'src/app/services/translation.service';
+import { ConnectionMonitorService } from '../../services/connection-monitor.service';
+import { Router, ActivatedRoute } from '@angular/router';
+import { of, BehaviorSubject } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Driver } from 'src/app/models/driver';
+import { Pipe, PipeTransform } from '@angular/core';
+
+// Mock Child Components
+@Component({ selector: 'app-back-button', template: '', standalone: false })
+class MockBackButtonComponent {
+  @Input() route: string | null = null;
+  @Input() queryParams: any = {};
+  @Input() label: string = '';
+  @Input() confirm: boolean = false;
+  @Input() confirmTitle: string = '';
+  @Input() confirmMessage: string = '';
+}
+
+@Component({ selector: 'app-audio-selector', template: '', standalone: false })
+class MockAudioSelectorComponent {
+  @Input() label: string = '';
+  @Input() type: any;
+  @Output() typeChange = new EventEmitter<any>();
+  @Input() url: any;
+  @Output() urlChange = new EventEmitter<any>();
+  @Input() text: any;
+  @Output() textChange = new EventEmitter<any>();
+  @Input() assets: any[] = [];
+  @Input() backButtonRoute: string | null = null;
+  @Input() backButtonQueryParams: any = {};
+  @Input() context: any;
+}
+
+@Component({ selector: 'app-image-selector', template: '', standalone: false })
+class MockImageSelectorComponent {
+  @Input() label?: string;
+  @Input() imageUrl?: string;
+  @Input() assets: any[] = [];
+  @Output() imageUrlChange = new EventEmitter<string>();
+  @Output() uploadStarted = new EventEmitter<void>();
+  @Output() uploadFinished = new EventEmitter<void>();
+}
+
+@Component({ selector: 'app-item-selector', template: '', standalone: false })
+class MockItemSelectorComponent {
+  @Input() items: any[] = [];
+  @Input() visible: boolean = false;
+  @Output() select = new EventEmitter<any>();
+  @Output() close = new EventEmitter<void>();
+  @Input() itemType: string = 'image';
+  @Input() backButtonRoute: string | null = null;
+  @Input() backButtonQueryParams: any = {};
+  @Input() title: string = '';
+}
+
+@Component({ selector: 'app-undo-redo-controls', template: '', standalone: false })
+class MockUndoRedoControlsComponent {
+  @Input() manager: any;
+}
+
+@Component({ selector: 'app-editor-title', template: '', standalone: false })
+class MockEditorTitleComponent {
+  @Input() titleKey: string = '';
+  @Input() backRoute: string = '';
+  @Input() backConfirm: boolean = false;
+  @Input() backQueryParams: any = {};
+  @Input() backConfirmTitle: string = '';
+  @Input() backConfirmMessage: string = '';
+  @Input() undoManager: any;
+  @Input() showUndo: boolean = true;
+  @Input() showRedo: boolean = true;
+  @Input() showHelp: boolean = true;
+  @Input() showCopy: boolean = false;
+  @Input() showAdd: boolean = false;
+  @Input() showDelete: boolean = false;
+  @Input() isSaving: boolean = false;
+  @Output() help = new EventEmitter<void>();
+  @Output() back = new EventEmitter<void>();
+  @Output() copy = new EventEmitter<void>();
+  @Output() add = new EventEmitter<void>();
+  @Output() delete = new EventEmitter<void>();
+}
+
+@Component({ selector: 'app-help-overlay', template: '', standalone: false })
+class MockHelpOverlayComponent {
+  @Input() steps: any[] = [];
+  @Input() showHelp: boolean = false;
+  @Output() helpClosed = new EventEmitter<void>();
+}
+
+@Pipe({ name: 'translate', standalone: false })
+class MockTranslatePipe implements PipeTransform {
+  transform(value: string): string { return value; }
+}
+
+@Pipe({ name: 'avatarUrl', standalone: false })
+class MockAvatarUrlPipe implements PipeTransform {
+  transform(value: string): string { return value; }
+}
+
+describe('DriverEditorComponent Reproduction', () => {
+  let component: DriverEditorComponent;
+  let fixture: ComponentFixture<DriverEditorComponent>;
+  let mockDataService: any;
+  let mockTranslationService: any;
+  let mockConnectionMonitor: any;
+  let mockRouter: any;
+  let mockActivatedRoute: any;
+
+  beforeEach(async () => {
+    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'listAssets', 'createDriver', 'updateDriver', 'deleteDriver', 'uploadAsset']);
+    mockTranslationService = jasmine.createSpyObj('TranslationService', ['translate']);
+    mockConnectionMonitor = {
+      connectionState$: new BehaviorSubject('CONNECTED'),
+      startMonitoring: jasmine.createSpy('startMonitoring')
+    };
+    mockRouter = jasmine.createSpyObj('Router', ['navigate', 'serializeUrl', 'createUrlTree']);
+    mockRouter.createUrlTree.and.returnValue({});
+    mockRouter.serializeUrl.and.returnValue('/new-url');
+    
+    mockActivatedRoute = {
+      snapshot: {
+        queryParamMap: {
+          get: jasmine.createSpy('get').and.returnValue('d1')
+        }
+      },
+      queryParams: of({})
+    };
+
+    mockDataService.getDrivers.and.returnValue(of([{ entity_id: 'd1', name: 'Original', nickname: '' }]));
+    mockDataService.listAssets.and.returnValue(of([]));
+    mockDataService.createDriver.and.returnValue(of({ entity_id: 'd2' }));
+    mockDataService.updateDriver.and.returnValue(of({ entity_id: 'd2' }));
+    mockTranslationService.translate.and.callFake((key: string) => key);
+
+    await TestBed.configureTestingModule({
+      declarations: [
+        DriverEditorComponent,
+        MockBackButtonComponent,
+        MockAudioSelectorComponent,
+        MockItemSelectorComponent,
+        MockUndoRedoControlsComponent,
+        MockImageSelectorComponent,
+        MockEditorTitleComponent,
+        MockHelpOverlayComponent,
+        MockTranslatePipe,
+        MockAvatarUrlPipe
+      ],
+      imports: [FormsModule],
+      providers: [
+        { provide: DataService, useValue: mockDataService },
+        { provide: TranslationService, useValue: mockTranslationService },
+        { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
+        { provide: Router, useValue: mockRouter },
+        { provide: ActivatedRoute, useValue: mockActivatedRoute }
+      ]
+    }).compileComponents();
+  });
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(DriverEditorComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should correctly maintain clean state after duplicate + rename + auto-save + blur', fakeAsync(() => {
+    // 1. Load initial driver
+    component.loadData();
+    tick();
+    expect(component.editingDriver?.name).toBe('Original');
+    expect(component.isDirtyState()).toBeFalse();
+
+    // 2. Duplicate (Save as New)
+    component.saveAsNew();
+    tick();
+    expect(mockDataService.createDriver).toHaveBeenCalled();
+    expect(component.editingDriver?.entity_id).toBe('d2');
+    expect(component.isDirtyState()).toBeFalse();
+
+    // 3. Change name (triggers auto-save)
+    component.onInputFocus();
+    component.editingDriver!.name = 'New Name';
+    component.onInputChange();
+    tick(200); // Trigger undoManager debounce
+    
+    expect(mockDataService.updateDriver).toHaveBeenCalled();
+    expect(component.isDirtyState()).toBeFalse(); // Should be clean after auto-save
+
+    // 4. Simulate blur (as if clicking Back)
+    component.onInputBlur();
+    
+    // Verify that the state remains clean (FIXED behavior)
+    expect(component.isDirtyState()).toBeFalse();
+    
+    discardPeriodicTasks();
+  }));
+});
