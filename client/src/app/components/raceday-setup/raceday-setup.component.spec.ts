@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
 import { RacedaySetupComponent } from './raceday-setup.component';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { Compiler, Injector, ChangeDetectorRef } from '@angular/core';
@@ -79,6 +79,15 @@ describe('RacedaySetupComponent', () => {
     component = fixture.componentInstance;
     component.clientVersion = 'TEST-CLIENT-VERSION';
     component.container = mockContainer;
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+    try {
+      discardPeriodicTasks();
+    } catch (e) {
+      // Not in fakeAsync zone
+    }
   });
 
   it('should create', () => {

@@ -44,8 +44,10 @@ class MockAcknowledgementModalComponent {
 })
 class MockConfirmationModalComponent {
   @Input() visible: boolean = false;
-  @Input() titleKey: string = '';
-  @Input() messageKey: string = '';
+  @Input() title: string = '';
+  @Input() message: string = '';
+  @Input() confirmText: string = '';
+  @Input() cancelText: string = '';
   @Output() confirm = new EventEmitter<void>();
   @Output() cancel = new EventEmitter<void>();
 }
@@ -783,10 +785,15 @@ describe('DefaultRacedayComponent', () => {
       fixture.detectChanges();
     });
 
-    it('should update and sort entries when participants$ emits', () => {
+    it('should update entries when participants$ emits (stable DOM order)', () => {
       const entries = component['leaderboardEntries'];
-      expect(entries[0].name).toBe('Team X'); // Rank 1
-      expect(entries[1].name).toBe('D1'); // Rank 2
+      // Entries are in order of first appearance (mockDriver1 then mockDriver2)
+      expect(entries[0].name).toBe('D1');
+      expect(entries[1].name).toBe('Team X');
+      
+      // But their visual positions based on rank (1 and 2) should be correct
+      expect(component['getLeaderboardPosition'](entries[0])).toBe(1); // Rank 2 -> Position 1
+      expect(component['getLeaderboardPosition'](entries[1])).toBe(0); // Rank 1 -> Position 0
     });
 
     it('should prioritize team name over driver nickname', () => {
@@ -798,17 +805,17 @@ describe('DefaultRacedayComponent', () => {
       expect(entries[0].name).toBe('Team Elite');
     });
 
-    it('should update top style when ranks change (animation check)', () => {
+    it('should update transform when ranks change (animation check)', () => {
       // Initial state:
-      // Index 0: Team X (Rank 1) -> top: 0px
-      // Index 1: D1 (Rank 2) -> top: 24px
+      // Index 0: D1 (Rank 2) -> translateY(24px)
+      // Index 1: Team X (Rank 1) -> translateY(0px)
       let rows = fixture.nativeElement.querySelectorAll('.leaderboard-item');
-      expect(rows[0].textContent).toContain('Team X');
-      expect(rows[0].style.top).toBe('0px');
-      expect(rows[1].textContent).toContain('D1');
-      expect(rows[1].style.top).toBe('24px');
+      expect(rows[0].textContent).toContain('D1');
+      expect(rows[0].style.transform).toBe('translateY(24px)');
+      expect(rows[1].textContent).toContain('Team X');
+      expect(rows[1].style.transform).toBe('translateY(0px)');
 
-      // Swap ranks: D1 becomes Rank 1, Team X becomes Rank 2
+      // Swap ranks: D1 becomes Rank 1 (Pos 0), Team X becomes Rank 2 (Pos 1)
       participantsSubject.next([
         { driver: mockDriver1, totalLaps: 20, rank: 1 } as any,
         { driver: mockDriver2, team: mockTeam, totalLaps: 15, rank: 2 } as any
@@ -816,11 +823,11 @@ describe('DefaultRacedayComponent', () => {
       fixture.detectChanges();
 
       rows = fixture.nativeElement.querySelectorAll('.leaderboard-item');
-      // Verify that after re-sorting, the element positions (top style) reflect the new indices
+      // Verify stable DOM order (rows[0] is still D1) but visual position updated via transform
       expect(rows[0].textContent).toContain('D1');
-      expect(rows[0].style.top).toBe('0px');
+      expect(rows[0].style.transform).toBe('translateY(0px)');
       expect(rows[1].textContent).toContain('Team X');
-      expect(rows[1].style.top).toBe('24px');
+      expect(rows[1].style.transform).toBe('translateY(24px)');
     });
 
     it('should have correct height on scroll content wrapper', () => {
@@ -972,6 +979,8 @@ describe('DefaultRacedayComponent', () => {
       // Mock getCurrentHeat to return our mock heat and prevent overrides during detectChanges
       mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
       mockRaceService.getHeats.and.returnValue([mockHeat]);
+
+      fixture.detectChanges(); // Initialize component and run initializeHeat() once
     });
 
     it('should sort by lane index when sortByStandings is false', () => {
@@ -992,12 +1001,13 @@ describe('DefaultRacedayComponent', () => {
       component['driverRankings'].set('hd2', 1);
 
       (component as any).sortHeatDrivers();
+      fixture.detectChanges();
 
-      expect(component['sortedHeatDrivers'][0].objectId).toBe('hd2'); // Rank 1
-      expect(component['sortedHeatDrivers'][1].objectId).toBe('hd1'); // Rank 2
+      expect((component as any).getDriverVisualPosition(mockHd2)).toBe(0); // Rank 1 -> visual pos 0
+      expect((component as any).getDriverVisualPosition(mockHd1)).toBe(1); // Rank 2 -> visual pos 1
     });
 
-    it('should have correct top style for animation when sorted', () => {
+    it('should have correct transform for animation when sorted', () => {
       mockSettings.sortByStandings = true;
       component['driverRankings'].set('hd1', 2);
       component['driverRankings'].set('hd2', 1);
@@ -1008,10 +1018,12 @@ describe('DefaultRacedayComponent', () => {
       const rows = fixture.nativeElement.querySelectorAll('.table-row');
       const rowHeight = component.getRowHeight();
       
-      // hd2 should be at index 0 (top: 0px)
-      // hd1 should be at index 1 (top: (rowHeight + 2)px)
-      expect(rows[0].style.top).toBe('0px');
-      expect(rows[1].style.top).toBe(`${rowHeight + 2}px`);
+      // hd1 (lane 0) is rank 2 -> visual position 1
+      // hd2 (lane 1) is rank 1 -> visual position 0
+      // translateY = pos * (height + 2)
+      const expectedHd1Translate = 1 * (rowHeight + 2);
+      expect(rows[0].style.transform).toContain(`translateY(${expectedHd1Translate}px)`);
+      expect(rows[1].style.transform).toContain('translateY(0px)');
     });
 
     it('should update rankings and sort on standingsUpdate$ event', fakeAsync(() => {
@@ -1029,9 +1041,10 @@ describe('DefaultRacedayComponent', () => {
         ]
       });
       tick(); // Let async subscription execute
+      fixture.detectChanges();
 
-      expect(component['sortedHeatDrivers'][0].objectId).toBe('hd2');
-      expect(component['sortedHeatDrivers'][1].objectId).toBe('hd1');
+      expect((component as any).getDriverVisualPosition(mockHd2)).toBe(0);
+      expect((component as any).getDriverVisualPosition(mockHd1)).toBe(1);
     }));
   });
 

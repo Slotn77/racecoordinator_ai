@@ -101,6 +101,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.isDestroyed = true;
+    this.connectionMonitor.stopMonitoring();
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
     }

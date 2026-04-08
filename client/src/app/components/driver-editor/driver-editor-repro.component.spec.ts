@@ -118,7 +118,8 @@ describe('DriverEditorComponent Reproduction', () => {
     mockTranslationService = jasmine.createSpyObj('TranslationService', ['translate']);
     mockConnectionMonitor = {
       connectionState$: new BehaviorSubject('CONNECTED'),
-      startMonitoring: jasmine.createSpy('startMonitoring')
+      startMonitoring: jasmine.createSpy('startMonitoring'),
+      stopMonitoring: jasmine.createSpy('stopMonitoring')
     };
     mockRouter = jasmine.createSpyObj('Router', ['navigate', 'serializeUrl', 'createUrlTree']);
     mockRouter.createUrlTree.and.returnValue({});
@@ -167,6 +168,15 @@ describe('DriverEditorComponent Reproduction', () => {
     fixture = TestBed.createComponent(DriverEditorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+    try {
+      discardPeriodicTasks();
+    } catch (e) {
+      // Not in fakeAsync zone
+    }
   });
 
   it('should correctly maintain clean state after duplicate + rename + auto-save + blur', fakeAsync(() => {

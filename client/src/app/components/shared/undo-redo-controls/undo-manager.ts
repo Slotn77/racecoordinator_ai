@@ -40,7 +40,6 @@ export class UndoManager<T> {
     this.undoStack = [];
     this.redoStack = [];
     this._snapshot = this.config.clonner(initialState);
-    console.log('UndoManager initialized, snapshot set:', this._snapshot);
   }
 
   public isInitialized(): boolean {
@@ -128,26 +127,15 @@ export class UndoManager<T> {
   // This compares current state with last snapshot and pushes snapshot if different.
   public captureState() {
     const currentState = this.snapshotGetter();
-    console.log('UndoManager: captureState called');
-    console.log('UndoManager: currentState exists:', !!currentState);
-    console.log('UndoManager: _snapshot exists:', !!this._snapshot);
     if (currentState && this._snapshot) {
       const equal = this.config.equalizer(currentState, this._snapshot);
-      console.log('UndoManager: states equal?', equal);
       if (!equal) {
-        console.log('UndoManager: Pushing state to undo stack');
         this.pushToUndo(this.config.clonner(this._snapshot));
         this._snapshot = this.config.clonner(currentState);
-        console.log('UndoManager: New snapshot set, undoStack count:', this.undoStack.length);
-      } else {
-        console.log('UndoManager: States are equal, not pushing');
       }
     } else if (currentState && !this._snapshot) {
       // First time catching a state
-      console.log('UndoManager: First snapshot capture');
       this._snapshot = this.config.clonner(currentState);
-    } else {
-      console.log('UndoManager: Missing state or snapshot, cannot capture');
     }
   }
 
@@ -158,7 +146,6 @@ export class UndoManager<T> {
 
   // Call on text input change (debounced)
   public onInputChange() {
-    console.log('UndoManager: onInputChange triggered');
     this.textChange$.next();
   }
 
@@ -168,7 +155,6 @@ export class UndoManager<T> {
   }
 
   private commitChange() {
-    console.log('UndoManager: commitChange triggered');
     this.commitState();
   }
 

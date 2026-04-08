@@ -37,7 +37,8 @@ describe('ReorderDialogComponent', () => {
     },
     columnVisibility: {
       'slot1': ColumnVisibility.Always
-    }
+    },
+    screenName: 'Test Screen'
   };
 
   beforeEach(async () => {
@@ -201,7 +202,8 @@ describe('ReorderDialogComponent', () => {
       ],
       columnSlots: [{ key: 'custom_slot', label: 'Custom' }],
       columnLayouts: { 'custom_slot': { [AnchorPoint.TopLeft]: 'lapCount' } },
-      columnVisibility: { 'custom_slot': ColumnVisibility.NonFuelRaceOnly }
+      columnVisibility: { 'custom_slot': ColumnVisibility.NonFuelRaceOnly },
+      screenName: 'Reset Test'
     };
 
     expect(component.columnSlots.length).toBe(1);

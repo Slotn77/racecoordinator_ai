@@ -195,6 +195,7 @@ export class RacedaySetupComponent implements OnInit {
 
   ngOnDestroy() {
     this.stopQuoteRotation();
+    this.connectionMonitor.stopMonitoring();
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
     }

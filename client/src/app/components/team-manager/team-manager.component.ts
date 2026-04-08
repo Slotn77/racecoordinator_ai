@@ -80,6 +80,7 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
 
 
   ngOnDestroy() {
+    this.connectionMonitor.stopMonitoring();
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
     }

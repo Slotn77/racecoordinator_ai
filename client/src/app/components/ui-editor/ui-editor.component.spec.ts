@@ -107,7 +107,6 @@ describe('UIEditorComponent', () => {
         ChangeDetectorRef
       ]
     }).compileComponents();
-    console.log('UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', !!mockSettingsService.saveSettings);
   });
 
   beforeEach(() => {
@@ -160,12 +159,20 @@ describe('UIEditorComponent', () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/raceday-setup']);
   });
 
-  it('should detect changes via undo manager', () => {
+  it('should detect changes via undo manager', fakeAsync(() => {
+    tick(); // Ensure loadData completes
     expect(component.hasChanges()).toBeFalse();
     component.editingSettings.flagGreen = 'new-green';
-    component.captureState();
+    
+    // hasChanges should be true as soon as we modify the object
     expect(component.hasChanges()).toBeTrue();
-  });
+    
+    component.captureState();
+    
+    // hasChanges becomes false again because captureState triggers autoSaveSettings,
+    // which calls resetTracking on the undo manager (effectively a "save").
+    expect(component.hasChanges()).toBeFalse();
+  }));
 
   it('should return correct column slots', () => {
     component.editingSettings.racedayColumns = ['driver.name', 'lapCount'];
@@ -196,7 +203,8 @@ describe('UIEditorComponent', () => {
 
     const result = {
       columns: ['lapCount'],
-      columnLayouts: { 'lapCount': { [AnchorPoint.CenterCenter]: 'lapCount' } }
+      columnLayouts: { 'lapCount': { [AnchorPoint.CenterCenter]: 'lapCount' } },
+      columnVisibility: { 'lapCount': 'Always' }
     };
     component.onReorderSave(result as any);
     expect(component.editingSettings.racedayColumns).toEqual(['lapCount']);

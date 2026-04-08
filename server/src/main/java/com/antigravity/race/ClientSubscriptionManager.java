@@ -26,6 +26,7 @@ public class ClientSubscriptionManager {
   private final Set<WsContext> interfaceSubscribers = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
   private ScheduledFuture<?> cleanupFuture;
+  private long cleanupGracePeriodSeconds = 10;
 
   private ClientSubscriptionManager() {
   }
@@ -43,6 +44,10 @@ public class ClientSubscriptionManager {
 
   public void setShuttingDown(boolean shuttingDown) {
     this.isShuttingDown = shuttingDown;
+  }
+
+  public synchronized void setCleanupGracePeriodSeconds(long seconds) {
+    this.cleanupGracePeriodSeconds = seconds;
   }
 
   public synchronized void setRace(Race race) {
@@ -159,21 +164,25 @@ public class ClientSubscriptionManager {
   private synchronized void checkAndStopRace() {
     if (raceDataSubscribers.isEmpty() && currentRace != null) {
       if (!isShuttingDown) {
-        if (cleanupFuture == null || cleanupFuture.isDone()) {
-          System.out.println("No subscribers left. Scheduling race cleanup in 10 seconds...");
+        if (cleanupGracePeriodSeconds <= 0) {
+          performCleanup();
+        } else if (cleanupFuture == null || cleanupFuture.isDone()) {
+          System.out.println("No subscribers left. Scheduling race cleanup in " + cleanupGracePeriodSeconds + " seconds...");
           cleanupFuture = scheduler.schedule(() -> {
-            synchronized (this) {
-              if (raceDataSubscribers.isEmpty() && currentRace != null) {
-                System.out.println("Last interested client disconnected/unsubscribed grace period expired. Stopping and clearing current race.");
-                deleteAutoSave(currentRace.getRaceModel().getEntityId());
-                setRace(null);
-              }
-            }
-          }, 10, TimeUnit.SECONDS);
+            performCleanup();
+          }, cleanupGracePeriodSeconds, TimeUnit.SECONDS);
         }
       } else {
         System.out.println("Server is shutting down, preserving race state and auto-save.");
       }
+    }
+  }
+
+  private synchronized void performCleanup() {
+    if (raceDataSubscribers.isEmpty() && currentRace != null) {
+      System.out.println("Last interested client disconnected/unsubscribed. Stopping and clearing current race.");
+      deleteAutoSave(currentRace.getRaceModel().getEntityId());
+      setRace(null);
     }
   }
 

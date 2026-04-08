@@ -22,7 +22,7 @@ describe('RaceManagerComponent', () => {
     mockDataService = jasmine.createSpyObj('DataService', ['getRaces', 'getTracks', 'createRace', 'deleteRace', 'generateHeats', 'previewHeats']);
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
     mockTranslationService = jasmine.createSpyObj('TranslationService', ['translate']);
-    mockConnectionMonitor = jasmine.createSpyObj('ConnectionMonitorService', ['startMonitoring'], { connectionState$: of() });
+    mockConnectionMonitor = jasmine.createSpyObj('ConnectionMonitorService', ['startMonitoring', 'stopMonitoring'], { connectionState$: of() });
     mockActivatedRoute = {
       snapshot: {
         queryParamMap: {

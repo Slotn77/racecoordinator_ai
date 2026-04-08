@@ -111,7 +111,8 @@ describe('TeamEditorComponent', () => {
     mockTranslationService = jasmine.createSpyObj('TranslationService', ['translate']);
     mockConnectionMonitor = {
       connectionState$: new BehaviorSubject('CONNECTED'),
-      startMonitoring: jasmine.createSpy('startMonitoring')
+      startMonitoring: jasmine.createSpy('startMonitoring'),
+      stopMonitoring: jasmine.createSpy('stopMonitoring')
     };
     mockRouter = jasmine.createSpyObj('Router', ['navigate'], ['serializeUrl', 'createUrlTree']);
     mockRouter.serializeUrl = (tree: any) => 'mock-url';

@@ -116,12 +116,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.isDestroyed = true;
-    if (this.connectionSubscription) {
-      this.connectionSubscription.unsubscribe();
-    }
-    if (this.dataSubscription) {
-      this.dataSubscription.unsubscribe();
-    }
+    this.connectionMonitor.stopMonitoring();
     this.subscriptions.forEach(s => s.unsubscribe());
     this.undoManager.destroy();
   }
@@ -222,15 +217,22 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   }
 
   private areDriversEqual(d1: Driver, d2: Driver): boolean {
-    return d1.name === d2.name &&
-      d1.nickname === d2.nickname &&
-      d1.avatarUrl === d2.avatarUrl &&
-      (d1.lapAudio?.url || '') === (d2.lapAudio?.url || '') &&
-      (d1.bestLapAudio?.url || '') === (d2.bestLapAudio?.url || '') &&
-      (d1.lapAudio?.type || 'preset') === (d2.lapAudio?.type || 'preset') &&
-      (d1.bestLapAudio?.type || 'preset') === (d2.bestLapAudio?.type || 'preset') &&
-      (d1.lapAudio?.text || '') === (d2.lapAudio?.text || '') &&
-      (d1.bestLapAudio?.text || '') === (d2.bestLapAudio?.text || '');
+    const normalizeString = (val: any) => (val === null || val === undefined) ? '' : String(val).trim();
+
+    const nameMatch = normalizeString(d1.name) === normalizeString(d2.name);
+    const nicknameMatch = normalizeString(d1.nickname) === normalizeString(d2.nickname);
+    const avatarMatch = normalizeString(d1.avatarUrl) === normalizeString(d2.avatarUrl);
+
+    const checkAudio = (a1: any, a2: any) => {
+      if (!a1 || !a2) return a1 === a2;
+      return normalizeString(a1.url) === normalizeString(a2.url) &&
+        normalizeString(a1.type || 'preset') === normalizeString(a2.type || 'preset') &&
+        normalizeString(a1.text) === normalizeString(a2.text);
+    };
+
+    return nameMatch && nicknameMatch && avatarMatch &&
+      checkAudio(d1.lapAudio, d2.lapAudio) &&
+      checkAudio(d1.bestLapAudio, d2.bestLapAudio);
   }
 
   isNameUnique(excludeSelf: boolean = true): boolean {
@@ -406,8 +408,9 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       }
     }
 
-    if (this.editingDriver) {
-      this.originalDriver = this.cloneDriver(this.editingDriver);
+    // undoManager.initialize will be called inside selectDriver if count > 0,
+    // or we call it once here if it's 'new'
+    if (idParam === 'new' && this.editingDriver) {
       this.undoManager.initialize(this.editingDriver);
     }
   }

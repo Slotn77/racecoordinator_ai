@@ -118,7 +118,8 @@ describe('DriverEditorComponent', () => {
     mockTranslationService = jasmine.createSpyObj('TranslationService', ['translate']);
     mockConnectionMonitor = {
       connectionState$: new BehaviorSubject('CONNECTED'),
-      startMonitoring: jasmine.createSpy('startMonitoring')
+      startMonitoring: jasmine.createSpy('startMonitoring'),
+      stopMonitoring: jasmine.createSpy('stopMonitoring')
     };
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
     mockActivatedRoute = {
@@ -165,6 +166,15 @@ describe('DriverEditorComponent', () => {
     fixture = TestBed.createComponent(DriverEditorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+    try {
+      discardPeriodicTasks();
+    } catch (e) {
+      // Not in fakeAsync zone
+    }
   });
 
   // Helper to setup driver state for change tracking and undo/redo

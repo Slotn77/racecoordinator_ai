@@ -55,10 +55,8 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
       // Store screen name
       this.screenName = value.screenName || '';
       
-      this.availableValues = value.availableValues.map(v => ({
-        ...v,
-        translatedLabel: this.translationService.translate(v.label)
-      }));
+      this.availableValues = [...value.availableValues].sort((a, b) => 
+        this.translationService.translate(a.label).localeCompare(this.translationService.translate(b.label)));
       this.availableValuesMap = new Map(this.availableValues.map(v => [v.key, v]));
 
       const newSlots = value.columnSlots.map(s => ({ ...s }));
@@ -135,8 +133,8 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
   @Output() save = new EventEmitter<ReorderDialogResult>();
   @Output() cancel = new EventEmitter<void>();
 
-  availableValues: { key: string; label: string; translatedLabel: string }[] = [];
-  availableValuesMap = new Map<string, { key: string; label: string; translatedLabel: string }>();
+  availableValues: { key: string; label: string }[] = [];
+  availableValuesMap = new Map<string, { key: string; label: string }>();
   columnSlots: { key: string; label: string }[] = [];
   columnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } } = {};
   columnVisibility: { [columnKey: string]: ColumnVisibility } = {};

@@ -345,11 +345,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   private areTracksEqual(t1: Track, t2: Track): boolean {
     if (t1.name !== t2.name) {
-      console.log('Dirty Check Mismatch: Name differ', t1.name, t2.name);
       return false;
     }
     if (t1.lanes.length !== t2.lanes.length) {
-      console.log('Dirty Check Mismatch: Lane count differ', t1.lanes.length, t2.lanes.length);
       return false;
     }
     for (let i = 0; i < t1.lanes.length; i++) {
@@ -357,7 +355,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       const l2 = t2.lanes[i];
       if (l1.entity_id !== l2.entity_id || l1.background_color !== l2.background_color ||
         l1.foreground_color !== l2.foreground_color || l1.length !== l2.length) {
-        console.log(`Dirty Check Mismatch: Lane ${i} differ`, l1, l2);
         return false;
       }
     }
@@ -366,7 +363,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     const acs1 = t1.arduino_configs || [];
     const acs2 = t2.arduino_configs || [];
     if (acs1.length !== acs2.length) {
-      console.log('Dirty Check Mismatch: Config count differ', acs1.length, acs2.length);
       return false;
     }
 
@@ -382,7 +378,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
         if (Array.isArray(v1)) {
           if (!Array.isArray(v2) || v1.length !== v2.length) {
-            console.log(`Dirty Check Mismatch: Config ${key} length differ`, v1?.length, v2?.length);
             return false;
           }
           for (let i = 0; i < v1.length; i++) {
@@ -390,11 +385,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
               const ls1 = v1 as unknown as LedString[];
               const ls2 = v2 as unknown as LedString[];
               if (!this.isLedStringsEqual(ls1[i], ls2[i])) {
-                console.log(`Dirty Check Mismatch: Config ledStrings[${i}] differ`, ls1[i], ls2[i]);
                 return false;
               }
             } else if (v1[i] !== v2[i]) {
-              console.log(`Dirty Check Mismatch: Config ${key}[${i}] differ`, v1[i], v2[i]);
               return false;
             }
           }
@@ -404,17 +397,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           const entries1 = Object.entries(vc1);
           const entries2 = Object.entries(vc2);
           if (entries1.length !== entries2.length) {
-            console.log(`Dirty Check Mismatch: Config voltageConfigs length differ`, entries1.length, entries2.length);
             return false;
           }
           for (const [lane, val] of entries1) {
             if (vc2[lane as any] !== val) {
-              console.log(`Dirty Check Mismatch: Config voltageConfigs lane ${lane} differ`, val, vc2[lane as any]);
               return false;
             }
           }
         } else if (v1 !== v2) {
-          console.log(`Dirty Check Mismatch: Config ${key} differ`, v1, v2);
           return false;
         }
       }

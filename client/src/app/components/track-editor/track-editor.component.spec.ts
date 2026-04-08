@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush, discardPeriodicTasks } from '@angular/core/testing';
 import { TrackEditorComponent } from './track-editor.component';
 import { DataService } from '../../data.service';
 import { TranslationService } from '../../services/translation.service';
@@ -215,6 +215,15 @@ describe('TrackEditorComponent', () => {
     dataService = TestBed.inject(DataService);
     router = TestBed.inject(Router);
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+    try {
+      discardPeriodicTasks();
+    } catch (e) {
+      // Not in fakeAsync zone
+    }
   });
 
   it('should create', () => {

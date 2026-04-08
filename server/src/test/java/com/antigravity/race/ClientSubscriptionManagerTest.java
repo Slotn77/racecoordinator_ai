@@ -41,6 +41,7 @@ public class ClientSubscriptionManagerTest {
     // Force set protocol to null if close() didn't do it (though setProtocol(null)
     // isn't directly exposed to clear without closing, we can pass null)
     manager.setProtocol(null);
+    manager.setCleanupGracePeriodSeconds(0);
 
     // We need to clear sessions, but there is no public method to clear them.
     // However, for unit testing we can assume start fresh or we might need to rely
