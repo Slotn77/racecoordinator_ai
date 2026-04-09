@@ -18,7 +18,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: client/package-lock.json
       - name: Install dependencies
-        run: cd client && npm ci
+        run: cd client && npm install --legacy-peer-deps
       - name: Run client tests
         run: cd client && npm run test --watch=false
 
@@ -33,7 +33,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: client/package-lock.json
       - name: Install dependencies
-        run: cd client && npm ci
+        run: cd client && npm install --legacy-peer-deps
       - name: Cache Playwright Browsers
         uses: actions/cache@v4
         with:
@@ -54,6 +54,10 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
           cache: 'maven'
+      - name: Install LibSSL 1.1 (for MongoDB)
+        run: |
+          wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+          sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb
       - name: Install Protoc
         run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
       - name: Generate Protobufs
