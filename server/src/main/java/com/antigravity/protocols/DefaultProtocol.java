@@ -53,4 +53,7 @@ public abstract class DefaultProtocol implements IProtocol {
   public int getNumLanes() {
     return numLanes;
   }
+
+  @Override
+  public void setHeatStandings(List<Integer> laneIndices) {}
 }

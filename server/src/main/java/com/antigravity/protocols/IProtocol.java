@@ -27,4 +27,6 @@ public interface IProtocol {
   // TODO(aufderheide): Think about getting rid of this and
   // getting it from somewhere else as needed.
   int getNumLanes();
+
+  void setHeatStandings(List<Integer> laneIndices);
 }

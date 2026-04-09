@@ -17,6 +17,7 @@ import com.antigravity.proto.StandingsUpdate;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.RaceOver;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -504,9 +505,35 @@ public class HeatExecutionManager {
         this.race.broadcast(standingsDataMsg);
       }
 
+      updateProtocolStandings();
       return true;
     }
     return false;
+  }
+
+  private void updateProtocolStandings() {
+    Heat currentHeat = race.getCurrentHeat();
+    if (currentHeat == null || currentHeat.getHeatStandings() == null) {
+      return;
+    }
+
+    List<String> standingsIds = currentHeat.getStandings();
+    List<DriverHeatData> drivers = currentHeat.getDrivers();
+    List<Integer> laneIndices = new ArrayList<>();
+
+    for (String objectId : standingsIds) {
+      for (int i = 0; i < drivers.size(); i++) {
+        DriverHeatData dhd = drivers.get(i);
+        if (dhd != null && dhd.getObjectId().equals(objectId)) {
+          laneIndices.add(i);
+          break;
+        }
+      }
+    }
+
+    if (!laneIndices.isEmpty()) {
+      race.setHeatStandings(laneIndices);
+    }
   }
 
   private void handleLapTime(DriverHeatData driverData, double lapTime, int lane, int interfaceId) {
@@ -548,6 +575,7 @@ public class HeatExecutionManager {
       this.race.broadcast(standingsDataMsg);
     }
 
+    updateProtocolStandings();
     this.race.updateAndBroadcastOverallStandings();
   }
 

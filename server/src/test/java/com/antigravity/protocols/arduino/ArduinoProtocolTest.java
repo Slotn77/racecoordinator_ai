@@ -1208,4 +1208,75 @@ public class ArduinoProtocolTest {
 
     assertArrayEquals(expected, serialConnection.lastWrittenData);
   }
+
+  @Test
+  public void testSetHeatStandings() {
+    // Configure LED string 1 with 2 leds: Lane 0 leader (2000), Lane 1 leader (2001)
+    LedString ledString = new LedString();
+    ledString.stringNum = 1;
+    ledString.leds =
+        Arrays.asList(
+            RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE_VALUE + 0,
+            RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE_VALUE + 1);
+    ledString.ledLaneColorOverrides = Arrays.asList("#FF0000", "#00FF00");
+    config.ledStrings = Collections.singletonList(ledString);
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+
+    // Standings: Lane 1 is leader
+    protocol.setHeatStandings(Arrays.asList(1, 0));
+
+    // Expected SET_RGB_LED_VALUES command for String 1:
+    // LED 0: Lane 0 leader -> OFF (0,0,0)
+    // LED 1: Lane 1 leader -> ON (0,255,0)
+    // Opcode: 0x4C, String: 1, NumLeds: 2, [0, 0, 0, 0, 1, 0, 255, 0], Terminator: 0x3B
+    byte[] expected = {
+      0x4C,
+      0x01,
+      0x02,
+      0x00,
+      0x00,
+      0x00,
+      0x00, // LED 0
+      0x01,
+      0x00,
+      (byte) 0xFF,
+      0x00, // LED 1
+      0x3B
+    };
+
+    byte[] lastLCommand = null;
+    for (byte[] data : serialConnection.allWrittenData) {
+      if (data.length > 0 && data[0] == 0x4C) {
+        lastLCommand = data;
+      }
+    }
+
+    assertNotNull("Should have sent SET_RGB_LED_VALUES command", lastLCommand);
+    assertArrayEquals(expected, lastLCommand);
+  }
+
+  @Test
+  public void testSetHeatStandings_MissingColorMapping() {
+    LedString ledString = new LedString();
+    ledString.stringNum = 1;
+    ledString.leds =
+        Collections.singletonList(RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE_VALUE + 0);
+    ledString.ledLaneColorOverrides = new ArrayList<>(); // Empty mapping
+    config.ledStrings = Collections.singletonList(ledString);
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+
+    serialConnection.allWrittenData.clear();
+    protocol.setHeatStandings(Arrays.asList(0));
+
+    // Should NOT have sent any 0x4C commands
+    for (byte[] data : serialConnection.allWrittenData) {
+      if (data.length > 0 && data[0] == 0x4C) {
+        assertTrue("Should not have sent LED update for missing color", false);
+      }
+    }
+  }
 }

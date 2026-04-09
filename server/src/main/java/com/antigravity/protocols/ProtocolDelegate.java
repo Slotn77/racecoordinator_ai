@@ -107,4 +107,11 @@ public class ProtocolDelegate implements IProtocol {
     }
     return protocols.get(0).getNumLanes();
   }
+
+  @Override
+  public void setHeatStandings(List<Integer> laneIndices) {
+    for (IProtocol protocol : protocols) {
+      protocol.setHeatStandings(laneIndices);
+    }
+  }
 }

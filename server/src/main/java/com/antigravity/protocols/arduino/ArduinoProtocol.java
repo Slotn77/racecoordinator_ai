@@ -5,6 +5,7 @@ import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.PinId;
+import com.antigravity.proto.RgbLedBehavior;
 import com.antigravity.proto.RgbLedState;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
@@ -1219,5 +1220,76 @@ public class ArduinoProtocol extends DefaultProtocol {
         setPinState(pinConfig.isDigital, pinConfig.pin, isHigh);
       }
     }
+  }
+
+  @Override
+  public void setHeatStandings(List<Integer> laneIndices) {
+    if (laneIndices == null || laneIndices.isEmpty()) {
+      return;
+    }
+
+    int leaderLaneIndex = laneIndices.get(0);
+    int leaderBehavior = RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE_VALUE + leaderLaneIndex;
+
+    if (config.ledStrings != null) {
+      for (LedString ledString : config.ledStrings) {
+        List<RgbLedState> updates = new ArrayList<>();
+        boolean success = true;
+
+        for (int i = 0; i < ledString.leds.size(); i++) {
+          int behavior = ledString.leds.get(i);
+          // Check if this LED is configured as a heat leader
+          if (behavior >= RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE_VALUE
+              && behavior < RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE_VALUE) {
+            if (behavior == leaderBehavior) {
+              if (leaderLaneIndex < 0
+                  || leaderLaneIndex >= ledString.ledLaneColorOverrides.size()) {
+                logger.error(
+                    "Missing color mapping for lane {} on string {}",
+                    leaderLaneIndex,
+                    ledString.stringNum);
+                success = false;
+                break;
+              }
+              int[] rgb = parseColor(ledString.ledLaneColorOverrides.get(leaderLaneIndex));
+              updates.add(
+                  RgbLedState.newBuilder()
+                      .setIndex(i)
+                      .setR(rgb[0])
+                      .setG(rgb[1])
+                      .setB(rgb[2])
+                      .build());
+            } else {
+              // Not the leader lane, turn off
+              updates.add(RgbLedState.newBuilder().setIndex(i).setR(0).setG(0).setB(0).build());
+            }
+          }
+        }
+
+        if (success && !updates.isEmpty()) {
+          setStringRgbLedValues(ledString.stringNum, updates);
+        }
+      }
+    }
+  }
+
+  private int[] parseColor(String hex) {
+    if (hex == null || hex.isEmpty()) {
+      return new int[] {0, 0, 0};
+    }
+    if (hex.startsWith("#")) {
+      hex = hex.substring(1);
+    }
+    try {
+      if (hex.length() == 6) {
+        int r = Integer.parseInt(hex.substring(0, 2), 16);
+        int g = Integer.parseInt(hex.substring(2, 4), 16);
+        int b = Integer.parseInt(hex.substring(4, 6), 16);
+        return new int[] {r, g, b};
+      }
+    } catch (NumberFormatException e) {
+      logger.error("Failed to parse color hex: {}", hex, e);
+    }
+    return new int[] {0, 0, 0};
   }
 }

@@ -454,6 +454,12 @@ public class Race implements ProtocolListener {
     return protocols.stopTimer();
   }
 
+  public void setHeatStandings(List<Integer> laneIndices) {
+    if (protocols != null) {
+      protocols.setHeatStandings(laneIndices);
+    }
+  }
+
   public void initializeHeatExecutionState() {
     int laneCount = 0;
     if (this.track != null && this.track.getLanes() != null) {
