@@ -59,8 +59,6 @@ import io.javalin.Javalin;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -70,7 +68,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -946,7 +943,7 @@ public class ClientCommandTaskHandler {
     String remoteAddr = getRemoteAddr(ctx);
     String remoteHost = getRemoteHost(ctx);
 
-    boolean isLocalhost = isLocalAddress(remoteAddr, remoteHost);
+    boolean isLocalhost = NetworkUtils.isLocalAddress(remoteAddr, remoteHost);
 
     if (!isLocalhost) {
       setStatus(ctx, 403);
@@ -996,10 +993,6 @@ public class ClientCommandTaskHandler {
 
   byte[] getBodyBytes(Context ctx) {
     return ctx.bodyAsBytes();
-  }
-
-  /* package */ boolean isLocalAddress(String remoteAddr, String remoteHost) {
-    return NetworkUtils.isLocalAddress(remoteAddr, remoteHost);
   }
 
   ObjectMapper getObjectMapper() {
