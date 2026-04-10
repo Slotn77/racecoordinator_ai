@@ -121,6 +121,7 @@ if [ ${#PROTO_FILES[@]} -eq 0 ]; then
 fi
 
 "$PROTOC_LOCAL" \
+  --experimental_allow_proto3_optional \
   --proto_path="$PROTO_ROOT" \
   --java_out="$JAVA_OUT" \
   "${PROTO_FILES[@]}"
