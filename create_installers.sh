@@ -10,14 +10,40 @@ NPM_CONFIG_CACHE="$(pwd)/.npm_cache" npm install
 npm run build
 cd ..
 
-# 2. Clean and Build Server (Fat Jar)
-echo "Building Server..."
+# 2. Clean and Build Server (Modern and Legacy versions)
+echo "Building Server (Modern - Java 11)..."
 cd server
 mvn clean -Dbuild.dist.dir=target_dist
 chmod +x generate_protos.sh
 ./generate_protos.sh
 mvn package -Dmaven.test.skip=true -Dbuild.dist.dir=target_dist
 cd ..
+
+# Initialize Release Structure
+echo "Creating Release Structure..."
+rm -rf release 2>/dev/null || true
+mkdir -p release/RaceCoordinator/web
+mkdir -p release/RaceCoordinator/jre8
+mkdir -p release/RaceCoordinator/jre17
+mkdir -p release/RaceCoordinator/mongodb32
+mkdir -p release/RaceCoordinator_Offline/web
+
+# Copy Modern Artifacts
+cp server/target_dist/server-1.0-SNAPSHOT.jar release/RaceCoordinator/RaceCoordinator.jar
+cp -r client/dist/client/* release/RaceCoordinator/web/
+cp -r server/src/main/resources/arduino release/RaceCoordinator/
+
+echo "Building Server (Legacy - Java 1.8 Profile)..."
+cd server
+mvn clean -Dbuild.dist.dir=target_dist
+./generate_protos.sh
+mvn package -Plegacy -Dmaven.test.skip=true -Dbuild.dist.dir=target_dist
+cd ..
+
+# Copy Legacy Artifacts
+cp server/target_dist/server-1.0-SNAPSHOT.jar release/RaceCoordinator_Offline/RaceCoordinator.jar
+cp -r client/dist/client/* release/RaceCoordinator_Offline/web/
+cp -r server/src/main/resources/arduino release/RaceCoordinator_Offline/
 
 # 3. Download Dependencies for Offline Installer
 echo "Downloading Dependencies for Offline Installer..."
@@ -41,30 +67,7 @@ if [ ! -s build_cache/mongodb32.zip ]; then
     curl -L "https://fastdl.mongodb.org/win32/mongodb-win32-i386-3.2.22.zip" -o build_cache/mongodb32.zip || echo "Warning: MongoDB 3.2 download failed"
 fi
 
-# MongoDB 6.0 (64-bit for Modern Windows)
-if [ ! -s build_cache/mongodb60.zip ]; then
-    echo "Downloading MongoDB 6.0 (64-bit)..."
-    curl -L "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-6.0.21.zip" -o build_cache/mongodb60.zip || echo "Warning: MongoDB 6.0 download failed"
-fi
-
-# 4. Create Release Directory Structure
-echo "Creating Release Structure..."
-rm -rf release 2>/dev/null || true
-mkdir -p release/RaceCoordinator/web
-mkdir -p release/RaceCoordinator/jre8
-mkdir -p release/RaceCoordinator/jre17
-mkdir -p release/RaceCoordinator/mongodb32
-mkdir -p release/RaceCoordinator/mongodb60
-mkdir -p release/RaceCoordinator_Offline/web
-
-# Copy Artifacts
-for dir in release/RaceCoordinator release/RaceCoordinator_Offline; do
-    cp server/target_dist/server-1.0-SNAPSHOT.jar "$dir/RaceCoordinator.jar"
-    cp -r client/dist/client/* "$dir/web/"
-    cp -r server/src/main/resources/arduino "$dir/"
-done
-
-# Extract and Bundle Dependencies
+# 4. Extract and Bundle Dependencies
 if [ -r build_cache/java8.zip ]; then
     cp build_cache/java8.zip release/RaceCoordinator_Offline/bundled_jre8.zip
     echo "Extracting JRE 8 (Legacy Support)..."
@@ -72,6 +75,7 @@ if [ -r build_cache/java8.zip ]; then
     mv release/RaceCoordinator/temp_jre8/*/* release/RaceCoordinator/jre8/
     rm -rf release/RaceCoordinator/temp_jre8
 fi
+
 
 if [ -r build_cache/java17.zip ]; then
     cp build_cache/java17.zip release/RaceCoordinator_Offline/bundled_jre17.zip
@@ -88,12 +92,8 @@ if [ -r build_cache/mongodb32.zip ]; then
     rm -rf release/RaceCoordinator/temp_mongo32
 fi
 
-if [ -r build_cache/mongodb60.zip ]; then
-    echo "Extracting MongoDB 6.0..."
-    unzip -q build_cache/mongodb60.zip -d release/RaceCoordinator/temp_mongo60
-    mv release/RaceCoordinator/temp_mongo60/*/* release/RaceCoordinator/mongodb60/
-    rm -rf release/RaceCoordinator/temp_mongo60
-fi
+
+
 
 # 5. Create Launch Scripts
 
@@ -333,13 +333,7 @@ create_scripts release/RaceCoordinator
 echo "Generating scripts for offline distribution..."
 create_scripts release/RaceCoordinator_Offline
 
-# 6. Create Installers / Packages
-
-echo "Creating Zip packages..."
-cd release
-zip -r RaceCoordinator_Universal.zip RaceCoordinator
-zip -r RaceCoordinator_Windows_Offline.zip RaceCoordinator_Offline
-cd ..
+# 6. Create Mac DMG (if on Mac)
 
 # DMG for Mac (if on Mac)
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -373,21 +367,7 @@ EOF
     rm -rf release/dmg_content
 fi
 
-# 7. Create Windows Installer (.exe) with Inno Setup
-if command -v iscc &> /dev/null; then
-    echo "Creating Windows Installer (.exe) using Inno Setup..."
-    iscc installer.iss
-    iscc installer_offline.iss
-    iscc installer_offline_legacy.iss
-elif [[ -f "/c/Program Files (x86)/Inno Setup 6/iscc.exe" ]]; then
-    echo "Creating Windows Installer (.exe) using Inno Setup (found in default path)..."
-    "/c/Program Files (x86)/Inno Setup 6/iscc.exe" installer.iss
-    "/c/Program Files (x86)/Inno Setup 6/iscc.exe" installer_offline.iss
-    "/c/Program Files (x86)/Inno Setup 6/iscc.exe" installer_offline_legacy.iss
-else
-    echo "Warning: Inno Setup (iscc) not found. Skipping .exe installer creation."
-    echo "To build the .exe installer, install Inno Setup and run: iscc installer.iss, installer_offline.iss, etc."
-fi
+echo "Manual Step for Windows: Build installers using Inno Setup (installer_online.iss, installer_offline_legacy.iss)"
 
 echo "Build Complete!"
 echo "Artifacts in 'release/' directory."

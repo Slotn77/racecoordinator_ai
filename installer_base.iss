@@ -1,5 +1,5 @@
 ; Race Coordinator AI Common Installer Definitions
-; This file is included by installer_offline.iss and installer_min.iss
+; This file is included by installer_offline.iss and installer_online.iss
 
 #define MyAppName "Race Coordinator AI"
 #define MyAppVersion "0.0.0.13"
@@ -22,12 +22,13 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
+AlwaysOnTop=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
 ; Server JAR
@@ -59,6 +60,12 @@ Name: "{group}\Race Coordinator Client"; Filename: "cmd.exe"; \
     Parameters: "/c start {#MyAppURL}"; IconFilename: "{app}\server\web\favicon.ico"
 
 Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
+
+[UninstallDelete]
+Type: files; Name: "{app}\install_java.log"
+Type: files; Name: "{app}\install_mongo.log"
+Type: filesandordirs; Name: "{app}\jre"
+Type: filesandordirs; Name: "{app}\mongodb"
 
 [Dirs]
 ; Writable data directory in ProgramData
