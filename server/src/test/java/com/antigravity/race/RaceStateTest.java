@@ -15,6 +15,7 @@ import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import com.antigravity.proto.RaceData;
+import com.antigravity.proto.RaceData.DataCase;
 import com.antigravity.proto.RaceState;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.protocols.arduino.ArduinoConfig;
@@ -190,7 +191,7 @@ public class RaceStateTest {
       for (ByteBuffer buf : captured) {
         try {
           RaceData raceData = RaceData.parseFrom(buf);
-          if (raceData.hasRaceState()) {
+          if (raceData.getDataCase() == DataCase.RACE_STATE) {
             capturedStates.append("RaceState:").append(raceData.getRaceState()).append(", ");
             if (raceData.getRaceState() == expectedState) {
               found = true;
@@ -311,7 +312,8 @@ public class RaceStateTest {
     // 3. Verify
     assertEquals(0.0, race.getAutoStartRemaining(), 0.001);
     assertTrue(race.getState() instanceof NotStarted);
-    // Note: We don't call verifyBroadcast(RaceState.PAUSED) because state doesn't change.
+    // Note: We don't call verifyBroadcast(RaceState.PAUSED) because state doesn't
+    // change.
     // Instead, Race.clearAutoTimers() broadcasts the reset timer.
   }
 
