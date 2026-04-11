@@ -20,6 +20,7 @@ import {
 import { GuideStep, HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
+import { naturalSortCompare } from "src/app/utils/sorting.utils";
 
 @Component({
   selector: "app-team-manager",
@@ -45,7 +46,7 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         (t) => t.name && t.name.toLowerCase().includes(query),
       );
     }
-    return filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    return filtered.sort((a, b) => naturalSortCompare(a.name || "", b.name || ""));
   }
 
   // Connection Monitoring

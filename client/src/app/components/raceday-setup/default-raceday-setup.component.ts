@@ -21,6 +21,7 @@ import { GuideStep, HelpService } from "src/app/services/help.service";
 import { RaceService } from "src/app/services/race.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
+import { naturalSortCompare } from "src/app/utils/sorting.utils";
 
 type Participant = Driver | Team;
 
@@ -712,6 +713,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
     if (!this.raceSearchQuery) return this.races;
     const q = this.raceSearchQuery.toLowerCase();
     return this.races.filter((r) => r.name.toLowerCase().includes(q));
+  }
+
+  private naturalSortParticipants(a: Participant, b: Participant): number {
+    return naturalSortCompare(a.name || "", b.name || "");
   }
 
   // --- Options Menu Logic ---
