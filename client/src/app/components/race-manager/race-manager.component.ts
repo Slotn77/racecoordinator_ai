@@ -6,17 +6,19 @@ import {
   OnDestroy,
   OnInit,
   QueryList,
+  ViewChild,
   ViewChildren,
 } from "@angular/core";
-import { ActivatedRoute } from "@angular/router";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
+import { ManagerHeaderComponent } from "src/app/components/shared/manager-header/manager-header.component";
 import { DataService } from "src/app/data.service";
 import {
   ConnectionMonitorService,
   ConnectionState,
 } from "src/app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 @Component({
@@ -26,6 +28,7 @@ import { TranslationService } from "src/app/services/translation.service";
   standalone: false,
 })
 export class RaceManagerComponent implements OnInit, OnDestroy {
+  @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
   races: any[] = [];
   tracks: any[] = [];
   selectedRace?: any;
@@ -79,6 +82,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private connectionMonitor: ConnectionMonitorService,
     private helpService: HelpService,
+    private settingsService: SettingsService,
   ) {}
 
   ngOnInit() {
@@ -94,6 +98,21 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     }
 
     this.loadData();
+
+    // Trigger help automatically on first visit or if requested via query param
+    this.route.queryParams.subscribe((params) => {
+      const forceHelp = params["help"] === "true";
+      const settings = this.settingsService.getSettings();
+      if (forceHelp || !settings.raceManagerHelpShown) {
+        setTimeout(() => {
+          this.helpService.startGuide(this.getHelpSteps());
+          if (!forceHelp) {
+            settings.raceManagerHelpShown = true;
+            this.settingsService.saveSettings(settings);
+          }
+        }, 800);
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -173,7 +192,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     // Scroll into view
     setTimeout(() => {
       const row = this.raceRows.find(
-        (r) => r.nativeElement.getAttribute("data-id") === race.entity_id,
+        (r: any) => r.nativeElement.getAttribute("data-id") === race.entity_id,
       );
       if (row) {
         row.nativeElement.scrollIntoView({
@@ -335,7 +354,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
       .replace(/\b\w/g, (l) => l.toUpperCase());
   }
 
-  startHelp() {
+  getHelpSteps(): GuideStep[] {
     const steps: GuideStep[] = [
       {
         title: this.translationService.translate("RM_HELP_WELCOME_TITLE"),
@@ -345,7 +364,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
       {
         selector: ".sidebar-list",
         title: this.translationService.translate("TM_HELP_SIDEBAR_TITLE"),
-        content: this.translationService.translate("RM_HELP_WELCOME_CONTENT"), // Reuse for now or add new keys if they exist
+        content: this.translationService.translate("RM_HELP_WELCOME_CONTENT"),
         position: "right",
       },
       {
@@ -354,31 +373,12 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
         content: this.translationService.translate("RM_HELP_WELCOME_CONTENT"),
         position: "left",
       },
-      {
-        selector: "#edit-track-btn",
-        title: this.translationService.translate("TM_HELP_EDIT_TITLE"),
-        content: this.translationService.translate("TM_HELP_EDIT_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#add-item-btn",
-        title: this.translationService.translate("RM_CREATE_NEW"),
-        content: this.translationService.translate("TM_HELP_CREATE_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#delete-track-btn",
-        title: this.translationService.translate("RM_BTN_DELETE_RACE"),
-        content: this.translationService.translate("TM_HELP_DELETE_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-track-btn",
-        title: this.translationService.translate("RDS_MENU_TUTORIAL"),
-        content: this.translationService.translate("TM_HELP_HELP_CONTENT"),
-        position: "bottom",
-      },
     ];
-    this.helpService.startGuide(steps);
+
+    if (this.header?.toolbar) {
+      steps.push(...this.header.toolbar.getToolbarHelpSteps());
+    }
+
+    return steps;
   }
 }

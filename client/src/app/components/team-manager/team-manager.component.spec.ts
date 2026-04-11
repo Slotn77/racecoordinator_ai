@@ -9,6 +9,7 @@ import {
 } from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
+import { AnalyticsService } from "src/app/analytics.service";
 import { SharedModule } from "src/app/components/shared/shared.module";
 import { DataService } from "src/app/data.service";
 import { Driver } from "src/app/models/driver";
@@ -33,6 +34,7 @@ describe("TeamManagerComponent", () => {
   let mockRouter: jasmine.SpyObj<Router>;
   let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
   let mockHelpService: jasmine.SpyObj<HelpService>;
+  let mockAnalyticsService: jasmine.SpyObj<AnalyticsService>;
   let mockSettingsService: jasmine.SpyObj<SettingsService>;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
   let mockActivatedRoute: any;
@@ -83,6 +85,14 @@ describe("TeamManagerComponent", () => {
       get: () => of(false),
     });
 
+    mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
+      "isEnabled",
+      "toggleAnalytics",
+      "trackClick",
+    ]);
+    mockAnalyticsService.isEnabled.and.returnValue(true);
+    mockAnalyticsService.toggleAnalytics.and.returnValue(of({ success: true }));
+
     mockSettingsService = jasmine.createSpyObj("SettingsService", [
       "getSettings",
       "saveSettings",
@@ -121,6 +131,7 @@ describe("TeamManagerComponent", () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
         { provide: HelpService, useValue: mockHelpService },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
         ChangeDetectorRef,
       ],
@@ -170,6 +181,7 @@ describe("TeamManagerComponent", () => {
             useValue: mockConnectionMonitor,
           },
           { provide: HelpService, useValue: mockHelpService },
+          { provide: AnalyticsService, useValue: mockAnalyticsService },
           { provide: SettingsService, useValue: mockSettingsService },
           ChangeDetectorRef,
         ],
@@ -253,6 +265,7 @@ describe("TeamManagerComponent", () => {
             useValue: mockConnectionMonitor,
           },
           { provide: HelpService, useValue: mockHelpService },
+          { provide: AnalyticsService, useValue: mockAnalyticsService },
           { provide: SettingsService, useValue: mockSettingsService },
           ChangeDetectorRef,
         ],

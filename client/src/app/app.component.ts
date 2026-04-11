@@ -14,6 +14,7 @@ import { DataService } from "./data.service";
     >
       <router-outlet></router-outlet>
     </div>
+    <app-help-overlay></app-help-overlay>
   `,
   animations: [slideInAnimation],
   styles: [

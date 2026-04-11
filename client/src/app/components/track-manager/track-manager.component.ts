@@ -3,8 +3,10 @@ import {
   Component,
   HostListener,
   OnInit,
+  ViewChild,
 } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
+import { ManagerHeaderComponent } from "src/app/components/shared/manager-header/manager-header.component";
 import { DataService } from "src/app/data.service";
 import { Track } from "src/app/models/track";
 import { GuideStep, HelpService } from "src/app/services/help.service";
@@ -18,6 +20,7 @@ import { TranslationService } from "src/app/services/translation.service";
   standalone: false,
 })
 export class TrackManagerComponent implements OnInit {
+  @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
   tracks: Track[] = [];
   selectedTrack?: Track;
   scale: number = 1;
@@ -50,7 +53,7 @@ export class TrackManagerComponent implements OnInit {
       const settings = this.settingsService.getSettings();
       if (forceHelp || !settings.trackManagerHelpShown) {
         setTimeout(() => {
-          this.startHelp();
+          this.helpService.startGuide(this.getHelpSteps());
           if (!forceHelp) {
             settings.trackManagerHelpShown = true;
             this.settingsService.saveSettings(settings);
@@ -60,7 +63,7 @@ export class TrackManagerComponent implements OnInit {
     });
   }
 
-  startHelp() {
+  getHelpSteps(): GuideStep[] {
     const steps: GuideStep[] = [
       {
         title: "TM_HELP_WELCOME_TITLE",
@@ -79,32 +82,13 @@ export class TrackManagerComponent implements OnInit {
         content: "TM_HELP_DETAIL_CONTENT",
         position: "left",
       },
-      {
-        selector: "#edit-track-btn",
-        title: "TM_HELP_EDIT_TITLE",
-        content: "TM_HELP_EDIT_CONTENT",
-        position: "bottom",
-      },
-      {
-        selector: "#add-item-btn",
-        title: "TM_HELP_CREATE_TITLE",
-        content: "TM_HELP_CREATE_CONTENT",
-        position: "bottom",
-      },
-      {
-        selector: "#delete-track-btn",
-        title: "TM_HELP_DELETE_TITLE",
-        content: "TM_HELP_DELETE_CONTENT",
-        position: "bottom",
-      },
-      {
-        selector: "#help-track-btn",
-        title: "TM_HELP_HELP_TITLE",
-        content: "TM_HELP_HELP_CONTENT",
-        position: "bottom",
-      },
     ];
-    this.helpService.startGuide(steps);
+
+    if (this.header?.toolbar) {
+      steps.push(...this.header.toolbar.getToolbarHelpSteps());
+    }
+
+    return steps;
   }
 
   @HostListener("window:resize")

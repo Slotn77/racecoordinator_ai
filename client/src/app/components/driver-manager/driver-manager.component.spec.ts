@@ -2,6 +2,7 @@ import { ChangeDetectorRef } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
+import { AnalyticsService } from "src/app/analytics.service";
 import { SharedModule } from "src/app/components/shared/shared.module";
 import { DataService } from "src/app/data.service";
 import { Driver } from "src/app/models/driver";
@@ -10,6 +11,8 @@ import {
   ConnectionMonitorService,
   ConnectionState,
 } from "src/app/services/connection-monitor.service";
+import { HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { DriverManagerComponent } from "./driver-manager.component";
@@ -20,6 +23,9 @@ describe("DriverManagerComponent", () => {
   let mockDataService: jasmine.SpyObj<DataService>;
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
   let mockRouter: jasmine.SpyObj<Router>;
+  let mockHelpService: jasmine.SpyObj<HelpService>;
+  let mockSettingsService: jasmine.SpyObj<SettingsService>;
+  let mockAnalyticsService: jasmine.SpyObj<AnalyticsService>;
   let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
   let mockActivatedRoute: any;
@@ -47,6 +53,28 @@ describe("DriverManagerComponent", () => {
     connectionStateSubject = new BehaviorSubject<ConnectionState>(
       ConnectionState.CONNECTED,
     );
+    mockHelpService = jasmine.createSpyObj("HelpService", ["startGuide"]);
+    mockHelpService.isVisible$ = of(false);
+    mockHelpService.currentStep$ = of(null);
+    mockHelpService.hasNext$ = of(false);
+    mockHelpService.hasPrevious$ = of(false);
+
+    mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
+      "isEnabled",
+      "toggleAnalytics",
+      "trackClick",
+    ]);
+    mockAnalyticsService.isEnabled.and.returnValue(true);
+    mockAnalyticsService.toggleAnalytics.and.returnValue(of({ success: true }));
+
+    mockSettingsService = jasmine.createSpyObj("SettingsService", [
+      "getSettings",
+      "saveSettings",
+    ]);
+    mockSettingsService.getSettings.and.returnValue({
+      driverManagerHelpShown: true,
+    } as any);
+
     Object.defineProperty(mockConnectionMonitor, "connectionState$", {
       get: () => connectionStateSubject.asObservable(),
     });
@@ -57,7 +85,7 @@ describe("DriverManagerComponent", () => {
           get: jasmine.createSpy("get").and.returnValue(null),
         },
       },
-      queryParams: of({}),
+      queryParams: of({ help: "false" }),
     };
 
     mockDataService.getDrivers.and.returnValue(of(mockDrivers));
@@ -73,6 +101,9 @@ describe("DriverManagerComponent", () => {
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
+        { provide: HelpService, useValue: mockHelpService },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
+        { provide: SettingsService, useValue: mockSettingsService },
         ChangeDetectorRef,
       ],
     }).compileComponents();
@@ -118,6 +149,8 @@ describe("DriverManagerComponent", () => {
             provide: ConnectionMonitorService,
             useValue: mockConnectionMonitor,
           },
+          { provide: HelpService, useValue: mockHelpService },
+          { provide: AnalyticsService, useValue: mockAnalyticsService },
           ChangeDetectorRef,
         ],
       }).compileComponents();

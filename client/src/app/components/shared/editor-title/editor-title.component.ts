@@ -1,6 +1,14 @@
-import { Component, EventEmitter, Input, Output } from "@angular/core";
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  ViewChild,
+} from "@angular/core";
 import { Router } from "@angular/router";
+import { ToolbarComponent } from "src/app/components/shared/toolbar/toolbar.component";
 import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
+import { GuideStep } from "src/app/services/help.service";
 
 @Component({
   selector: "app-editor-title",
@@ -9,6 +17,7 @@ import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-m
   standalone: false,
 })
 export class EditorTitleComponent {
+  @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
   @Input() titleKey: string = "";
   @Input() backRoute: string = "";
   @Input() backQueryParams: any = {};
@@ -23,6 +32,8 @@ export class EditorTitleComponent {
   @Input() showAdd: boolean = false;
   @Input() showDelete: boolean = false;
   @Input() isSaving: boolean = false;
+  @Input() helpSteps: GuideStep[] = [];
+  @Input() helpTitle: string = "";
 
   @Output() help = new EventEmitter<void>();
   @Output() back = new EventEmitter<void>();

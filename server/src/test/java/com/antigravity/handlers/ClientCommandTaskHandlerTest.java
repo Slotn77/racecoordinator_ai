@@ -477,8 +477,7 @@ public class ClientCommandTaskHandlerTest {
 
     AnalyticsToggleRequest requestData = new AnalyticsToggleRequest();
     requestData.setEnabled(true);
-    byte[] bodyBytes =
-        new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestData);
+    byte[] bodyBytes = new ObjectMapper().writeValueAsBytes(requestData);
 
     doReturn(bodyBytes).when(spyHandler).getBodyBytes(any());
     doNothing().when(spyHandler).setStatus(any(), anyInt());
@@ -500,8 +499,7 @@ public class ClientCommandTaskHandlerTest {
 
     AnalyticsToggleRequest requestData = new AnalyticsToggleRequest();
     requestData.setEnabled(false);
-    byte[] bodyBytes =
-        new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestData);
+    byte[] bodyBytes = new ObjectMapper().writeValueAsBytes(requestData);
 
     doReturn(bodyBytes).when(spyHandler).getBodyBytes(any());
     doNothing().when(spyHandler).setStatus(any(), anyInt());
@@ -523,8 +521,7 @@ public class ClientCommandTaskHandlerTest {
 
     AnalyticsToggleRequest requestData = new AnalyticsToggleRequest();
     requestData.setEnabled(true);
-    byte[] bodyBytes =
-        new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestData);
+    byte[] bodyBytes = new ObjectMapper().writeValueAsBytes(requestData);
 
     doReturn(bodyBytes).when(spyHandler).getBodyBytes(any());
     doNothing().when(spyHandler).setStatus(any(), anyInt());

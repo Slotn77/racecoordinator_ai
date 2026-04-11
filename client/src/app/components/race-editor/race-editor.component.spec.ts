@@ -10,10 +10,13 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
+import { AnalyticsService } from "src/app/analytics.service";
 import { DataService } from "src/app/data.service";
 import { FuelUsageType } from "src/app/models/fuel_options";
 import { Track } from "src/app/models/track";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
+import { HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { RaceEditorComponent } from "./race-editor.component";
@@ -27,6 +30,9 @@ describe("RaceEditorComponent", () => {
   let mockRouter: jasmine.SpyObj<Router>;
   let mockActivatedRoute: any;
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
+  let mockHelpService: jasmine.SpyObj<HelpService>;
+  let mockSettingsService: jasmine.SpyObj<SettingsService>;
+  let mockAnalyticsService: jasmine.SpyObj<AnalyticsService>;
 
   beforeEach(() => {
     mockDataService = jasmine.createSpyObj("DataService", [
@@ -41,6 +47,29 @@ describe("RaceEditorComponent", () => {
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
     ]);
+
+    mockHelpService = jasmine.createSpyObj("HelpService", ["startGuide"]);
+    mockHelpService.isVisible$ = of(false);
+    mockHelpService.currentStep$ = of(null);
+    mockHelpService.hasNext$ = of(false);
+    mockHelpService.hasPrevious$ = of(false);
+
+    mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
+      "isEnabled",
+      "toggleAnalytics",
+      "trackClick",
+    ]);
+    mockAnalyticsService.isEnabled.and.returnValue(true);
+    mockAnalyticsService.toggleAnalytics.and.returnValue(of({ success: true }));
+
+    mockSettingsService = jasmine.createSpyObj("SettingsService", [
+      "getSettings",
+      "saveSettings",
+    ]);
+    mockSettingsService.getSettings.and.returnValue({
+      raceEditorHelpShown: true,
+    } as any);
+
     mockActivatedRoute = {
       snapshot: {
         queryParamMap: {
@@ -51,6 +80,7 @@ describe("RaceEditorComponent", () => {
           }),
         },
       },
+      queryParams: of({ help: "false" }),
     };
 
     TestBed.configureTestingModule({
@@ -61,6 +91,9 @@ describe("RaceEditorComponent", () => {
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: TranslationService, useValue: mockTranslationService },
+        { provide: HelpService, useValue: mockHelpService },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
+        { provide: SettingsService, useValue: mockSettingsService },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     });

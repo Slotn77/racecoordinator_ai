@@ -10,8 +10,10 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
+import { AnalyticsService } from "src/app/analytics.service";
 import { DataService } from "src/app/data.service";
 import { ConnectionMonitorService } from "src/app/services/connection-monitor.service";
+import { HelpService } from "src/app/services/help.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { DriverEditorComponent } from "./driver-editor.component";
@@ -89,6 +91,8 @@ class MockEditorTitleComponent {
   @Input() showAdd: boolean = false;
   @Input() showDelete: boolean = false;
   @Input() isSaving: boolean = false;
+  @Input() helpSteps: any[] = [];
+  @Input() helpTitle: string = "";
   @Output() help = new EventEmitter<void>();
   @Output() back = new EventEmitter<void>();
   @Output() copy = new EventEmitter<void>();
@@ -125,6 +129,8 @@ describe("DriverEditorComponent Reproduction", () => {
   let mockConnectionMonitor: any;
   let mockRouter: any;
   let mockActivatedRoute: any;
+  let mockHelpService: any;
+  let mockAnalyticsService: any;
 
   beforeEach(async () => {
     mockDataService = jasmine.createSpyObj("DataService", [
@@ -160,6 +166,18 @@ describe("DriverEditorComponent Reproduction", () => {
       queryParams: of({}),
     };
 
+    mockHelpService = jasmine.createSpyObj("HelpService", ["startGuide"]);
+    mockHelpService.isVisible$ = of(false);
+    mockHelpService.currentStep$ = of(null);
+    mockHelpService.hasNext$ = of(false);
+    mockHelpService.hasPrevious$ = of(false);
+
+    mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
+      "isEnabled",
+      "trackClick",
+    ]);
+    mockAnalyticsService.isEnabled.and.returnValue(true);
+
     mockDataService.getDrivers.and.returnValue(
       of([{ entity_id: "d1", name: "Original", nickname: "" }]),
     );
@@ -188,6 +206,8 @@ describe("DriverEditorComponent Reproduction", () => {
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        { provide: HelpService, useValue: mockHelpService },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
       ],
     }).compileComponents();
   });

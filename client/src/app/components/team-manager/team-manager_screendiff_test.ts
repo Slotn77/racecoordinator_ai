@@ -67,7 +67,7 @@ test.describe("Team Manager Visuals", () => {
     );
 
     const overlay = page.locator("app-help-overlay");
-    await overlay.waitFor({ state: "attached" });
+    await overlay.locator(".help-popover").waitFor({ state: "visible" });
 
     await page.waitForTimeout(1000);
     await expect(page).toHaveScreenshot("team-manager-guided-help.png");

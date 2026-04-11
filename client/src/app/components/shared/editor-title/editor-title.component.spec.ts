@@ -31,6 +31,8 @@ class MockToolbarComponent {
   @Input() showCopy: boolean = false;
   @Input() isSaving: boolean = false;
   @Input() undoManager: any;
+  @Input() helpSteps: any[] = [];
+  @Input() helpTitle: string = "";
   @Output() help = new EventEmitter<void>();
   @Output() add = new EventEmitter<void>();
   @Output() delete = new EventEmitter<void>();

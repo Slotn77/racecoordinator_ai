@@ -11,6 +11,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, convertToParamMap, Router } from "@angular/router";
 import { BehaviorSubject, of, throwError } from "rxjs";
+import { AnalyticsService } from "src/app/analytics.service";
 import { DataService } from "src/app/data.service";
 import { Lane } from "src/app/models/lane";
 import { Settings } from "src/app/models/settings";
@@ -112,6 +113,19 @@ class MockDataService {
 // Mock HelpService
 class MockHelpService {
   startGuide = jasmine.createSpy("startGuide");
+  isVisible$ = of(false);
+  currentStep$ = of(null);
+  hasNext$ = of(false);
+  hasPrevious$ = of(false);
+}
+
+// Mock AnalyticsService
+class MockAnalyticsService {
+  isEnabled = jasmine.createSpy("isEnabled").and.returnValue(true);
+  trackClick = jasmine.createSpy("trackClick");
+  toggleAnalytics = jasmine
+    .createSpy("toggleAnalytics")
+    .and.returnValue(of({ success: true }));
 }
 
 // Mock TranslationService
@@ -158,6 +172,9 @@ class MockActivatedRoute {
 // Mock SettingsService
 class MockSettingsService {
   settings = new Settings();
+  constructor() {
+    this.settings.trackEditorHelpShown = true;
+  }
   getSettings() {
     return this.settings;
   }
@@ -211,6 +228,8 @@ class MockEditorTitleComponent {
   @Input() showAdd: boolean = false;
   @Input() showDelete: boolean = false;
   @Input() isSaving: boolean = false;
+  @Input() helpSteps: any[] = [];
+  @Input() helpTitle: string = "";
   @Output() help = new EventEmitter<void>();
   @Output() back = new EventEmitter<void>();
   @Output() copy = new EventEmitter<void>();
@@ -241,6 +260,7 @@ describe("TrackEditorComponent", () => {
         { provide: Router, useClass: MockRouter },
         { provide: ActivatedRoute, useClass: MockActivatedRoute },
         { provide: HelpService, useClass: MockHelpService },
+        { provide: AnalyticsService, useClass: MockAnalyticsService },
         { provide: SettingsService, useClass: MockSettingsService },
       ],
     }).compileComponents();

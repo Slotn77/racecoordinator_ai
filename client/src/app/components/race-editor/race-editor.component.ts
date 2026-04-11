@@ -174,6 +174,21 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     this.undoManager.stateCommitted$.subscribe(() => {
       this.autoSaveRace();
     });
+
+    // Trigger help automatically on first visit or if requested via query param
+    this.route.queryParams.subscribe((params) => {
+      const forceHelp = params["help"] === "true";
+      const settings = this.settingsService.getSettings();
+      if (forceHelp || !settings.raceEditorHelpShown) {
+        setTimeout(() => {
+          this.startHelp();
+          if (!forceHelp) {
+            settings.raceEditorHelpShown = true;
+            this.settingsService.saveSettings(settings);
+          }
+        }, 800);
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -1292,8 +1307,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     };
   }
 
-  startHelp() {
-    const steps: GuideStep[] = [
+  getHelpSteps(): GuideStep[] {
+    return [
       {
         title: this.translationService.translate("RE_HELP_WELCOME_TITLE"),
         content: this.translationService.translate("RE_HELP_WELCOME_CONTENT"),
@@ -1311,21 +1326,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         content: this.translationService.translate("RE_HELP_TRACK_CONTENT"),
         position: "bottom",
       },
-      {
-        selector: "#copy-item-btn",
-        title: this.translationService.translate("RE_HELP_DUPLICATE_TITLE"),
-        content: this.translationService.translate("RE_HELP_DUPLICATE_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-track-btn",
-        title: this.translationService.translate("TM_HELP_HELP_TITLE"),
-        content: this.translationService.translate("TM_HELP_HELP_CONTENT"),
-        position: "bottom",
-      },
     ];
+  }
 
-    this.helpService.startGuide(steps);
+  startHelp() {
+    this.helpService.startGuide(this.getHelpSteps());
   }
 }
 

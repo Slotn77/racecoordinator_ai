@@ -9,9 +9,12 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of, throwError } from "rxjs";
+import { AnalyticsService } from "src/app/analytics.service";
 import { DataService } from "src/app/data.service";
 import { Driver } from "src/app/models/driver";
 import { ConnectionMonitorService } from "src/app/services/connection-monitor.service";
+import { HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { DriverEditorComponent } from "./driver-editor.component";
@@ -89,6 +92,8 @@ class MockEditorTitleComponent {
   @Input() showAdd: boolean = false;
   @Input() showDelete: boolean = false;
   @Input() isSaving: boolean = false;
+  @Input() helpSteps: any[] = [];
+  @Input() helpTitle: string = "";
   @Output() help = new EventEmitter<void>();
   @Output() back = new EventEmitter<void>();
   @Output() copy = new EventEmitter<void>();
@@ -126,6 +131,9 @@ describe("DriverEditorComponent", () => {
   let mockConnectionMonitor: any;
   let mockRouter: any;
   let mockActivatedRoute: any;
+  let mockHelpService: jasmine.SpyObj<HelpService>;
+  let mockSettingsService: jasmine.SpyObj<SettingsService>;
+  let mockAnalyticsService: jasmine.SpyObj<AnalyticsService>;
 
   beforeEach(async () => {
     mockDataService = jasmine.createSpyObj("DataService", [
@@ -139,6 +147,29 @@ describe("DriverEditorComponent", () => {
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
     ]);
+
+    mockHelpService = jasmine.createSpyObj("HelpService", ["startGuide"]);
+    mockHelpService.isVisible$ = of(false);
+    mockHelpService.currentStep$ = of(null);
+    mockHelpService.hasNext$ = of(false);
+    mockHelpService.hasPrevious$ = of(false);
+
+    mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
+      "isEnabled",
+      "toggleAnalytics",
+      "trackClick",
+    ]);
+    mockAnalyticsService.isEnabled.and.returnValue(true);
+    mockAnalyticsService.toggleAnalytics.and.returnValue(of({ success: true }));
+
+    mockSettingsService = jasmine.createSpyObj("SettingsService", [
+      "getSettings",
+      "saveSettings",
+    ]);
+    mockSettingsService.getSettings.and.returnValue({
+      driverEditorHelpShown: true,
+    } as any);
+
     mockConnectionMonitor = {
       connectionState$: new BehaviorSubject("CONNECTED"),
       startMonitoring: jasmine.createSpy("startMonitoring"),
@@ -151,7 +182,7 @@ describe("DriverEditorComponent", () => {
           get: jasmine.createSpy("get").and.returnValue("new"),
         },
       },
-      queryParams: of({}),
+      queryParams: of({ help: "false" }),
     };
 
     // Default mock returns
@@ -183,6 +214,9 @@ describe("DriverEditorComponent", () => {
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        { provide: HelpService, useValue: mockHelpService },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
+        { provide: SettingsService, useValue: mockSettingsService },
       ],
     }).compileComponents();
   });

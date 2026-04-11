@@ -17,6 +17,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
+import { AnalyticsService } from "src/app/analytics.service";
 import { DataService } from "src/app/data.service";
 import { Driver } from "src/app/models/driver";
 import { Team } from "src/app/models/team";
@@ -81,6 +82,8 @@ class MockEditorTitleComponent {
   @Input() showAdd: boolean = false;
   @Input() showDelete: boolean = false;
   @Input() isSaving: boolean = false;
+  @Input() helpSteps: any[] = [];
+  @Input() helpTitle: string = "";
   @Output() help = new EventEmitter<void>();
   @Output() back = new EventEmitter<void>();
   @Output() copy = new EventEmitter<void>();
@@ -116,6 +119,7 @@ describe("TeamEditorComponent", () => {
   let mockLocation: any;
   let mockHelpService: any;
   let mockSettingsService: any;
+  let mockAnalyticsService: any;
 
   const mockDrivers = [
     new Driver("d1", "Alice", "Rocket", "assets/images/default_avatar.svg"),
@@ -156,15 +160,23 @@ describe("TeamEditorComponent", () => {
           get: jasmine.createSpy("get").and.returnValue("new"),
         },
       },
+      queryParams: of({ help: "false" }),
     };
     mockLocation = jasmine.createSpyObj("Location", ["replaceState"]);
     mockHelpService = jasmine.createSpyObj("HelpService", ["startGuide"]);
     mockSettingsService = {
       getSettings: jasmine
         .createSpy("getSettings")
-        .and.returnValue({ teamEditorHelpShown: false }),
+        .and.returnValue({ teamEditorHelpShown: true }),
       saveSettings: jasmine.createSpy("saveSettings"),
     };
+    mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
+      "isEnabled",
+      "toggleAnalytics",
+      "trackClick",
+    ]);
+    mockAnalyticsService.isEnabled.and.returnValue(true);
+    mockAnalyticsService.toggleAnalytics.and.returnValue(of({ success: true }));
 
     mockDataService.getDrivers.and.returnValue(of(mockDrivers));
     mockDataService.getTeams.and.returnValue(of(mockTeams));
@@ -194,6 +206,7 @@ describe("TeamEditorComponent", () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: Location, useValue: mockLocation },
         { provide: HelpService, useValue: mockHelpService },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
       ],
     }).compileComponents();

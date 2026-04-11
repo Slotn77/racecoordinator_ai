@@ -1,14 +1,23 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
+import { Component, CUSTOM_ELEMENTS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { of } from "rxjs";
 import { AnalyticsService } from "src/app/analytics.service";
 import { AcknowledgementModalComponent } from "src/app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
+import { HelpService } from "src/app/services/help.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { ToolbarHarness } from "./testing/toolbar.harness";
 import { ToolbarComponent } from "./toolbar.component";
+
+@Component({
+  selector: "app-help-overlay",
+  template: "",
+  standalone: false,
+})
+class MockHelpOverlayComponent {}
 
 describe("ToolbarComponent", () => {
   let component: ToolbarComponent;
@@ -16,6 +25,7 @@ describe("ToolbarComponent", () => {
   let harness: ToolbarHarness;
   let translationServiceSpy: jasmine.SpyObj<TranslationService>;
   let analyticsServiceSpy: jasmine.SpyObj<AnalyticsService>;
+  let helpServiceSpy: jasmine.SpyObj<HelpService>;
 
   beforeEach(async () => {
     translationServiceSpy = jasmine.createSpyObj("TranslationService", [
@@ -31,16 +41,25 @@ describe("ToolbarComponent", () => {
     analyticsServiceSpy.isEnabled.and.returnValue(true);
     analyticsServiceSpy.toggleAnalytics.and.returnValue(of({ success: true }));
 
+    helpServiceSpy = jasmine.createSpyObj("HelpService", ["startGuide"]);
+    helpServiceSpy.isVisible$ = of(false);
+    helpServiceSpy.currentStep$ = of(null);
+    helpServiceSpy.hasNext$ = of(false);
+    helpServiceSpy.hasPrevious$ = of(false);
+
     await TestBed.configureTestingModule({
       declarations: [
         ToolbarComponent,
         TranslatePipe,
         AcknowledgementModalComponent,
+        MockHelpOverlayComponent,
       ],
       providers: [
         { provide: TranslationService, useValue: translationServiceSpy },
         { provide: AnalyticsService, useValue: analyticsServiceSpy },
+        { provide: HelpService, useValue: helpServiceSpy },
       ],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ToolbarComponent);

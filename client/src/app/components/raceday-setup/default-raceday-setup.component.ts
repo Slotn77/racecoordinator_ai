@@ -12,12 +12,13 @@ import {
 } from "@angular/core";
 import { Router } from "@angular/router";
 import { forkJoin } from "rxjs";
+import { ToolbarComponent } from "src/app/components/shared/toolbar/toolbar.component";
 import { DataService } from "src/app/data.service";
 import { Driver } from "src/app/models/driver";
 import { Race } from "src/app/models/race";
 import { Team } from "src/app/models/team";
 import { FileSystemService } from "src/app/services/file-system.service";
-import { HelpService } from "src/app/services/help.service";
+import { GuideStep, HelpService } from "src/app/services/help.service";
 import { RaceService } from "src/app/services/race.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
@@ -31,6 +32,7 @@ type Participant = Driver | Team;
   standalone: false,
 })
 export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
+  @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
   @Output() requestServerConfig = new EventEmitter<void>();
   @ViewChild("scrollContainer") scrollContainer?: ElementRef;
 
@@ -889,27 +891,11 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.cdr.detectChanges();
   }
 
-  startHelp() {
-    this.helpService.startGuide([
+  getHelpSteps(): GuideStep[] {
+    const steps: GuideStep[] = [
       {
         title: this.translationService.translate("RDS_HELP_WELCOME_TITLE"),
         content: this.translationService.translate("RDS_HELP_WELCOME_CONTENT"),
-      },
-      {
-        selector: ".toolbar-btn.help",
-        title: this.translationService.translate("RDS_HELP_WALKTHROUGH_TITLE"),
-        content: this.translationService.translate(
-          "RDS_HELP_WALKTHROUGH_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: ".toolbar-btn.analytics",
-        title: this.translationService.translate("RDS_HELP_ANALYTICS_TITLE"),
-        content: this.translationService.translate(
-          "RDS_HELP_ANALYTICS_CONTENT",
-        ),
-        position: "bottom",
       },
       {
         selector: ".panel.driver-panel",
@@ -973,7 +959,17 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
         ),
         position: "top",
       },
-    ]);
+    ];
+
+    if (this.toolbar) {
+      steps.push(...this.toolbar.getToolbarHelpSteps());
+    }
+
+    return steps;
+  }
+
+  startHelp() {
+    this.helpService.startGuide(this.getHelpSteps());
   }
 
   loadSavedRaces() {

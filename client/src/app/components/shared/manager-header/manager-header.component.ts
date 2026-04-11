@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, Output } from "@angular/core";
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  ViewChild,
+} from "@angular/core";
+import { ToolbarComponent } from "src/app/components/shared/toolbar/toolbar.component";
+import { GuideStep } from "src/app/services/help.service";
 
 @Component({
   selector: "app-manager-header",
@@ -7,6 +15,7 @@ import { Component, EventEmitter, Input, Output } from "@angular/core";
   standalone: false,
 })
 export class ManagerHeaderComponent {
+  @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
   @Input() title: string = "";
   @Input() backTargetUrl: string = "/raceday-setup";
   @Input() showActions: boolean = true;
@@ -16,6 +25,8 @@ export class ManagerHeaderComponent {
   @Input() showDelete: boolean = true;
   @Input() showCopy: boolean = false;
   @Input() isSaving: boolean = false;
+  @Input() helpSteps: GuideStep[] = [];
+  @Input() helpTitle: string = "";
 
   @Output() add = new EventEmitter<void>();
   @Output() edit = new EventEmitter<void>();

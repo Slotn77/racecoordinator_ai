@@ -1,6 +1,6 @@
-import { Page } from '@playwright/test';
+import { Page } from "@playwright/test";
 
-import { com } from '../proto/message';
+import { com } from "../proto/message";
 
 export interface SetupOptions {
   skipIntro?: boolean;
@@ -11,81 +11,98 @@ export interface SetupOptions {
   driverEditorHelpShown?: boolean;
   teamManagerHelpShown?: boolean;
   teamEditorHelpShown?: boolean;
+  assetManagerHelpShown?: boolean;
+  raceManagerHelpShown?: boolean;
+  raceEditorHelpShown?: boolean;
 }
-
-
 
 export class TestSetupHelper {
   static async setupStandardMocks(page: Page, options: SetupOptions = {}) {
     // Listen for console logs from the browser and prefix them for visibility
-    page.on('console', msg => {
+    page.on("console", (msg) => {
       const type = msg.type();
       const text = msg.text();
       // Only log if it's not a noisy debug message, or if it's one of our HEARTBEAT logs
-      if (type === 'error' || type === 'warning' || text.includes('MockWebSocket')) {
+      if (
+        type === "error" ||
+        type === "warning" ||
+        text.includes("MockWebSocket")
+      ) {
         console.log(`BROWSER [${type.toUpperCase()}]: ${text}`);
       }
     });
 
-    page.on('pageerror', err => console.error(`BROWSER ERROR: ${err.message}`));
+    page.on("pageerror", (err) =>
+      console.error(`BROWSER ERROR: ${err.message}`),
+    );
 
     // Mock WebSockets by default to avoid connection refused/watchdog issues
     await this.setupWebSocketMock(page);
 
     // Mock Drivers API
-    await page.route('**/api/drivers', async (route) => {
+    await page.route("**/api/drivers", async (route) => {
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify([
-          { entity_id: 'd1', name: 'Alice', nickname: 'The Rocket' },
-          { entity_id: 'd2', name: 'Bob', nickname: 'Drift King' },
-          { entity_id: 'd3', name: 'Charlie', nickname: 'Speedy' },
-          { entity_id: 'd4', name: 'Dave', nickname: 'Noob' },
+          { entity_id: "d1", name: "Alice", nickname: "The Rocket" },
+          { entity_id: "d2", name: "Bob", nickname: "Drift King" },
+          { entity_id: "d3", name: "Charlie", nickname: "Speedy" },
+          { entity_id: "d4", name: "Dave", nickname: "Noob" },
         ]),
       });
     });
 
-    await page.route('**/api/races', async (route) => {
+    await page.route("**/api/races", async (route) => {
       const standardRace = (id: string, name: string) => ({
         entity_id: id,
         name: name,
-        track_entity_id: 't1',
+        track_entity_id: "t1",
         track: {
-          entity_id: 't1',
-          name: 'Classic Circuit',
+          entity_id: "t1",
+          name: "Classic Circuit",
           lanes: [
-            { entity_id: 'l1', length: 12.5, backgroundColor: '#ff0000', foregroundColor: '#ffffff' },
-            { entity_id: 'l2', length: 12.5, backgroundColor: '#0000ff', foregroundColor: '#ffffff' }
-          ]
+            {
+              entity_id: "l1",
+              length: 12.5,
+              backgroundColor: "#ff0000",
+              foregroundColor: "#ffffff",
+            },
+            {
+              entity_id: "l2",
+              length: 12.5,
+              backgroundColor: "#0000ff",
+              foregroundColor: "#ffffff",
+            },
+          ],
         },
-        heat_rotation_type: 'RoundRobin',
+        heat_rotation_type: "RoundRobin",
         heat_scoring: {
-          finish_method: 'Lap',
+          finish_method: "Lap",
           finish_value: 10,
-          heat_ranking: 'LAP_COUNT',
-          heat_ranking_tiebreaker: 'FASTEST_LAP_TIME',
-          allow_finish: 'None'
+          heat_ranking: "LAP_COUNT",
+          heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
+          allow_finish: "None",
         },
         overall_scoring: {
           dropped_heats: 0,
-          ranking_method: 'LAP_COUNT',
-          tiebreaker: 'FASTEST_LAP_TIME'
-        }
+          ranking_method: "LAP_COUNT",
+          tiebreaker: "FASTEST_LAP_TIME",
+        },
       });
 
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify([
-          standardRace('r1', 'Grand Prix'),
-          standardRace('r2', 'Time Trial'),
-          standardRace('r3', 'Endurance'),
-          standardRace('r4', 'Sprint'),
-          standardRace('r5', 'Elimination'),
-          standardRace('r6', 'Team Race'),
-          standardRace('r7', 'Junior GP'),
-          standardRace('r8', 'Veteran GP'),
+          standardRace("r1", "Grand Prix"),
+          standardRace("r2", "Time Trial"),
+          standardRace("r3", "Endurance"),
+          standardRace("r4", "Sprint"),
+          standardRace("r5", "Elimination"),
+          standardRace("r6", "Team Race"),
+          standardRace("r7", "Junior GP"),
+          standardRace("r8", "Veteran GP"),
         ]),
       });
     });
@@ -103,86 +120,89 @@ export class TestSetupHelper {
     await this.setupAssetMocks(page);
 
     // Mock Server Version API
-    await page.route('**/api/version', async (route) => {
+    await page.route("**/api/version", async (route) => {
       await route.fulfill({
         status: 200,
-        contentType: 'text/plain',
-        body: 'TEST-SERVER-VERSION'
+        contentType: "text/plain",
+        body: "TEST-SERVER-VERSION",
       });
     });
- 
+
     // Mock Client Version Override
     await page.addInitScript(() => {
-      (window as any).CLIENT_VERSION_OVERRIDE = 'TEST-CLIENT-VERSION';
+      (window as any).CLIENT_VERSION_OVERRIDE = "TEST-CLIENT-VERSION";
     });
 
     // Mock Server IP API
-    await page.route('**/api/server-ip', async (route) => {
+    await page.route("**/api/server-ip", async (route) => {
       await route.fulfill({
         status: 200,
-        contentType: 'text/plain',
-        body: '192.168.1.100'
+        contentType: "text/plain",
+        body: "192.168.1.100",
       });
     });
 
     // Mock Database Stats API
-    await page.route('**/api/databases/current*', async (route) => {
+    await page.route("**/api/databases/current*", async (route) => {
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify({
-          name: 'Mock_Database.db',
-          totalSize: '450 KB',
+          name: "Mock_Database.db",
+          totalSize: "450 KB",
           imageCount: 5,
-          soundCount: 3
+          soundCount: 3,
         }),
       });
     });
 
     // Mock Settings using localStorage (since no component actually calls /api/settings)
     await this.setupSettings(page, {
-      racedaySetupWalkthroughSeen: options.walkthroughSeen ?? false,
+      racedaySetupWalkthroughSeen: options.walkthroughSeen ?? true,
       trackManagerHelpShown: options.trackManagerHelpShown ?? true,
       trackEditorHelpShown: options.trackEditorHelpShown ?? true,
       driverManagerHelpShown: options.driverManagerHelpShown ?? true,
       driverEditorHelpShown: options.driverEditorHelpShown ?? true,
       teamManagerHelpShown: options.teamManagerHelpShown ?? true,
       teamEditorHelpShown: options.teamEditorHelpShown ?? true,
+      assetManagerHelpShown: options.assetManagerHelpShown ?? true,
+      raceManagerHelpShown: options.raceManagerHelpShown ?? true,
+      raceEditorHelpShown: options.raceEditorHelpShown ?? true,
 
-      racedayColumns: ['driver.name', 'lapCount'],
+      racedayColumns: ["driver.name", "lapCount"],
 
       columnLayouts: {
-        'driver.name': { 'CenterCenter': 'driver.name' },
-        'lapCount': { 'CenterCenter': 'lapCount' }
+        "driver.name": { CenterCenter: "driver.name" },
+        lapCount: { CenterCenter: "lapCount" },
       },
       columnAnchors: {
-        'driver.name': 'Center',
-        'lapCount': 'Center'
+        "driver.name": "Center",
+        lapCount: "Center",
       },
       columnWidths: {
-        'driver.name': 200,
-        'lapCount': 100
+        "driver.name": 200,
+        lapCount: 100,
       },
-      columnVisibility: {}
+      columnVisibility: {},
     });
 
     // Mock Google Analytics to prevent external network requests that cause layout shifts
-    await page.route('**/gtag/js*', async (route) => {
+    await page.route("**/gtag/js*", async (route) => {
       await route.fulfill({
         status: 200,
-        contentType: 'application/javascript',
-        body: 'window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} window.gtag = gtag;'
+        contentType: "application/javascript",
+        body: "window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} window.gtag = gtag;",
       });
     });
 
     // Mock Analytics Config API
-    await page.route('**/api/analytics/config', async (route) => {
+    await page.route("**/api/analytics/config", async (route) => {
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify({
-          clientId: 'mock-client-id',
-          measurementId: 'G-MOCK-ID'
+          clientId: "mock-client-id",
+          measurementId: "G-MOCK-ID",
         }),
       });
     });
@@ -190,19 +210,29 @@ export class TestSetupHelper {
     // Handle skip intro
     if (options.skipIntro) {
       await page.addInitScript(() => {
-        window.sessionStorage.setItem('skipIntro', 'true');
+        window.sessionStorage.setItem("skipIntro", "true");
       });
     }
   }
 
   static async setupTeamMocks(page: Page) {
-    await page.route('**/api/teams', async (route) => {
+    await page.route("**/api/teams", async (route) => {
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify([
-          { entity_id: 't1', name: 'Team Alpha', avatarUrl: '', driverIds: ['d1', 'd2'] },
-          { entity_id: 't2', name: 'Team Beta', avatarUrl: '', driverIds: ['d3', 'd4'] },
+          {
+            entity_id: "t1",
+            name: "Team Alpha",
+            avatarUrl: "",
+            driverIds: ["d1", "d2"],
+          },
+          {
+            entity_id: "t2",
+            name: "Team Beta",
+            avatarUrl: "",
+            driverIds: ["d3", "d4"],
+          },
         ]),
       });
     });
@@ -210,14 +240,14 @@ export class TestSetupHelper {
 
   static async setupLocalizationMocks(page: Page) {
     // Read en.json from disk to serve as mock
-    const fs = require('fs');
-    const path = require('path');
+    const fs = require("fs");
+    const path = require("path");
 
     // Try to locate the assets folder relative to CWD
-    const i18nPath = path.resolve(process.cwd(), 'client/src/assets/i18n');
-    const altPath = path.resolve(process.cwd(), 'src/assets/i18n');
-    const rootPath = path.resolve(process.cwd(), 'assets/i18n');
-    const relativePath = path.resolve(__dirname, '../../assets/i18n');
+    const i18nPath = path.resolve(process.cwd(), "client/src/assets/i18n");
+    const altPath = path.resolve(process.cwd(), "src/assets/i18n");
+    const rootPath = path.resolve(process.cwd(), "assets/i18n");
+    const relativePath = path.resolve(__dirname, "../../assets/i18n");
 
     let finalPath = i18nPath;
     if (!fs.existsSync(finalPath)) {
@@ -234,15 +264,15 @@ export class TestSetupHelper {
     await page.route(/\/assets\/i18n\/.*\.json/, async (route) => {
       const url = route.request().url();
       const match = url.match(/\/assets\/i18n\/([a-z]{2,3})\.json/);
-      const lang = match ? match[1] : 'en';
+      const lang = match ? match[1] : "en";
       try {
         const filePath = path.join(finalPath, `${lang}.json`);
         if (fs.existsSync(filePath)) {
-          const content = fs.readFileSync(filePath, 'utf8');
+          const content = fs.readFileSync(filePath, "utf8");
           await route.fulfill({
             status: 200,
-            contentType: 'application/json',
-            body: content
+            contentType: "application/json",
+            body: content,
           });
           return;
         }
@@ -254,7 +284,7 @@ export class TestSetupHelper {
     });
 
     // Mock background images to avoid dev-server flakiness
-    await page.route('**/assets/**/*.png', async (route) => {
+    await page.route("**/assets/**/*.png", async (route) => {
       const url = route.request().url();
       console.log(`DEBUG: Asset request hit: ${url}`);
 
@@ -269,12 +299,12 @@ export class TestSetupHelper {
 
       // Try multiple potential base paths
       const potentialPaths = [
-        path.resolve(process.cwd(), 'src/assets'),        // Case where CWD is /client
-        path.resolve(process.cwd(), 'assets'),             // Case where CWD is /client/src
-        path.resolve(process.cwd(), 'client/src/assets'), // Case where CWD is project root
+        path.resolve(process.cwd(), "src/assets"), // Case where CWD is /client
+        path.resolve(process.cwd(), "assets"), // Case where CWD is /client/src
+        path.resolve(process.cwd(), "client/src/assets"), // Case where CWD is project root
       ];
 
-      let filePath = '';
+      let filePath = "";
       for (const basePath of potentialPaths) {
         const testPath = path.join(basePath, relativePath);
         if (fs.existsSync(testPath)) {
@@ -287,8 +317,8 @@ export class TestSetupHelper {
         const content = fs.readFileSync(filePath);
         await route.fulfill({
           status: 200,
-          contentType: 'image/png',
-          body: content
+          contentType: "image/png",
+          body: content,
         });
         return;
       }
@@ -296,131 +326,199 @@ export class TestSetupHelper {
     });
   }
 
-  static async waitForLocalization(page: Page, lang: string = 'en', action?: Promise<any>) {
+  static async waitForLocalization(
+    page: Page,
+    lang: string = "en",
+    action?: Promise<any>,
+  ) {
     // 1. Perform the action (e.g. goto)
     if (action) await action;
 
     // 2. Wait for the Service level readiness flag
     // This is set to true in TranslationService.ts when the JSON is loaded and applied
     // We wait for it to be exactly true (it starts as undefined/false)
-    await page.waitForFunction(() => (window as any).isTranslationsLoaded === true, { timeout: 15000 });
+    await page.waitForFunction(
+      () => (window as any).isTranslationsLoaded === true,
+      { timeout: 15000 },
+    );
 
     // 3. Ensure fonts and layout have settled after text swap
     await page.evaluate(() => document.fonts.ready);
 
     // 4. Wait for a paint cycle to ensure DOM updates are flushed
-    await page.evaluate(() => new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res))));
+    await page.evaluate(
+      () =>
+        new Promise((res) =>
+          requestAnimationFrame(() => requestAnimationFrame(res)),
+        ),
+    );
 
     // 5. Final safety wait for complex components (like SVGs) to stabilize
     await page.waitForTimeout(750);
   }
 
-
   static async setupTrackMocks(page: Page) {
-    await page.route('**/api/tracks', async (route) => {
+    await page.route("**/api/tracks", async (route) => {
       const method = route.request().method();
       const tracks = [
         {
-          entity_id: 't1',
-          name: 'Classic Circuit',
+          entity_id: "t1",
+          name: "Classic Circuit",
           lanes: [
-            { entity_id: 'l1', length: 12.5, backgroundColor: '#ff0000', foregroundColor: '#ffffff' },
-            { entity_id: 'l2', length: 12.5, backgroundColor: '#0000ff', foregroundColor: '#ffffff' }
+            {
+              entity_id: "l1",
+              length: 12.5,
+              backgroundColor: "#ff0000",
+              foregroundColor: "#ffffff",
+            },
+            {
+              entity_id: "l2",
+              length: 12.5,
+              backgroundColor: "#0000ff",
+              foregroundColor: "#ffffff",
+            },
           ],
-          arduino_configs: [{
-            name: 'Arduino 1',
-            commPort: 'COM3',
-            baudRate: 115200,
-            debounceUs: 5000,
-            hardwareType: 1, // Mega
-            digitalIds: new Array(60).fill(0),
-            analogIds: new Array(16).fill(0),
-            normallyClosedLaneSensors: false,
-            normallyClosedRelays: true,
-            globalInvertLights: 0,
-            useLapsForPits: 0,
-            useLapsForPitEnd: 0,
-            usePitsAsLaps: false,
-            useLapsForSegments: true,
-            ledStrings: null,
-            ledLaneColorOverrides: null,
-            lapPinPitBehavior: 3
-          }]
+          arduino_configs: [
+            {
+              name: "Arduino 1",
+              commPort: "COM3",
+              baudRate: 115200,
+              debounceUs: 5000,
+              hardwareType: 1, // Mega
+              digitalIds: new Array(60).fill(0),
+              analogIds: new Array(16).fill(0),
+              normallyClosedLaneSensors: false,
+              normallyClosedRelays: true,
+              globalInvertLights: 0,
+              useLapsForPits: 0,
+              useLapsForPitEnd: 0,
+              usePitsAsLaps: false,
+              useLapsForSegments: true,
+              ledStrings: null,
+              ledLaneColorOverrides: null,
+              lapPinPitBehavior: 3,
+            },
+          ],
         },
         {
-          entity_id: 't2',
-          name: 'Speedway',
+          entity_id: "t2",
+          name: "Speedway",
           lanes: [
-            { entity_id: 'l1', length: 15.0, backgroundColor: '#ffff00', foregroundColor: '#000000' },
-            { entity_id: 'l2', length: 15.0, backgroundColor: '#00ff00', foregroundColor: '#000000' },
-            { entity_id: 'l3', length: 15.0, backgroundColor: '#ff00ff', foregroundColor: '#ffffff' },
-            { entity_id: 'l4', length: 15.0, backgroundColor: '#00ffff', foregroundColor: '#000000' }
+            {
+              entity_id: "l1",
+              length: 15.0,
+              backgroundColor: "#ffff00",
+              foregroundColor: "#000000",
+            },
+            {
+              entity_id: "l2",
+              length: 15.0,
+              backgroundColor: "#00ff00",
+              foregroundColor: "#000000",
+            },
+            {
+              entity_id: "l3",
+              length: 15.0,
+              backgroundColor: "#ff00ff",
+              foregroundColor: "#ffffff",
+            },
+            {
+              entity_id: "l4",
+              length: 15.0,
+              backgroundColor: "#00ffff",
+              foregroundColor: "#000000",
+            },
           ],
-          arduino_configs: [{
-            name: 'Arduino 2',
-            commPort: 'COM4',
-            baudRate: 115200,
-            debounceUs: 5000,
-            hardwareType: 0, // Uno
-            digitalIds: new Array(60).fill(0),
-            analogIds: new Array(16).fill(0),
-            normallyClosedLaneSensors: false,
-            normallyClosedRelays: true,
-            globalInvertLights: 0,
-            useLapsForPits: 0,
-            useLapsForPitEnd: 0,
-            usePitsAsLaps: false,
-            useLapsForSegments: true,
-            ledStrings: null,
-            ledLaneColorOverrides: null,
-            lapPinPitBehavior: 3
-          }]
-        }
+          arduino_configs: [
+            {
+              name: "Arduino 2",
+              commPort: "COM4",
+              baudRate: 115200,
+              debounceUs: 5000,
+              hardwareType: 0, // Uno
+              digitalIds: new Array(60).fill(0),
+              analogIds: new Array(16).fill(0),
+              normallyClosedLaneSensors: false,
+              normallyClosedRelays: true,
+              globalInvertLights: 0,
+              useLapsForPits: 0,
+              useLapsForPitEnd: 0,
+              usePitsAsLaps: false,
+              useLapsForSegments: true,
+              ledStrings: null,
+              ledLaneColorOverrides: null,
+              lapPinPitBehavior: 3,
+            },
+          ],
+        },
       ];
 
-      if (method === 'POST') {
+      if (method === "POST") {
         const postData = route.request().postDataJSON();
-        const newTrack = { ...postData, entity_id: 't-new-id' };
+        const newTrack = { ...postData, entity_id: "t-new-id" };
         await route.fulfill({
           status: 200,
-          contentType: 'application/json',
+          contentType: "application/json",
           body: JSON.stringify(newTrack),
         });
       } else {
         // Include t-new-id if it's "created" (flexible for tests)
-        const extendedTracks = [...tracks, {
-          entity_id: 't-new-id',
-          name: 'New Track',
-          lanes: [
-            { entity_id: 'l1', length: 10, backgroundColor: '#ef4444', foregroundColor: 'black' },
-            { entity_id: 'l2', length: 10, backgroundColor: '#ffffff', foregroundColor: 'black' },
-            { entity_id: 'l3', length: 10, backgroundColor: '#3b82f6', foregroundColor: 'black' },
-            { entity_id: 'l4', length: 10, backgroundColor: '#fbbf24', foregroundColor: 'black' }
-          ],
-          arduino_configs: []
-        }];
+        const extendedTracks = [
+          ...tracks,
+          {
+            entity_id: "t-new-id",
+            name: "New Track",
+            lanes: [
+              {
+                entity_id: "l1",
+                length: 10,
+                backgroundColor: "#ef4444",
+                foregroundColor: "black",
+              },
+              {
+                entity_id: "l2",
+                length: 10,
+                backgroundColor: "#ffffff",
+                foregroundColor: "black",
+              },
+              {
+                entity_id: "l3",
+                length: 10,
+                backgroundColor: "#3b82f6",
+                foregroundColor: "black",
+              },
+              {
+                entity_id: "l4",
+                length: 10,
+                backgroundColor: "#fbbf24",
+                foregroundColor: "black",
+              },
+            ],
+            arduino_configs: [],
+          },
+        ];
 
         await route.fulfill({
           status: 200,
-          contentType: 'application/json',
+          contentType: "application/json",
           body: JSON.stringify(extendedTracks),
         });
       }
     });
 
-    await page.route('**/api/tracks/*', async (route) => {
+    await page.route("**/api/tracks/*", async (route) => {
       const method = route.request().method();
-      if (method === 'PUT') {
+      if (method === "PUT") {
         const postData = route.request().postDataJSON();
         await route.fulfill({
           status: 200,
-          contentType: 'application/json',
+          contentType: "application/json",
           body: JSON.stringify(postData),
         });
-      } else if (method === 'DELETE') {
+      } else if (method === "DELETE") {
         await route.fulfill({
           status: 200,
-          contentType: 'application/json',
+          contentType: "application/json",
           body: JSON.stringify({ success: true }),
         });
       } else {
@@ -428,107 +526,138 @@ export class TestSetupHelper {
       }
     });
 
-    await page.route('**/api/serial-ports', async (route) => {
+    await page.route("**/api/serial-ports", async (route) => {
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(['COM1', 'COM2', 'COM3', 'COM4']),
+        contentType: "application/json",
+        body: JSON.stringify(["COM1", "COM2", "COM3", "COM4"]),
       });
     });
 
-    await page.route('**/api/tracks/factory-settings', async (route) => {
+    await page.route("**/api/tracks/factory-settings", async (route) => {
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify({
           lanes: [
-            { background_color: '#ef4444', foreground_color: 'black', length: 10 },
-            { background_color: '#ffffff', foreground_color: 'black', length: 10 },
-            { background_color: '#3b82f6', foreground_color: 'black', length: 10 },
-            { background_color: '#fbbf24', foreground_color: 'black', length: 10 }
+            {
+              background_color: "#ef4444",
+              foreground_color: "black",
+              length: 10,
+            },
+            {
+              background_color: "#ffffff",
+              foreground_color: "black",
+              length: 10,
+            },
+            {
+              background_color: "#3b82f6",
+              foreground_color: "black",
+              length: 10,
+            },
+            {
+              background_color: "#fbbf24",
+              foreground_color: "black",
+              length: 10,
+            },
           ],
-          arduino_configs: [{
-            name: 'Arduino 1',
-            commPort: '',
-            baudRate: 115200,
-            debounceUs: 5000,
-            hardwareType: 0,
-            digitalIds: new Array(60).fill(0),
-            analogIds: new Array(16).fill(0),
-            normallyClosedLaneSensors: false,
-            normallyClosedRelays: true,
-            globalInvertLights: 0,
-            useLapsForPits: 0,
-            useLapsForPitEnd: 0,
-            usePitsAsLaps: false,
-            useLapsForSegments: true,
-            ledStrings: null,
-            ledLaneColorOverrides: null,
-            lapPinPitBehavior: 3,
-            voltageConfigs: {}
-          }]
+          arduino_configs: [
+            {
+              name: "Arduino 1",
+              commPort: "",
+              baudRate: 115200,
+              debounceUs: 5000,
+              hardwareType: 0,
+              digitalIds: new Array(60).fill(0),
+              analogIds: new Array(16).fill(0),
+              normallyClosedLaneSensors: false,
+              normallyClosedRelays: true,
+              globalInvertLights: 0,
+              useLapsForPits: 0,
+              useLapsForPitEnd: 0,
+              usePitsAsLaps: false,
+              useLapsForSegments: true,
+              ledStrings: null,
+              ledLaneColorOverrides: null,
+              lapPinPitBehavior: 3,
+              voltageConfigs: {},
+            },
+          ],
         }),
       });
     });
 
     // Mock interface initialization and updates to avoid browser errors
-    await page.route('**/api/initialize-interface', async (route) => {
-      const response = com.antigravity.InitializeInterfaceResponse.create({ success: true });
-      const buffer = com.antigravity.InitializeInterfaceResponse.encode(response).finish();
+    await page.route("**/api/initialize-interface", async (route) => {
+      const response = com.antigravity.InitializeInterfaceResponse.create({
+        success: true,
+      });
+      const buffer =
+        com.antigravity.InitializeInterfaceResponse.encode(response).finish();
       await route.fulfill({
         status: 200,
-        contentType: 'application/octet-stream',
+        contentType: "application/octet-stream",
         body: Buffer.from(buffer),
       });
     });
 
-    await page.route('**/api/update-interface-config', async (route) => {
-      const response = com.antigravity.UpdateInterfaceConfigResponse.create({ success: true });
-      const buffer = com.antigravity.UpdateInterfaceConfigResponse.encode(response).finish();
+    await page.route("**/api/update-interface-config", async (route) => {
+      const response = com.antigravity.UpdateInterfaceConfigResponse.create({
+        success: true,
+      });
+      const buffer =
+        com.antigravity.UpdateInterfaceConfigResponse.encode(response).finish();
       await route.fulfill({
         status: 200,
-        contentType: 'application/octet-stream',
+        contentType: "application/octet-stream",
         body: Buffer.from(buffer),
       });
     });
   }
 
   static async setupDigitalTrackMocks(page: Page) {
-    await page.route('**/api/tracks', async (route) => {
+    await page.route("**/api/tracks", async (route) => {
       const tracks = [
         {
-          entity_id: 't_digital',
-          name: 'Digital Haven',
+          entity_id: "t_digital",
+          name: "Digital Haven",
           has_digital_fuel: true, // Use the new property we added to the model/converter
           lanes: [
-            { entity_id: 'l1', length: 15.0, backgroundColor: '#ffff00', foregroundColor: '#000000' }
+            {
+              entity_id: "l1",
+              length: 15.0,
+              backgroundColor: "#ffff00",
+              foregroundColor: "#000000",
+            },
           ],
-          arduino_configs: [{
-            name: 'Arduino Digital',
-            commPort: 'COM5',
-            baudRate: 115200,
-            debounceUs: 5000,
-            hardwareType: 1,
-            digitalIds: [1001],
-            analogIds: [-1],
-            voltageConfigs: { 1: 12.0 }, // This also indicates digital fuel
-            normallyClosedLaneSensors: false,
-            normallyClosedRelays: true,
-            globalInvertLights: 0,
-            useLapsForPits: 0,
-            useLapsForPitEnd: 0,
-            usePitsAsLaps: false,
-            useLapsForSegments: true,
-            ledStrings: null,
-            ledLaneColorOverrides: null,
-            lapPinPitBehavior: 3
-          }]
-        }
+          arduino_configs: [
+            {
+              name: "Arduino Digital",
+              commPort: "COM5",
+              baudRate: 115200,
+              debounceUs: 5000,
+              hardwareType: 1,
+              digitalIds: [1001],
+              analogIds: [-1],
+              voltageConfigs: { 1: 12.0 }, // This also indicates digital fuel
+              normallyClosedLaneSensors: false,
+              normallyClosedRelays: true,
+              globalInvertLights: 0,
+              useLapsForPits: 0,
+              useLapsForPitEnd: 0,
+              usePitsAsLaps: false,
+              useLapsForSegments: true,
+              ledStrings: null,
+              ledLaneColorOverrides: null,
+              lapPinPitBehavior: 3,
+            },
+          ],
+        },
       ];
 
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify(tracks),
       });
     });
@@ -536,79 +665,106 @@ export class TestSetupHelper {
 
   static async setupAssetMocks(page: Page) {
     // Return a 1x1 transparent PNG for any requested images
-    await page.route('**/assets/images/**/*.png', async (route) => {
+    await page.route("**/assets/images/**/*.png", async (route) => {
       // 1x1 base64 transparent PNG
-      const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+      const transparentPng = Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+        "base64",
+      );
       await route.fulfill({
         status: 200,
-        contentType: 'image/png',
-        body: transparentPng
+        contentType: "image/png",
+        body: transparentPng,
       });
     });
 
-    await page.route('**/api/assets/list', async (route) => {
+    await page.route("**/api/assets/list", async (route) => {
       const assets = [
         {
-          model: { entityId: '1' },
-          name: 'Test Image 1',
-          type: 'image',
-          size: '150 KB',
-          url: '/api/assets/download?filename=img1.png',
-          filename: 'img1.png'
+          model: { entityId: "1" },
+          name: "Test Image 1",
+          type: "image",
+          size: "150 KB",
+          url: "/api/assets/download?filename=img1.png",
+          filename: "img1.png",
         },
         {
-          model: { entityId: '2' },
-          name: 'Test Sound 1',
-          type: 'sound',
-          size: '50 KB',
-          url: '/api/assets/download?filename=snd1.mp3',
-          filename: 'snd1.mp3'
+          model: { entityId: "2" },
+          name: "Test Sound 1",
+          type: "sound",
+          size: "50 KB",
+          url: "/api/assets/download?filename=snd1.mp3",
+          filename: "snd1.mp3",
         },
         {
-          model: { entityId: 'set123' },
-          name: 'Custom Dash',
-          type: 'image_set',
-          size: '1.2 MB',
-          url: '/api/assets/download?filename=dash.json',
-          filename: 'dash.json',
+          model: { entityId: "set123" },
+          name: "Custom Dash",
+          type: "image_set",
+          size: "1.2 MB",
+          url: "/api/assets/download?filename=dash.json",
+          filename: "dash.json",
           images: [
-            { percentage: 30, url: '/api/assets/download?filename=img1.png', name: 'img1.png' },
-            { percentage: 70, url: '/api/assets/download?filename=img2.png', name: 'img2.png' }
-          ]
+            {
+              percentage: 30,
+              url: "/api/assets/download?filename=img1.png",
+              name: "img1.png",
+            },
+            {
+              percentage: 70,
+              url: "/api/assets/download?filename=img2.png",
+              name: "img2.png",
+            },
+          ],
         },
         {
-          model: { entityId: 'fuel-gauge-builtin' },
-          name: 'Fuel Gauge',
-          type: 'image_set',
-          size: '1.2 MB',
-          url: '/api/assets/download?filename=fuel-gauge.json',
-          filename: 'fuel-gauge.json',
+          model: { entityId: "fuel-gauge-builtin" },
+          name: "Fuel Gauge",
+          type: "image_set",
+          size: "1.2 MB",
+          url: "/api/assets/download?filename=fuel-gauge.json",
+          filename: "fuel-gauge.json",
           images: [
-            { percentage: 0, url: '/api/assets/download?filename=fuel-0.png', name: 'fuel-0.png' },
-            { percentage: 50, url: '/api/assets/download?filename=fuel-50.png', name: 'fuel-50.png' },
-            { percentage: 100, url: '/api/assets/download?filename=fuel-100.png', name: 'fuel-100.png' }
-          ]
-        }
+            {
+              percentage: 0,
+              url: "/api/assets/download?filename=fuel-0.png",
+              name: "fuel-0.png",
+            },
+            {
+              percentage: 50,
+              url: "/api/assets/download?filename=fuel-50.png",
+              name: "fuel-50.png",
+            },
+            {
+              percentage: 100,
+              url: "/api/assets/download?filename=fuel-100.png",
+              name: "fuel-100.png",
+            },
+          ],
+        },
       ];
 
       const response = com.antigravity.ListAssetsResponse.create({ assets });
-      const buffer = com.antigravity.ListAssetsResponse.encode(response).finish();
+      const buffer =
+        com.antigravity.ListAssetsResponse.encode(response).finish();
 
       await route.fulfill({
         status: 200,
-        contentType: 'application/octet-stream',
+        contentType: "application/octet-stream",
         body: Buffer.from(buffer),
       });
     });
 
     // Mock Asset Download API
-    await page.route('**/api/assets/download*', async (route) => {
+    await page.route("**/api/assets/download*", async (route) => {
       // Return a 1x1 transparent pixel for all downloads in tests
-      const transparentPixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
+      const transparentPixel = Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
+        "base64",
+      );
       await route.fulfill({
         status: 200,
-        contentType: 'image/png',
-        body: transparentPixel
+        contentType: "image/png",
+        body: transparentPixel,
       });
     });
   }
@@ -619,7 +775,7 @@ export class TestSetupHelper {
   static async setupWebSocketMock(page: Page) {
     await page.addInitScript(() => {
       // General testing disables the watchdog to prevent unstable timeouts. Tests that need it will override it.
-      if (typeof (window as any).WATCHDOG_TIMEOUT === 'undefined') {
+      if (typeof (window as any).WATCHDOG_TIMEOUT === "undefined") {
         (window as any).WATCHDOG_TIMEOUT = 99999999;
       }
 
@@ -629,9 +785,9 @@ export class TestSetupHelper {
       window.MockWebSocket = class extends EventTarget {
         url: string;
         readyState: number;
-        protocol: string = '';
-        extensions: string = '';
-        binaryType: BinaryType = 'blob';
+        protocol: string = "";
+        extensions: string = "";
+        binaryType: BinaryType = "blob";
         bufferedAmount = 0;
         onopen: any = null;
         onmessage: any = null;
@@ -650,24 +806,31 @@ export class TestSetupHelper {
             this.readyState = 1; // OPEN
             // @ts-ignore
             window.mockSocket = this;
-            const openEvent = new Event('open');
+            const openEvent = new Event("open");
             this.dispatchEvent(openEvent);
             if (this.onopen) this.onopen(openEvent);
 
-            if (url.includes('interface-data')) {
-              console.log(`MockWebSocket: Detected interface-data socket. heartbeatDisabled=${!!(window as any).disableMockHeartbeat}`);
+            if (url.includes("interface-data")) {
+              console.log(
+                `MockWebSocket: Detected interface-data socket. heartbeatDisabled=${!!(window as any).disableMockHeartbeat}`,
+              );
 
               // status 0 = CONNECTED. InterfaceEvent (Tag 3, Len 2) -> InterfaceStatusEvent (Tag 1, Val 0)
               // Bytes: 1A 02 08 00
-              const connectedBuffer = new Uint8Array([0x1A, 0x02, 0x08, 0x00]).buffer;
+              const connectedBuffer = new Uint8Array([0x1a, 0x02, 0x08, 0x00])
+                .buffer;
               const sendHeartbeat = () => {
                 try {
-                  const event = new MessageEvent('message', { data: connectedBuffer });
+                  const event = new MessageEvent("message", {
+                    data: connectedBuffer,
+                  });
                   this.dispatchEvent(event);
                   if (this.onmessage) this.onmessage(event);
-                  console.debug('MockWebSocket: Sent CONNECTED heartbeat (RAW)');
+                  console.debug(
+                    "MockWebSocket: Sent CONNECTED heartbeat (RAW)",
+                  );
                 } catch (e) {
-                  console.error('Error sending mock interface heartbeat', e);
+                  console.error("Error sending mock interface heartbeat", e);
                 }
               };
 
@@ -675,10 +838,10 @@ export class TestSetupHelper {
               setTimeout(() => {
                 // @ts-ignore
                 if (!window.disableMockHeartbeat) {
-                  console.log('MockWebSocket: Sending initial pulse');
+                  console.log("MockWebSocket: Sending initial pulse");
                   sendHeartbeat();
                 } else {
-                  console.log('MockWebSocket: Initial pulse suppressed');
+                  console.log("MockWebSocket: Initial pulse suppressed");
                 }
               }, 500);
 
@@ -686,28 +849,44 @@ export class TestSetupHelper {
               // @ts-ignore
               if (!window.disableMockHeartbeat) {
                 // Heartbeat disabled: we rely on WATCHDOG_TIMEOUT scaling instead to avoid breaking Playwright's auto-waiting stability checks with an active running setInterval
-                console.log('MockWebSocket: Periodic heartbeat disabled by test framework to prevent auto-waiting flakes.');
+                console.log(
+                  "MockWebSocket: Periodic heartbeat disabled by test framework to prevent auto-waiting flakes.",
+                );
               }
             }
 
             // Initial race data if available
             // @ts-ignore
-            if (url.includes('race-data') && window.mockRaceDataBuffer) {
+            if (url.includes("race-data") && window.mockRaceDataBuffer) {
               // @ts-ignore
-              const event = new MessageEvent('message', { data: window.mockRaceDataBuffer });
+              const event = new MessageEvent("message", {
+                data: window.mockRaceDataBuffer,
+              });
               this.dispatchEvent(event);
               if (this.onmessage) this.onmessage(event);
             }
           }, 100);
         }
 
-        send(data: any) { console.debug(`MockWebSocket: send called with ${data.length} bytes`); }
-        close() { if (this.heartbeatInterval) clearInterval(this.heartbeatInterval); }
+        send(data: any) {
+          console.debug(`MockWebSocket: send called with ${data.length} bytes`);
+        }
+        close() {
+          if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+        }
 
-        static get CONNECTING() { return 0; }
-        static get OPEN() { return 1; }
-        static get CLOSING() { return 2; }
-        static get CLOSED() { return 3; }
+        static get CONNECTING() {
+          return 0;
+        }
+        static get OPEN() {
+          return 1;
+        }
+        static get CLOSING() {
+          return 2;
+        }
+        static get CLOSED() {
+          return 3;
+        }
       };
 
       // @ts-ignore
@@ -717,60 +896,70 @@ export class TestSetupHelper {
 
   static async setupRaceMocks(page: Page) {
     const raceData = com.antigravity.RaceData.create({
-      race: { // IRace
-        race: { // IRaceModel
-          model: { entityId: 'r1' },
-          name: 'Mock GP',
-          track: { // ITrackModel
-            model: { entityId: 't1' },
-            name: 'Test Track',
+      race: {
+        // IRace
+        race: {
+          // IRaceModel
+          model: { entityId: "r1" },
+          name: "Mock GP",
+          track: {
+            // ITrackModel
+            model: { entityId: "t1" },
+            name: "Test Track",
             lanes: [
-              { objectId: 'l1', length: 10, backgroundColor: '#550000', foregroundColor: '#ffffff' },
-              { objectId: 'l2', length: 10, backgroundColor: '#005500', foregroundColor: '#ffffff' }
-            ]
+              {
+                objectId: "l1",
+                length: 10,
+                backgroundColor: "#550000",
+                foregroundColor: "#ffffff",
+              },
+              {
+                objectId: "l2",
+                length: 10,
+                backgroundColor: "#005500",
+                foregroundColor: "#ffffff",
+              },
+            ],
           },
           fuelOptions: {
             enabled: true,
             capacity: 100,
             usageType: 0, // Per lap
             usageRate: 1.0,
-            startLevel: 100
-          }
+            startLevel: 100,
+          },
         },
         currentHeat: {
           heatNumber: 1,
           heatDrivers: [
             {
-              objectId: 'hd1',
+              objectId: "hd1",
               driver: {
-                objectId: 'rp1',
+                objectId: "rp1",
                 fuelLevel: 75.5,
                 driver: {
-                  model: { entityId: 'd1' },
-                  name: 'Driver 1',
-                  avatarUrl: '/api/assets/download?filename=img1.png'
-                }
-              }
+                  model: { entityId: "d1" },
+                  name: "Driver 1",
+                  avatarUrl: "/api/assets/download?filename=img1.png",
+                },
+              },
             },
             {
-              objectId: 'hd2',
+              objectId: "hd2",
               driver: {
-                objectId: 'rp2',
+                objectId: "rp2",
                 fuelLevel: 42.0,
                 driver: {
-                  model: { entityId: 'd2' },
-                  name: 'Driver 2',
-                  avatarUrl: '/api/assets/download?filename=img1.png'
-                }
-              }
-            }
-          ]
+                  model: { entityId: "d2" },
+                  name: "Driver 2",
+                  avatarUrl: "/api/assets/download?filename=img1.png",
+                },
+              },
+            },
+          ],
         },
-        heats: [
-          { heatNumber: 1 },
-          { heatNumber: 2 }
-        ]
-      }
+        heats: [{ heatNumber: 1 }, { heatNumber: 2 }],
+      },
     });
 
     const buffer = com.antigravity.RaceData.encode(raceData).finish();
@@ -783,10 +972,14 @@ export class TestSetupHelper {
       // @ts-ignore
       if (window.allMockSockets) {
         // @ts-ignore
-        const raceSockets = window.allMockSockets.filter((s: any) => s.url.includes('race-data'));
+        const raceSockets = window.allMockSockets.filter((s: any) =>
+          s.url.includes("race-data"),
+        );
         raceSockets.forEach((s: any) => {
           // @ts-ignore
-          const event = new MessageEvent('message', { data: window.mockRaceDataBuffer });
+          const event = new MessageEvent("message", {
+            data: window.mockRaceDataBuffer,
+          });
           // @ts-ignore
           s.dispatchEvent(event);
           // @ts-ignore
@@ -805,9 +998,11 @@ export class TestSetupHelper {
       // @ts-ignore
       if (window.allMockSockets) {
         // @ts-ignore
-        const raceSockets = window.allMockSockets.filter((s: any) => s.url.includes('race-data'));
+        const raceSockets = window.allMockSockets.filter((s: any) =>
+          s.url.includes("race-data"),
+        );
         raceSockets.forEach((s: any) => {
-          const event = new MessageEvent('message', { data: buffer });
+          const event = new MessageEvent("message", { data: buffer });
           s.dispatchEvent(event);
           if (s.onmessage) s.onmessage(event);
         });
@@ -815,50 +1010,67 @@ export class TestSetupHelper {
     }, dataArray);
   }
 
-
-  static async setupLocalStorage(page: Page, settings: { recentRaceIds?: string[], selectedDriverIds?: string[], racedaySetupWalkthroughSeen?: boolean, shareAnalytics?: boolean, language?: string } = {}) {
+  static async setupLocalStorage(
+    page: Page,
+    settings: {
+      recentRaceIds?: string[];
+      selectedDriverIds?: string[];
+      racedaySetupWalkthroughSeen?: boolean;
+      shareAnalytics?: boolean;
+      language?: string;
+    } = {},
+  ) {
     await page.addInitScript((s) => {
       const defaultSettings = {
-        recentRaceIds: ['r1', 'r2'],
-        selectedDriverIds: ['d1', 'd2'],
+        recentRaceIds: ["r1", "r2"],
+        selectedDriverIds: ["d1", "d2"],
         racedaySetupWalkthroughSeen: false,
-        language: ''
+        language: "",
       };
       // @ts-ignore
-      window.localStorage.setItem('racecoordinator_settings', JSON.stringify({ ...defaultSettings, ...s }));
+      window.localStorage.setItem(
+        "racecoordinator_settings",
+        JSON.stringify({ ...defaultSettings, ...s }),
+      );
     }, settings);
   }
 
-  static async setupSessionStorage(page: Page, settings: Record<string, string> = {}) {
+  static async setupSessionStorage(
+    page: Page,
+    settings: Record<string, string> = {},
+  ) {
     await page.addInitScript((s) => {
       for (const [key, value] of Object.entries(s)) {
         window.sessionStorage.setItem(key, value);
       }
     }, settings);
   }
-  static async setupFileSystemMock(page: Page, customFiles: Record<string, string>) {
+  static async setupFileSystemMock(
+    page: Page,
+    customFiles: Record<string, string>,
+  ) {
     await page.addInitScript((files) => {
       // Helper to create a file handle
       const createMockFileHandle = (name: string, content: string) => ({
-        kind: 'file',
+        kind: "file",
         name: name,
         getFile: async () => ({
-          text: async () => content
-        })
+          text: async () => content,
+        }),
       });
 
       // Mock Directory Handle
       const mockDirectoryHandle = {
-        kind: 'directory',
-        name: 'mock-custom-dir',
-        queryPermission: async () => 'granted',
-        requestPermission: async () => 'granted',
+        kind: "directory",
+        name: "mock-custom-dir",
+        queryPermission: async () => "granted",
+        requestPermission: async () => "granted",
         getFileHandle: async (name: string) => {
           if (files[name]) {
             return createMockFileHandle(name, files[name]);
           }
-          throw new Error('File not found: ' + name);
-        }
+          throw new Error("File not found: " + name);
+        },
       };
 
       // Mock IndexedDB Structure
@@ -866,7 +1078,7 @@ export class TestSetupHelper {
         get: (key: string) => {
           const request: any = { result: null, onsuccess: null, onerror: null };
           setTimeout(() => {
-            if (key === 'raceday-setup-dir') {
+            if (key === "raceday-setup-dir") {
               request.result = mockDirectoryHandle;
             }
             if (request.onsuccess) request.onsuccess({ target: request });
@@ -874,7 +1086,7 @@ export class TestSetupHelper {
           return request;
         },
         put: () => ({ onsuccess: null, onerror: null }), // No-op for put
-        delete: () => ({ onsuccess: null, onerror: null }) // No-op for delete
+        delete: () => ({ onsuccess: null, onerror: null }), // No-op for delete
       };
 
       const mockTransaction = {
@@ -884,19 +1096,19 @@ export class TestSetupHelper {
       const mockDB = {
         objectStoreNames: { contains: () => true },
         createObjectStore: () => mockStore,
-        transaction: (stores: any, mode: any) => mockTransaction
+        transaction: (stores: any, mode: any) => mockTransaction,
       };
 
       const mockOpenRequest: any = {
         result: mockDB,
         onsuccess: null,
         onerror: null,
-        onupgradeneeded: null
+        onupgradeneeded: null,
       };
 
       // Override window.indexedDB
       try {
-        Object.defineProperty(window, 'indexedDB', {
+        Object.defineProperty(window, "indexedDB", {
           value: {
             open: (name: string, version: number) => {
               setTimeout(() => {
@@ -905,9 +1117,9 @@ export class TestSetupHelper {
                 }
               }, 10);
               return mockOpenRequest;
-            }
+            },
           },
-          writable: true
+          writable: true,
         });
       } catch (e) {
         // Fallback
@@ -919,7 +1131,7 @@ export class TestSetupHelper {
               }
             }, 10);
             return mockOpenRequest;
-          }
+          },
         };
       }
     }, customFiles);
@@ -931,7 +1143,7 @@ export class TestSetupHelper {
    */
   static async setupSettings(page: Page, settings: any) {
     await page.addInitScript((s) => {
-      localStorage.setItem('racecoordinator_settings', JSON.stringify(s));
+      localStorage.setItem("racecoordinator_settings", JSON.stringify(s));
     }, settings);
   }
 
@@ -951,21 +1163,24 @@ export class TestSetupHelper {
     // Persist across navigation
     await page.addInitScript((styleContent) => {
       const injectStyle = () => {
-        if (document.getElementById('playwright-disable-animations')) return;
-        const style = document.createElement('style');
-        style.id = 'playwright-disable-animations';
+        if (document.getElementById("playwright-disable-animations")) return;
+        const style = document.createElement("style");
+        style.id = "playwright-disable-animations";
         style.textContent = styleContent;
         document.head.appendChild(style);
       };
       if (document.head) {
         injectStyle();
       } else {
-        document.addEventListener('DOMContentLoaded', injectStyle);
+        document.addEventListener("DOMContentLoaded", injectStyle);
       }
 
       // Also inject periodically just in case Angular or something rewrites head
       const observer = new MutationObserver(() => {
-        if (document.head && !document.getElementById('playwright-disable-animations')) {
+        if (
+          document.head &&
+          !document.getElementById("playwright-disable-animations")
+        ) {
           injectStyle();
         }
       });
@@ -973,49 +1188,62 @@ export class TestSetupHelper {
     }, css);
 
     // Apply immediately to current execution context to be safe
-    await page.addStyleTag({ content: css }).catch(() => { });
+    await page.addStyleTag({ content: css }).catch(() => {});
   }
 
   static async setupManyTracksMock(page: Page) {
-    await page.route('**/api/tracks', async (route) => {
+    await page.route("**/api/tracks", async (route) => {
       const tracks = [];
       for (let i = 1; i <= 20; i++) {
         let name = `Track ${i}`;
         if (i === 5) {
-          name = 'Extremely Long Track Name That Should Definitely Be Truncated In Both The Sidebar And The Summary Title To Prevent Layout Issues';
+          name =
+            "Extremely Long Track Name That Should Definitely Be Truncated In Both The Sidebar And The Summary Title To Prevent Layout Issues";
         }
         tracks.push({
           entity_id: `t${i}`,
           name: name,
           lanes: [
-            { entity_id: `l${i}_1`, length: 10, backgroundColor: '#ff0000', foregroundColor: '#ffffff' },
-            { entity_id: `l${i}_2`, length: 10, backgroundColor: '#0000ff', foregroundColor: '#ffffff' }
+            {
+              entity_id: `l${i}_1`,
+              length: 10,
+              backgroundColor: "#ff0000",
+              foregroundColor: "#ffffff",
+            },
+            {
+              entity_id: `l${i}_2`,
+              length: 10,
+              backgroundColor: "#0000ff",
+              foregroundColor: "#ffffff",
+            },
           ],
-          arduino_configs: [{
-            name: `Arduino ${i}`,
-            commPort: `COM${i}`,
-            baudRate: 115200,
-            debounceUs: 5000,
-            hardwareType: 1,
-            digitalIds: [1001, 1002],
-            analogIds: [-1, -1],
-            normallyClosedLaneSensors: false,
-            normallyClosedRelays: true,
-            globalInvertLights: 0,
-            useLapsForPits: 0,
-            useLapsForPitEnd: 0,
-            usePitsAsLaps: false,
-            useLapsForSegments: true,
-            ledStrings: null,
-            ledLaneColorOverrides: null,
-            lapPinPitBehavior: 3
-          }]
+          arduino_configs: [
+            {
+              name: `Arduino ${i}`,
+              commPort: `COM${i}`,
+              baudRate: 115200,
+              debounceUs: 5000,
+              hardwareType: 1,
+              digitalIds: [1001, 1002],
+              analogIds: [-1, -1],
+              normallyClosedLaneSensors: false,
+              normallyClosedRelays: true,
+              globalInvertLights: 0,
+              useLapsForPits: 0,
+              useLapsForPitEnd: 0,
+              usePitsAsLaps: false,
+              useLapsForSegments: true,
+              ledStrings: null,
+              ledLaneColorOverrides: null,
+              lapPinPitBehavior: 3,
+            },
+          ],
         });
       }
 
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify(tracks),
       });
     });

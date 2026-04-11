@@ -1,3 +1,16 @@
+
+:host {
+  /* 
+   * The host must not affect layout or intercept clicks,
+   * but must NOT use width:0/height:0 since Playwright checks
+   * bounding-box visibility on the host tag.
+   * position:fixed takes it out of flow; pointer-events:none
+   * prevents click interception when the overlay is hidden.
+   */
+  display: block;
+  pointer-events: none;
+}
+
 .help-overlay-container {
   position: fixed;
   top: 0;
@@ -6,7 +19,7 @@
   height: 100vh;
   z-index: 10000;
   pointer-events: auto;
-  /* Catch clicks */
+  /* Catch clicks only when container is present */
 }
 
 /* 

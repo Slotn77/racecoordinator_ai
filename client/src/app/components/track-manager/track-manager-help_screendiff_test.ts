@@ -41,7 +41,8 @@ test.describe("Track Manager Guided Help Visuals", () => {
     { index: 4, name: "edit", label: "Edit Button" },
     { index: 5, name: "create", label: "Create New Button" },
     { index: 6, name: "delete", label: "Delete Button" },
-    { index: 7, name: "help", label: "Help Button" },
+    { index: 7, name: "analytics", label: "Analytics Button" },
+    { index: 8, name: "help", label: "Help Button" },
   ];
 
   for (const step of helpSteps) {

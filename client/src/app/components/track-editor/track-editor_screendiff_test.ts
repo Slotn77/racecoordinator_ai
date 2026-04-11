@@ -152,7 +152,7 @@ test.describe("Track Editor Visuals", () => {
     );
 
     const overlay = page.locator("app-help-overlay");
-    await overlay.waitFor({ state: "attached" });
+    await overlay.locator(".help-popover").waitFor({ state: "visible" });
 
     await expect(page).toHaveScreenshot("track-editor-guided-help.png");
   });

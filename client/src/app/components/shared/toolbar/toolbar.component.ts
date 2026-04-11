@@ -7,6 +7,7 @@ import {
 } from "@angular/core";
 import { AnalyticsService } from "src/app/analytics.service";
 import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
+import { GuideStep, HelpService } from "src/app/services/help.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 @Component({
@@ -25,6 +26,8 @@ export class ToolbarComponent {
   @Input() showRedo = false;
   @Input() isSaving = false;
   @Input() undoManager?: UndoManager<any>;
+  @Input() helpSteps: GuideStep[] = [];
+  @Input() helpTitle: string = "";
 
   showAnalyticsModal = false;
   analyticsModalTitle = "";
@@ -34,6 +37,7 @@ export class ToolbarComponent {
     private analyticsService: AnalyticsService,
     private translationService: TranslationService,
     private cdr: ChangeDetectorRef,
+    private helpService: HelpService,
   ) {}
 
   @Output() add = new EventEmitter<void>();
@@ -50,7 +54,89 @@ export class ToolbarComponent {
     this.edit.emit();
   }
 
+  getToolbarHelpSteps(): GuideStep[] {
+    const defaultSteps: GuideStep[] = [];
+
+    if (this.showUndo) {
+      defaultSteps.push({
+        targetId: "undo-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_UNDO_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_UNDO_CONTENT"),
+        position: "bottom",
+      });
+    }
+
+    if (this.showRedo) {
+      defaultSteps.push({
+        targetId: "redo-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_REDO_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_REDO_CONTENT"),
+        position: "bottom",
+      });
+    }
+
+    if (this.showEdit) {
+      defaultSteps.push({
+        targetId: "edit-track-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_EDIT_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_EDIT_CONTENT"),
+        position: "bottom",
+      });
+    }
+
+    if (this.showCopy) {
+      defaultSteps.push({
+        targetId: "copy-item-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_COPY_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_COPY_CONTENT"),
+        position: "bottom",
+      });
+    }
+
+    if (this.showAdd) {
+      defaultSteps.push({
+        targetId: "add-item-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_ADD_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_ADD_CONTENT"),
+        position: "bottom",
+      });
+    }
+
+    if (this.showDelete) {
+      defaultSteps.push({
+        targetId: "delete-track-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_DELETE_TITLE"),
+        content: this.translationService.translate(
+          "TOOLBAR_HELP_DELETE_CONTENT",
+        ),
+        position: "bottom",
+      });
+    }
+
+    defaultSteps.push({
+      targetId: "analytics-btn",
+      title: this.translationService.translate("TOOLBAR_HELP_ANALYTICS_TITLE"),
+      content: this.translationService.translate(
+        "TOOLBAR_HELP_ANALYTICS_CONTENT",
+      ),
+      position: "bottom",
+    });
+
+    if (this.showHelp) {
+      defaultSteps.push({
+        targetId: "help-track-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_HELP_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_HELP_CONTENT"),
+        position: "bottom",
+      });
+    }
+
+    return defaultSteps;
+  }
+
   onHelp() {
+    const steps = [...this.helpSteps, ...this.getToolbarHelpSteps()];
+    this.helpService.startGuide(steps);
     this.help.emit();
   }
 

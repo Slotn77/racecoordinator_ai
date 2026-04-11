@@ -7,13 +7,16 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
+import { AnalyticsService } from "src/app/analytics.service";
 import { DataService } from "src/app/data.service";
 import {
   ConnectionMonitorService,
   ConnectionState,
 } from "src/app/services/connection-monitor.service";
+import { HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import {
   mockDataService,
@@ -38,6 +41,10 @@ describe("AssetManagerComponent", () => {
   let fixture: ComponentFixture<AssetManagerComponent>;
   let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
+  let mockHelpService: jasmine.SpyObj<HelpService>;
+  let mockSettingsService: jasmine.SpyObj<SettingsService>;
+  let mockAnalyticsService: jasmine.SpyObj<AnalyticsService>;
+  const mockActivatedRoute = { queryParams: of({ help: "false" }) };
 
   beforeEach(async () => {
     // Reset mock calls before each test to ensure isolation
@@ -58,6 +65,36 @@ describe("AssetManagerComponent", () => {
       "stopMonitoring",
       "checkConnection",
     ]);
+    mockHelpService = jasmine.createSpyObj("HelpService", ["startGuide"]);
+    Object.defineProperty(mockHelpService, "isVisible$", {
+      get: () => of(false),
+    });
+    Object.defineProperty(mockHelpService, "currentStep$", {
+      get: () => of(null),
+    });
+    Object.defineProperty(mockHelpService, "hasNext$", {
+      get: () => of(false),
+    });
+    Object.defineProperty(mockHelpService, "hasPrevious$", {
+      get: () => of(false),
+    });
+
+    mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
+      "isEnabled",
+      "trackClick",
+      "toggleAnalytics",
+    ]);
+    mockAnalyticsService.toggleAnalytics.and.returnValue(of({ success: true }));
+    mockAnalyticsService.isEnabled.and.returnValue(true);
+
+    mockSettingsService = jasmine.createSpyObj("SettingsService", [
+      "getSettings",
+      "saveSettings",
+    ]);
+    mockSettingsService.getSettings.and.returnValue({
+      assetManagerHelpShown: true,
+    } as any);
+
     Object.defineProperty(mockConnectionMonitor, "connectionState$", {
       get: () => connectionStateSubject.asObservable(),
     });
@@ -71,6 +108,10 @@ describe("AssetManagerComponent", () => {
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: Router, useValue: mockRouter },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
+        { provide: HelpService, useValue: mockHelpService },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
+        { provide: SettingsService, useValue: mockSettingsService },
+        { provide: ActivatedRoute, useValue: mockActivatedRoute },
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
     }).compileComponents();

@@ -6,9 +6,11 @@ import {
   HostListener,
   OnDestroy,
   OnInit,
+  ViewChild,
 } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
+import { EditorTitleComponent } from "src/app/components/shared/editor-title/editor-title.component";
 import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "src/app/data.service";
 import { Driver } from "src/app/models/driver";
@@ -28,6 +30,7 @@ import { TranslationService } from "src/app/services/translation.service";
   standalone: false,
 })
 export class TeamEditorComponent implements OnInit, OnDestroy {
+  @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
   private dataSubscription: Subscription | null = null;
   selectedTeam?: Team;
@@ -99,15 +102,22 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
       );
     }
 
-    // Trigger help automatically on first visit
-    setTimeout(() => {
+    // Trigger help automatically on first visit or if requested via query param
+    this.route.queryParams.subscribe((params) => {
+      // TODO(aufderheide): I think help is used for tests, we should fix the
+      // test and not have this hack here.
+      const forceHelp = params["help"] === "true";
       const settings = this.settingsService.getSettings();
-      if (!settings.teamEditorHelpShown) {
-        this.startHelp();
-        settings.teamEditorHelpShown = true;
-        this.settingsService.saveSettings(settings);
+      if (forceHelp || !settings.teamEditorHelpShown) {
+        setTimeout(() => {
+          this.startHelp();
+          if (!forceHelp) {
+            settings.teamEditorHelpShown = true;
+            this.settingsService.saveSettings(settings);
+          }
+        }, 800);
       }
-    }, 800);
+    });
   }
 
   ngOnDestroy() {
@@ -538,7 +548,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     return url;
   }
 
-  startHelp() {
+  getHelpSteps(): GuideStep[] {
     const steps: GuideStep[] = [
       {
         title: this.translationService.translate("TEM_HELP_WELCOME_TITLE"),
@@ -571,22 +581,16 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         ),
         position: "left",
       },
-      {
-        selector: "#copy-item-btn",
-        title: this.translationService.translate("TEM_HELP_DUPLICATE_TITLE"),
-        content: this.translationService.translate(
-          "TEM_HELP_DUPLICATE_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: "#help-track-btn",
-        title: this.translationService.translate("TM_HELP_HELP_TITLE"),
-        content: this.translationService.translate("TM_HELP_HELP_CONTENT"),
-        position: "bottom",
-      },
     ];
 
-    this.helpService.startGuide(steps);
+    if (this.titleComponent?.toolbar) {
+      steps.push(...this.titleComponent.toolbar.getToolbarHelpSteps());
+    }
+
+    return steps;
+  }
+
+  startHelp() {
+    this.helpService.startGuide(this.getHelpSteps());
   }
 }

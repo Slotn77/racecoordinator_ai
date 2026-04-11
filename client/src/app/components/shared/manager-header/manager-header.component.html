@@ -6,18 +6,21 @@
   </div>
   <div class="header-right">
     <div class="header-actions" *ngIf="showActions">
-      <app-toolbar 
+      <app-toolbar
         [showAdd]="showAdd"
-        [showEdit]="showEdit" 
-        [showHelp]="showHelp" 
-        [showDelete]="showDelete" 
+        [showEdit]="showEdit"
+        [showHelp]="showHelp"
+        [showDelete]="showDelete"
         [showCopy]="showCopy"
         [isSaving]="isSaving"
+        [helpSteps]="helpSteps"
+        [helpTitle]="helpTitle"
         (add)="onAdd()"
-        (edit)="onEdit()" 
-        (help)="onHelp()" 
+        (edit)="onEdit()"
+        (help)="onHelp()"
         (delete)="onDelete()"
-        (copy)="onCopy()">
+        (copy)="onCopy()"
+      >
       </app-toolbar>
     </div>
   </div>

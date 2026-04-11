@@ -1,21 +1,27 @@
-import { AnchorPoint } from 'src/app/components/raceday/column_definition';
+import { AnchorPoint } from "src/app/components/raceday/column_definition";
 
 export enum ColumnVisibility {
-  Always = 'Always',
-  FuelRaceOnly = 'FuelRaceOnly',
-  NonFuelRaceOnly = 'NonFuelRaceOnly'
+  Always = "Always",
+  FuelRaceOnly = "FuelRaceOnly",
+  NonFuelRaceOnly = "NonFuelRaceOnly",
 }
 
 export class Settings {
-  static readonly DEFAULT_COLUMNS = ['driver.nickname', 'imageset_fuel-gauge-builtin', 'lapCount', 'lastLapTime', 'gapLeader'];
+  static readonly DEFAULT_COLUMNS = [
+    "driver.nickname",
+    "imageset_fuel-gauge-builtin",
+    "lapCount",
+    "lastLapTime",
+    "gapLeader",
+  ];
 
   recentRaceIds: string[] = [];
-  selectedRaceId: string = '';
+  selectedRaceId: string = "";
   selectedDriverIds: string[] = [];
 
-  serverIp: string = '';
+  serverIp: string = "";
   serverPort: number = 7070;
-  language: string = '';
+  language: string = "";
   shareAnalytics: boolean = true;
 
   racedaySetupWalkthroughSeen: boolean = false;
@@ -25,6 +31,9 @@ export class Settings {
   driverManagerHelpShown: boolean = false;
   teamManagerHelpShown: boolean = false;
   teamEditorHelpShown: boolean = false;
+  assetManagerHelpShown: boolean = false;
+  raceManagerHelpShown: boolean = false;
+  raceEditorHelpShown: boolean = false;
 
   flagGreen?: string;
   flagYellow?: string;
@@ -37,28 +46,28 @@ export class Settings {
   racedayColumns: string[] = Settings.DEFAULT_COLUMNS;
   columnAnchors: { [key: string]: AnchorPoint } = {};
   columnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } } = {
-    'driver.nickname': {
-      [AnchorPoint.CenterCenter]: 'driver.nickname',
-      [AnchorPoint.BottomRight]: 'participant.team.name'
+    "driver.nickname": {
+      [AnchorPoint.CenterCenter]: "driver.nickname",
+      [AnchorPoint.BottomRight]: "participant.team.name",
     },
 
-    'imageset_fuel-gauge-builtin': {
-      [AnchorPoint.CenterCenter]: 'imageset_fuel-gauge-builtin'
+    "imageset_fuel-gauge-builtin": {
+      [AnchorPoint.CenterCenter]: "imageset_fuel-gauge-builtin",
     },
-    'lapCount': {
-      [AnchorPoint.CenterCenter]: 'lapCount'
+    lapCount: {
+      [AnchorPoint.CenterCenter]: "lapCount",
     },
-    'lastLapTime': {
-      [AnchorPoint.CenterCenter]: 'lastLapTime',
-      [AnchorPoint.TopRight]: 'bestLapTime',
-      [AnchorPoint.BottomRight]: 'averageLapTime'
+    lastLapTime: {
+      [AnchorPoint.CenterCenter]: "lastLapTime",
+      [AnchorPoint.TopRight]: "bestLapTime",
+      [AnchorPoint.BottomRight]: "averageLapTime",
     },
-    'gapLeader': {
-      [AnchorPoint.CenterCenter]: 'gapLeader',
-      [AnchorPoint.BottomRight]: 'gapPosition'
-    }
+    gapLeader: {
+      [AnchorPoint.CenterCenter]: "gapLeader",
+      [AnchorPoint.BottomRight]: "gapPosition",
+    },
   };
   columnVisibility: { [columnKey: string]: ColumnVisibility } = {
-    'imageset_fuel-gauge-builtin': ColumnVisibility.FuelRaceOnly
+    "imageset_fuel-gauge-builtin": ColumnVisibility.FuelRaceOnly,
   };
 }

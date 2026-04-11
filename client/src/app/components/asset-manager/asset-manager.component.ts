@@ -1,13 +1,18 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { ViewChild } from "@angular/core";
 import { Router } from "@angular/router";
+import { ActivatedRoute } from "@angular/router";
 import { Subscription } from "rxjs";
 import { forkJoin } from "rxjs";
+import { ManagerHeaderComponent } from "src/app/components/shared/manager-header/manager-header.component";
 import { DataService } from "src/app/data.service";
 import { com } from "src/app/proto/message";
 import {
   ConnectionMonitorService,
   ConnectionState,
 } from "src/app/services/connection-monitor.service";
+import { GuideStep, HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { mockTTSContext, playSound } from "src/app/utils/audio";
 
@@ -31,6 +36,7 @@ export interface AssetView {
   standalone: false,
 })
 export class AssetManagerComponent implements OnInit, OnDestroy {
+  @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
   // Data
   assets: AssetView[] = [];
 
@@ -57,7 +63,10 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private translationService: TranslationService,
     private router: Router,
+    private route: ActivatedRoute,
     private connectionMonitor: ConnectionMonitorService,
+    private helpService: HelpService,
+    private settingsService: SettingsService,
   ) {}
 
   activeDatabaseName: string = "";
@@ -67,6 +76,21 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.monitorConnection();
     this.loadActiveDatabase();
     this.loadAssets();
+
+    // Trigger help automatically on first visit or if requested via query param
+    this.route.queryParams.subscribe((params) => {
+      const forceHelp = params["help"] === "true";
+      const settings = this.settingsService.getSettings();
+      if (forceHelp || !settings.assetManagerHelpShown) {
+        setTimeout(() => {
+          this.helpService.startGuide(this.getHelpSteps());
+          if (!forceHelp) {
+            settings.assetManagerHelpShown = true;
+            this.settingsService.saveSettings(settings);
+          }
+        }, 800);
+      }
+    });
   }
 
   loadActiveDatabase() {
@@ -568,5 +592,33 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   onImageSetSaved(asset: com.antigravity.IAssetMessage) {
     this.loadAssets();
+  }
+
+  getHelpSteps(): GuideStep[] {
+    const steps: GuideStep[] = [
+      {
+        title: this.translationService.translate("AM_HELP_WELCOME_TITLE"),
+        content: this.translationService.translate("AM_HELP_WELCOME_CONTENT"),
+        position: "center",
+      },
+      {
+        selector: ".stats-panel",
+        title: this.translationService.translate("AM_HELP_STATS_TITLE"),
+        content: this.translationService.translate("AM_HELP_STATS_CONTENT"),
+        position: "right",
+      },
+      {
+        selector: ".library-panel",
+        title: this.translationService.translate("AM_HELP_LIBRARY_TITLE"),
+        content: this.translationService.translate("AM_HELP_LIBRARY_CONTENT"),
+        position: "left",
+      },
+    ];
+
+    if (this.header?.toolbar) {
+      steps.push(...this.header.toolbar.getToolbarHelpSteps());
+    }
+
+    return steps;
   }
 }

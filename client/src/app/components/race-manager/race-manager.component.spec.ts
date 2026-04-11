@@ -4,9 +4,12 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
 import { Router } from "@angular/router";
 import { of } from "rxjs";
+import { AnalyticsService } from "src/app/analytics.service";
 import { DataService } from "src/app/data.service";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 import { ConnectionMonitorService } from "src/app/services/connection-monitor.service";
+import { HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { RaceManagerComponent } from "./race-manager.component";
@@ -18,6 +21,9 @@ describe("RaceManagerComponent", () => {
   let mockActivatedRoute: any;
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
   let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
+  let mockHelpService: jasmine.SpyObj<HelpService>;
+  let mockSettingsService: jasmine.SpyObj<SettingsService>;
+  let mockAnalyticsService: jasmine.SpyObj<AnalyticsService>;
 
   beforeEach(() => {
     mockDataService = jasmine.createSpyObj("DataService", [
@@ -37,12 +43,36 @@ describe("RaceManagerComponent", () => {
       ["startMonitoring", "stopMonitoring"],
       { connectionState$: of() },
     );
+
+    mockHelpService = jasmine.createSpyObj("HelpService", ["startGuide"]);
+    mockHelpService.isVisible$ = of(false);
+    mockHelpService.currentStep$ = of(null);
+    mockHelpService.hasNext$ = of(false);
+    mockHelpService.hasPrevious$ = of(false);
+
+    mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
+      "isEnabled",
+      "toggleAnalytics",
+      "trackClick",
+    ]);
+    mockAnalyticsService.isEnabled.and.returnValue(true);
+    mockAnalyticsService.toggleAnalytics.and.returnValue(of({ success: true }));
+
+    mockSettingsService = jasmine.createSpyObj("SettingsService", [
+      "getSettings",
+      "saveSettings",
+    ]);
+    mockSettingsService.getSettings.and.returnValue({
+      raceManagerHelpShown: true,
+    } as any);
+
     mockActivatedRoute = {
       snapshot: {
         queryParamMap: {
           get: jasmine.createSpy("get").and.returnValue(null),
         },
       },
+      queryParams: of({ help: "false" }),
     };
 
     TestBed.configureTestingModule({
@@ -54,6 +84,9 @@ describe("RaceManagerComponent", () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
+        { provide: HelpService, useValue: mockHelpService },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
+        { provide: SettingsService, useValue: mockSettingsService },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     });

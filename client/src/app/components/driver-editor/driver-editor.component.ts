@@ -5,9 +5,11 @@ import {
   HostListener,
   OnDestroy,
   OnInit,
+  ViewChild,
 } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
+import { EditorTitleComponent } from "src/app/components/shared/editor-title/editor-title.component";
 import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "src/app/data.service";
 import { Driver } from "src/app/models/driver";
@@ -27,6 +29,7 @@ import { createTTSContext, mockTTSContext } from "src/app/utils/audio";
   standalone: false,
 })
 export class DriverEditorComponent implements OnInit, OnDestroy {
+  @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
   private dataSubscription: Subscription | null = null;
   selectedDriver?: Driver;
@@ -114,7 +117,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       const settings = this.settingsService.getSettings();
       if (forceHelp || !settings.driverEditorHelpShown) {
         setTimeout(() => {
-          this.startHelp();
+          this.helpService.startGuide(this.getHelpSteps());
           if (!forceHelp) {
             settings.driverEditorHelpShown = true;
             this.settingsService.saveSettings(settings);
@@ -622,7 +625,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     return url;
   }
 
-  startHelp() {
+  getHelpSteps(): GuideStep[] {
     const steps: GuideStep[] = [
       {
         title: this.translationService.translate("DE_HELP_WELCOME_TITLE"),
@@ -647,20 +650,12 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
         content: this.translationService.translate("DE_HELP_NICKNAME_CONTENT"),
         position: "bottom",
       },
-      {
-        selector: "#copy-item-btn",
-        title: this.translationService.translate("DE_HELP_DUPLICATE_TITLE"),
-        content: this.translationService.translate("DE_HELP_DUPLICATE_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-track-btn",
-        title: this.translationService.translate("TM_HELP_HELP_TITLE"),
-        content: this.translationService.translate("TM_HELP_HELP_CONTENT"),
-        position: "bottom",
-      },
     ];
 
-    this.helpService.startGuide(steps);
+    if (this.titleComponent?.toolbar) {
+      steps.push(...this.titleComponent.toolbar.getToolbarHelpSteps());
+    }
+
+    return steps;
   }
 }

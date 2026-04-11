@@ -4,10 +4,12 @@ import {
   HostListener,
   OnDestroy,
   OnInit,
+  ViewChild,
 } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
+import { ManagerHeaderComponent } from "src/app/components/shared/manager-header/manager-header.component";
 import { DataService } from "src/app/data.service";
 import { Driver } from "src/app/models/driver";
 import { Team } from "src/app/models/team";
@@ -26,6 +28,7 @@ import { TranslationService } from "src/app/services/translation.service";
   standalone: false,
 })
 export class TeamManagerComponent implements OnInit, OnDestroy {
+  @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
   teams: Team[] = [];
   selectedTeam?: Team;
   editingTeam?: Team;
@@ -75,7 +78,7 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
       const settings = this.settingsService.getSettings();
       if (forceHelp || !settings.teamManagerHelpShown) {
         setTimeout(() => {
-          this.startHelp();
+          this.helpService.startGuide(this.getHelpSteps());
           if (!forceHelp) {
             settings.teamManagerHelpShown = true;
             this.settingsService.saveSettings(settings);
@@ -152,7 +155,7 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     });
   }
 
-  startHelp() {
+  getHelpSteps(): GuideStep[] {
     const steps: GuideStep[] = [
       {
         title: this.translationService.translate("TMM_HELP_WELCOME_TITLE"),
@@ -171,32 +174,13 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         content: this.translationService.translate("TMM_HELP_DETAIL_CONTENT"),
         position: "left",
       },
-      {
-        selector: "#edit-track-btn",
-        title: this.translationService.translate("TMM_HELP_EDIT_TITLE"),
-        content: this.translationService.translate("TMM_HELP_EDIT_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#add-item-btn",
-        title: this.translationService.translate("TMM_HELP_CREATE_TITLE"),
-        content: this.translationService.translate("TMM_HELP_CREATE_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#delete-track-btn",
-        title: this.translationService.translate("TMM_HELP_DELETE_TITLE"),
-        content: this.translationService.translate("TMM_HELP_DELETE_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-track-btn",
-        title: this.translationService.translate("TMM_HELP_HELP_TITLE"),
-        content: this.translationService.translate("TMM_HELP_HELP_CONTENT"),
-        position: "bottom",
-      },
     ];
-    this.helpService.startGuide(steps);
+
+    if (this.header?.toolbar) {
+      steps.push(...this.header.toolbar.getToolbarHelpSteps());
+    }
+
+    return steps;
   }
 
   getDriversForTeam(team: Team): Driver[] {

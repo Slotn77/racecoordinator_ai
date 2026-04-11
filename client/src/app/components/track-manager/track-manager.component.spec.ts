@@ -2,10 +2,12 @@ import { Component, Input, NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
+import { AnalyticsService } from "src/app/analytics.service";
 import { DataService } from "src/app/data.service";
 import { Settings } from "src/app/models/settings";
 import { Track } from "src/app/models/track";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
+import { HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 
@@ -79,15 +81,35 @@ class MockActivatedRoute {
     },
   };
   queryParamMap = of(this.snapshot.queryParamMap);
-  queryParams = of({});
+  queryParams = of({ help: "false" });
 }
 
 // Mock SettingsService
 class MockSettingsService {
   getSettings() {
-    return new Settings();
+    const s = new Settings();
+    s.trackManagerHelpShown = true;
+    return s;
   }
   saveSettings(settings: Settings) {}
+}
+
+// Mock HelpService
+class MockHelpService {
+  startGuide = jasmine.createSpy("startGuide");
+  isVisible$ = of(false);
+  currentStep$ = of(null);
+  hasNext$ = of(false);
+  hasPrevious$ = of(false);
+}
+
+// Mock AnalyticsService
+class MockAnalyticsService {
+  isEnabled = jasmine.createSpy("isEnabled").and.returnValue(true);
+  toggleAnalytics = jasmine
+    .createSpy("toggleAnalytics")
+    .and.returnValue(of({ success: true }));
+  trackClick = jasmine.createSpy("trackClick");
 }
 
 @Component({
@@ -124,6 +146,8 @@ describe("TrackManagerComponent", () => {
         { provide: Router, useClass: MockRouter },
         { provide: ActivatedRoute, useClass: MockActivatedRoute },
         { provide: SettingsService, useClass: MockSettingsService },
+        { provide: HelpService, useClass: MockHelpService },
+        { provide: AnalyticsService, useClass: MockAnalyticsService },
       ],
     }).compileComponents();
 

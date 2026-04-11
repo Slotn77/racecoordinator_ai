@@ -1,7 +1,10 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { of } from "rxjs";
+import { AnalyticsService } from "src/app/analytics.service";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
+import { HelpService } from "src/app/services/help.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { ManagerHeaderComponent } from "./manager-header.component";
@@ -12,6 +15,8 @@ describe("ManagerHeaderComponent", () => {
   let fixture: ComponentFixture<ManagerHeaderComponent>;
   let harness: ManagerHeaderHarness;
   let translationServiceSpy: jasmine.SpyObj<TranslationService>;
+  let helpServiceSpy: jasmine.SpyObj<HelpService>;
+  let analyticsServiceSpy: jasmine.SpyObj<AnalyticsService>;
 
   beforeEach(async () => {
     translationServiceSpy = jasmine.createSpyObj("TranslationService", [
@@ -19,10 +24,25 @@ describe("ManagerHeaderComponent", () => {
     ]);
     translationServiceSpy.translate.and.callFake((key: string) => key);
 
+    helpServiceSpy = jasmine.createSpyObj("HelpService", ["startGuide"]);
+    helpServiceSpy.isVisible$ = of(false);
+    helpServiceSpy.currentStep$ = of(null);
+    helpServiceSpy.hasNext$ = of(false);
+    helpServiceSpy.hasPrevious$ = of(false);
+
+    analyticsServiceSpy = jasmine.createSpyObj("AnalyticsService", [
+      "isEnabled",
+      "toggleAnalytics",
+    ]);
+    analyticsServiceSpy.toggleAnalytics.and.returnValue(of({ success: true }));
+    analyticsServiceSpy.isEnabled.and.returnValue(true);
+
     await TestBed.configureTestingModule({
       declarations: [ManagerHeaderComponent, TranslatePipe],
       providers: [
         { provide: TranslationService, useValue: translationServiceSpy },
+        { provide: HelpService, useValue: helpServiceSpy },
+        { provide: AnalyticsService, useValue: analyticsServiceSpy },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();

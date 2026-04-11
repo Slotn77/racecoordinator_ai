@@ -7,10 +7,12 @@ import {
   OnDestroy,
   OnInit,
   QueryList,
+  ViewChild,
   ViewChildren,
 } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of, Subscription } from "rxjs";
+import { EditorTitleComponent } from "src/app/components/shared/editor-title/editor-title.component";
 import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
 import { ArduinoEditorComponent } from "src/app/components/track-editor/arduino-editor/arduino-editor.component";
 import { DataService } from "src/app/data.service";
@@ -34,6 +36,7 @@ import { TranslationService } from "src/app/services/translation.service";
   standalone: false,
 })
 export class TrackEditorComponent implements OnInit, OnDestroy {
+  @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
   trackName: string = "";
@@ -44,6 +47,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   scale: number = 1;
   isLoading: boolean = true;
   isSaving: boolean = false;
+  isAutoSaving: boolean = false;
   public navigateBackOnSave = false;
 
   undoManager!: UndoManager<Track>;
@@ -555,7 +559,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     }
   }
 
-  startHelp() {
+  getHelpSteps(): GuideStep[] {
     const steps: GuideStep[] = [
       {
         title: "TE_HELP_WELCOME_TITLE",
@@ -610,24 +614,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         position: "right",
       },
       {
-        selector: "#undo-btn",
-        title: "TE_HELP_UNDO_TITLE",
-        content: "TE_HELP_UNDO_CONTENT",
-        position: "bottom",
-      },
-      {
-        selector: "#redo-btn",
-        title: "TE_HELP_REDO_TITLE",
-        content: "TE_HELP_REDO_CONTENT",
-        position: "bottom",
-      },
-      {
-        selector: "#copy-item-btn",
-        title: "TE_HELP_DUPLICATE_TITLE",
-        content: "TE_HELP_DUPLICATE_CONTENT",
-        position: "bottom",
-      },
-      {
         selector: "#add-interface-btn",
         title: "TE_HELP_ADD_INTERFACE_TITLE",
         content: "TE_HELP_ADD_INTERFACE_CONTENT",
@@ -636,15 +622,19 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     ];
 
     // Ensure lanes section is expanded if we are going to highlight items inside it
-    if (!this.sectionsExpanded.lanes && this.lanes.length > 0) {
+    if (
+      this.sectionsExpanded &&
+      !this.sectionsExpanded.lanes &&
+      this.lanes?.length > 0
+    ) {
       this.sectionsExpanded.lanes = true;
       this.cdr.detectChanges();
     }
 
     // Add Arduino help steps if there are any configured
-    if (this.arduinoConfigs.length > 0 && this.arduinoEditors.length > 0) {
+    if (this.arduinoConfigs?.length > 0 && this.arduinoEditors?.length > 0) {
       // Ensure interfaces section is expanded
-      if (!this.sectionsExpanded.interfaces) {
+      if (this.sectionsExpanded && !this.sectionsExpanded.interfaces) {
         this.sectionsExpanded.interfaces = true;
         this.cdr.detectChanges();
       }
@@ -656,7 +646,15 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       }
     }
 
-    this.helpService.startGuide(steps);
+    if (this.titleComponent?.toolbar) {
+      steps.push(...this.titleComponent.toolbar.getToolbarHelpSteps());
+    }
+
+    return steps;
+  }
+
+  startHelp() {
+    this.helpService.startGuide(this.getHelpSteps());
   }
 
   onInputFocus() {
@@ -933,6 +931,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     }
 
     this.isSaving = true;
+    this.isAutoSaving = isAutoSave;
 
     // Construct payload
     const finalTrack = this.createSnapshot();
@@ -957,6 +956,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       obs.subscribe({
         next: (result) => {
           this.isSaving = false;
+          this.isAutoSaving = false;
           // Update local state with result (especially ID)
           this.editingTrack = new Track(
             result.entity_id,
@@ -1055,6 +1055,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
             }
           }
           this.isSaving = false;
+          this.isAutoSaving = false;
         },
       }),
     );

@@ -1,6 +1,6 @@
 import { DragDropModule } from "@angular/cdk/drag-drop";
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
-import { CUSTOM_ELEMENTS_SCHEMA } from "@angular/core";
+import { Component, CUSTOM_ELEMENTS_SCHEMA, Input } from "@angular/core";
 import {
   ComponentFixture,
   fakeAsync,
@@ -11,7 +11,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
-import { map } from "rxjs/operators";
+import { AnalyticsService } from "src/app/analytics.service";
 import { HelpOverlayComponent } from "src/app/components/shared/help-overlay/help-overlay.component";
 import { DataService } from "src/app/data.service";
 import { Settings } from "src/app/models/settings";
@@ -26,6 +26,25 @@ import { TranslationService } from "src/app/services/translation.service";
 import { DefaultRacedaySetupComponent } from "./default-raceday-setup.component";
 import { DefaultRacedaySetupHarness } from "./testing/default-raceday-setup.harness";
 
+@Component({
+  selector: "app-toolbar",
+  template: "",
+  standalone: false,
+})
+class MockToolbarComponent {
+  @Input() showAdd = false;
+  @Input() showEdit = false;
+  @Input() showHelp = false;
+  @Input() showDelete = false;
+  @Input() showCopy = false;
+  @Input() showUndo = false;
+  @Input() showRedo = false;
+  @Input() isSaving = false;
+  @Input() undoManager?: any;
+  @Input() helpSteps: any[] = [];
+  @Input() helpTitle: string = "";
+}
+
 describe("DefaultRacedaySetupComponent", () => {
   let component: DefaultRacedaySetupComponent;
   let fixture: ComponentFixture<DefaultRacedaySetupComponent>;
@@ -36,6 +55,7 @@ describe("DefaultRacedaySetupComponent", () => {
   let mockSettingsService: jasmine.SpyObj<SettingsService>;
   let mockFileSystemService: jasmine.SpyObj<FileSystemService>;
   let mockHelpService: any;
+  let mockAnalyticsService: any;
   let mockRouter: jasmine.SpyObj<Router>;
 
   beforeEach(() => {
@@ -96,7 +116,14 @@ describe("DefaultRacedaySetupComponent", () => {
     mockHelpService.isVisible$ = new BehaviorSubject(false);
     mockHelpService.currentStep$ = new BehaviorSubject(null);
     mockHelpService.hasNext$ = new BehaviorSubject(false);
+    mockHelpService.hasNext$ = new BehaviorSubject(false);
     mockHelpService.hasPrevious$ = new BehaviorSubject(false);
+
+    mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
+      "isEnabled",
+      "trackClick",
+    ]);
+    mockAnalyticsService.isEnabled.and.returnValue(true);
 
     mockDataService.getDrivers.and.returnValue(
       of([
@@ -133,7 +160,7 @@ describe("DefaultRacedaySetupComponent", () => {
         serverIp: "localhost",
         serverPort: 7070,
         language: "",
-        racedaySetupWalkthroughSeen: false,
+        racedaySetupWalkthroughSeen: true,
         sortByStandings: true,
       }),
     );
@@ -144,6 +171,7 @@ describe("DefaultRacedaySetupComponent", () => {
         DefaultRacedaySetupComponent,
         TranslatePipe,
         HelpOverlayComponent,
+        MockToolbarComponent,
       ],
       providers: [
         { provide: DataService, useValue: mockDataService },
@@ -153,6 +181,7 @@ describe("DefaultRacedaySetupComponent", () => {
         { provide: Router, useValue: mockRouter },
         { provide: FileSystemService, useValue: mockFileSystemService },
         { provide: HelpService, useValue: mockHelpService },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
     }).compileComponents();
@@ -202,10 +231,6 @@ describe("DefaultRacedaySetupComponent", () => {
   }));
 
   it("should toggle team selection", fakeAsync(() => {
-    // Note: ngOnInit has already run in beforeEach. To test with specific data,
-    // we must re-trigger ngOnInit or handle the initialization logic manually.
-    // For this test, we verify that the team already exists from the initial setup.
-
     expect(component.filteredUnselectedParticipants.length).toBe(3);
     const teamToSelect = component.filteredUnselectedParticipants.find(
       (d: any) => d.entity_id === "t1",
@@ -415,17 +440,12 @@ describe("DefaultRacedaySetupComponent", () => {
       .map((p) => p.entity_id)
       .join(",");
 
-    // Mock Math.random to ensure a specific shuffle order for deterministic test if needed,
-    // or just check that it calls saveSettings and keeps length.
-    // Testing true randomness is flaky, so let's verify integration.
     spyOn(Math, "random").and.returnValue(0.5); // Simple mock
 
     component.randomizeParticipants();
     flush();
 
     expect(component.selectedParticipants.length).toBe(3);
-    // With fixed random, order might change or not depending on impl,
-    // but main goal is to ensure it runs without error and saves.
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
   }));
 
@@ -488,21 +508,18 @@ describe("DefaultRacedaySetupComponent", () => {
   });
 
   it("should preserve scroll position during refresh", fakeAsync(() => {
-    // We use a mock element that doesn't clamp scrollTop
     const mockElement = { scrollTop: 150 };
     const mockViewChild = { nativeElement: mockElement };
 
-    // Prevent Angular from overwriting our mock by defining it as a getter
     Object.defineProperty(component, "scrollContainer", {
       get: () => mockViewChild,
-      set: () => {}, // Ignore Angular trying to set it
+      set: () => {},
       configurable: true,
     });
 
     let actionCalled = false;
     component["updateListWithRefresh"](() => {
       actionCalled = true;
-      // Simulate DOM update resetting scroll or clamping it
       mockElement.scrollTop = 0;
     });
 
