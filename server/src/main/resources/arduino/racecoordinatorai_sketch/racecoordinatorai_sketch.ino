@@ -75,7 +75,7 @@ const byte term = 0x3B; // ;
 
 // Version is "major"."minor"."patch"."drop"
 // V2.0.0.0
-const byte rcVersion[] = {0x56, 0x01, 0x00, 0x00, 0x0, term};
+const byte rcVersion[] = {0x56, 0x02, 0x00, 0x00, 0x0, term};
 
 // Setting for the baud rate RC will run at 115200
 const long iBaudRate = 115200;
@@ -1339,7 +1339,7 @@ void sendTime(unsigned long ulCurTimeMs) {
   }
 
   if (g_curTimeMs != ulCurTimeMs) {
-    g_curTimeMs = g_curTimeMs;
+    g_curTimeMs = ulCurTimeMs;
 
     unsigned long ulCurTimeUs = micros();
     unsigned long ulDeltaUs = ulCurTimeUs - ulPrevHwTimeUs;

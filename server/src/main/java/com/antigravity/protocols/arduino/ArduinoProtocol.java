@@ -1,6 +1,7 @@
 package com.antigravity.protocols.arduino;
 
 import com.antigravity.proto.InterfaceAnalogDataEvent;
+import com.antigravity.proto.InterfaceDigitalPinEvent;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
@@ -753,6 +754,21 @@ public class ArduinoProtocol extends DefaultProtocol {
           (isDigital ? "Digital" : "Analog"),
           pin,
           state);
+    }
+
+    if (listener != null) {
+      // Send the raw interface event for all input changes
+      InterfaceEvent event =
+          InterfaceEvent.newBuilder()
+              .setDigitalPin(
+                  InterfaceDigitalPinEvent.newBuilder()
+                      .setPin(pin)
+                      .setState(state)
+                      .setIsDigital(isDigital)
+                      .setInterfaceIndex(getInterfaceIndex())
+                      .build())
+              .build();
+      listener.onInterfaceEvent(event);
     }
   }
 

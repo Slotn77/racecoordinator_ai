@@ -18,7 +18,15 @@ message InterfaceEvent {
     InterfaceStatusEvent status = 3;
     CallbuttonEvent callbutton = 4;
     InterfaceAnalogDataEvent analogData = 5;
+    InterfaceDigitalPinEvent digitalPin = 6;
   }
+}
+
+message InterfaceDigitalPinEvent {
+  int32 pin = 1;
+  int32 state = 2; // 0 or 1
+  bool is_digital = 3;
+  int32 interface_index = 4;
 }
 
 message InterfaceStatusEvent {

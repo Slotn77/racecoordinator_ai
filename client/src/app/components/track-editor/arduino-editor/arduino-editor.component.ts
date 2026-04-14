@@ -211,6 +211,27 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
               }
               this.cdr.detectChanges();
             }
+          } else if (event.digitalPin) {
+            if (event.digitalPin.interfaceIndex === this.index) {
+              const pin = event.digitalPin.pin ?? -1;
+              const isDigital = event.digitalPin.isDigital ?? false;
+              const state = event.digitalPin.state ?? 0;
+              const key = (isDigital ? "D" : "A") + pin;
+
+              // Map the raw state to our "active" status based on normally closed settings
+              // For inputs, we consider it "active" (green) if it's in the trip state
+              const nc = this.config?.normallyClosedLaneSensors;
+              const isTrip = nc ? state === 1 : state === 0;
+
+              this.pinActivity[key] = isTrip;
+
+              // Clear any existing pulse timer for this pin since we have real-time state
+              if (this.pinActivityTimers[key]) {
+                clearTimeout(this.pinActivityTimers[key]);
+                delete this.pinActivityTimers[key];
+              }
+              this.cdr.detectChanges();
+            }
           }
         },
       });

@@ -886,6 +886,37 @@ public class ArduinoProtocolTest {
   }
 
   @Test
+  public void testInterfaceDigitalPinEvent() {
+    protocol.open();
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+
+    // 1. Digital Pin Input (D2 LOW)
+    // I D2 0 ; -> 49 44 02 00 3B
+    byte[] digitalInput = {0x49, 0x44, 0x02, 0x00, 0x3B};
+    serialConnection.injectData(digitalInput);
+
+    assertNotNull(listener.lastEvent);
+    assertTrue(listener.lastEvent.hasDigitalPin());
+    assertEquals(2, listener.lastEvent.getDigitalPin().getPin());
+    assertEquals(0, listener.lastEvent.getDigitalPin().getState());
+    assertEquals(true, listener.lastEvent.getDigitalPin().getIsDigital());
+    assertEquals(
+        protocol.getInterfaceIndex(), listener.lastEvent.getDigitalPin().getInterfaceIndex());
+
+    // 2. Analog Pin Input (A3 HIGH)
+    // I A3 1 ; -> 49 41 03 01 3B
+    byte[] analogInput = {0x49, 0x41, 0x03, 0x01, 0x3B};
+    serialConnection.injectData(analogInput);
+
+    assertNotNull(listener.lastEvent);
+    assertTrue(listener.lastEvent.hasDigitalPin());
+    assertEquals(3, listener.lastEvent.getDigitalPin().getPin());
+    assertEquals(1, listener.lastEvent.getDigitalPin().getState());
+    assertEquals(false, listener.lastEvent.getDigitalPin().getIsDigital());
+  }
+
+  @Test
   @SuppressWarnings("unchecked")
   public void testSendPinModeAnalogRead() {
     // Configure A1 as Voltage Level for Lane 0 (Base + 0)

@@ -627,4 +627,77 @@ describe("ArduinoEditorComponent", () => {
       );
     });
   });
+
+  describe("Real-time Pin Status", () => {
+    it("should update pinActivity when digitalPin event received (Normally Open)", () => {
+      component.config!.normallyClosedLaneSensors = false;
+      fixture.detectChanges();
+
+      // Trip D2 (State 0)
+      mockDataService.interfaceEvents$.next({
+        digitalPin: { pin: 2, state: 0, isDigital: true, interfaceIndex: 0 },
+      });
+      expect(component.isPinActive(true, 2)).toBeTrue();
+
+      // Release D2 (State 1)
+      mockDataService.interfaceEvents$.next({
+        digitalPin: { pin: 2, state: 1, isDigital: true, interfaceIndex: 0 },
+      });
+      expect(component.isPinActive(true, 2)).toBeFalse();
+    });
+
+    it("should update pinActivity when digitalPin event received (Normally Closed)", () => {
+      component.config!.normallyClosedLaneSensors = true;
+      fixture.detectChanges();
+
+      // Trip D2 (State 1)
+      mockDataService.interfaceEvents$.next({
+        digitalPin: { pin: 2, state: 1, isDigital: true, interfaceIndex: 0 },
+      });
+      expect(component.isPinActive(true, 2)).toBeTrue();
+
+      // Release D2 (State 0)
+      mockDataService.interfaceEvents$.next({
+        digitalPin: { pin: 2, state: 0, isDigital: true, interfaceIndex: 0 },
+      });
+      expect(component.isPinActive(true, 2)).toBeFalse();
+    });
+
+    it("should update pinActivity for analog pins in digital mode", () => {
+      component.config!.normallyClosedLaneSensors = false;
+      fixture.detectChanges();
+
+      // Trip A3 (State 0)
+      mockDataService.interfaceEvents$.next({
+        digitalPin: { pin: 3, state: 0, isDigital: false, interfaceIndex: 0 },
+      });
+      expect(component.isPinActive(false, 3)).toBeTrue();
+
+      // Release A3 (State 1)
+      mockDataService.interfaceEvents$.next({
+        digitalPin: { pin: 3, state: 1, isDigital: false, interfaceIndex: 0 },
+      });
+      expect(component.isPinActive(false, 3)).toBeFalse();
+    });
+
+    it("should clear pulse timer when real-time event is received", fakeAsync(() => {
+      const key = "D2";
+      // Simulate high-level event start (pulse)
+      component["triggerPinActivity"](2); // interfaceId 2 is D2
+      expect(component.isPinActive(true, 2)).toBeTrue();
+      expect(component["pinActivityTimers"][key]).toBeTruthy();
+
+      // Receive real-time event (release)
+      mockDataService.interfaceEvents$.next({
+        digitalPin: { pin: 2, state: 1, isDigital: true, interfaceIndex: 0 },
+      });
+
+      expect(component.isPinActive(true, 2)).toBeFalse();
+      expect(component["pinActivityTimers"][key]).toBeUndefined();
+
+      tick(1000);
+      // Ensure timer didn't fire and turn it back on/off unexpectedly
+      expect(component.isPinActive(true, 2)).toBeFalse();
+    }));
+  });
 });
