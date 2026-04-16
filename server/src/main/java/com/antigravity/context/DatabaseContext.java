@@ -57,6 +57,10 @@ public class DatabaseContext {
     return currentDatabaseName;
   }
 
+  public ServerConfigService getConfigService() {
+    return configService;
+  }
+
   public synchronized void switchDatabase(String databaseName) {
     this.currentDatabaseName = databaseName;
     this.currentDatabase = mongoClient.getDatabase(databaseName);

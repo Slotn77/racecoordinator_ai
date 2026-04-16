@@ -563,6 +563,10 @@ public class DatabaseTaskHandler {
               .withAutoAdvanceWarmupTime(race.getAutoAdvanceWarmupTime())
               .withAutoStartWarmupTime(race.getAutoStartWarmupTime())
               .withDriftTime(race.getDriftTime())
+              .withStartTime(race.getStartTime())
+              .withRestartTime(race.getRestartTime())
+              .withStartDelay(race.getStartDelay())
+              .withRestartDelay(race.getRestartDelay())
               .withEntityId(nextId)
               .build();
     }
@@ -617,6 +621,10 @@ public class DatabaseTaskHandler {
             .withAutoAdvanceWarmupTime(race.getAutoAdvanceWarmupTime())
             .withAutoStartWarmupTime(race.getAutoStartWarmupTime())
             .withDriftTime(race.getDriftTime())
+            .withStartTime(race.getStartTime())
+            .withRestartTime(race.getRestartTime())
+            .withStartDelay(race.getStartDelay())
+            .withRestartDelay(race.getRestartDelay())
             .withEntityId(id)
             .withId(race.getId())
             .build();
@@ -701,6 +709,10 @@ public class DatabaseTaskHandler {
       raceMap.put("auto_advance_warmup_time", race.getAutoAdvanceWarmupTime());
       raceMap.put("auto_start_warmup_time", race.getAutoStartWarmupTime());
       raceMap.put("drift_time", race.getDriftTime());
+      raceMap.put("start_time", race.getStartTime());
+      raceMap.put("restart_time", race.getRestartTime());
+      raceMap.put("start_delay", race.getStartDelay());
+      raceMap.put("restart_delay", race.getRestartDelay());
       response.add(raceMap);
     }
     ctx.json(response);

@@ -143,6 +143,26 @@ export class RaceConverter {
             : p.min_lap_time !== undefined
               ? p.min_lap_time
               : 1.5,
+          p.startTime !== undefined
+            ? p.startTime
+            : p.start_time !== undefined
+              ? p.start_time
+              : 5.0,
+          p.restartTime !== undefined
+            ? p.restartTime
+            : p.restart_time !== undefined
+              ? p.restart_time
+              : 5.0,
+          p.startDelay !== undefined
+            ? p.startDelay
+            : p.start_delay !== undefined
+              ? p.start_delay
+              : 0.0,
+          p.restartDelay !== undefined
+            ? p.restartDelay
+            : p.restart_delay !== undefined
+              ? p.restart_delay
+              : 0.0,
         );
       },
       () => {

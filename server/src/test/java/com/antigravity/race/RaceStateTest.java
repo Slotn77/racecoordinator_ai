@@ -7,6 +7,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
@@ -24,6 +25,7 @@ import com.antigravity.race.states.Paused;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import com.antigravity.race.states.Starting;
+import com.antigravity.service.ServerConfigService;
 import io.javalin.websocket.WsContext;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
@@ -45,7 +47,15 @@ public class RaceStateTest {
 
   @Before
   public void setUp() throws Exception {
-    // Setup Mocks and Real Objects
+    ServerConfigService configService = mock(ServerConfigService.class);
+    when(configService.getStartDelay()).thenReturn(0.0);
+    when(configService.getRestartDelay()).thenReturn(0.0);
+
+    DatabaseContext dbContext = mock(DatabaseContext.class);
+    when(dbContext.getConfigService()).thenReturn(configService);
+
+    ClientSubscriptionManager.getInstance().setDatabaseContext(dbContext);
+
     List<ArduinoConfig> mockConfig = Collections.singletonList(mock(ArduinoConfig.class));
 
     List<Lane> lanes = new ArrayList<>();

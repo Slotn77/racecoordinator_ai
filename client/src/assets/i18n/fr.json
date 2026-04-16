@@ -797,5 +797,13 @@
   "UE_TRANSITION_SLIDE": "Glissement",
   "UE_TRANSITION_ZOOM": "Zoom",
   "UE_TRANSITION_BLUR": "Flou",
-  "UE_TRANSITION_FADE": "Fondu"
+  "UE_TRANSITION_FADE": "Fondu",
+  "RE_START_TIME": "Start Time (s)",
+  "RE_START_TIME_HINT": "The fixed duration of the countdown when starting a heat for the first time.",
+  "RE_RESTART_TIME": "Restart Time (s)",
+  "RE_RESTART_TIME_HINT": "The fixed duration of the countdown when restarting a heat.",
+  "RE_START_DELAY": "Start Delay (s)",
+  "RE_START_DELAY_HINT": "The maximum random delay added after the start countdown reaches zero.",
+  "RE_RESTART_DELAY": "Restart Delay (s)",
+  "RE_RESTART_DELAY_HINT": "The maximum random delay added after the restart countdown reaches zero."
 }

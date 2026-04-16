@@ -67,10 +67,50 @@ public class ServerConfigService {
     return config.analyticsClientId;
   }
 
+  public double getStartTime() {
+    return config.startTime;
+  }
+
+  public void setStartTime(double startTime) {
+    config.startTime = startTime;
+    saveConfig();
+  }
+
+  public double getRestartTime() {
+    return config.restartTime;
+  }
+
+  public void setRestartTime(double restartTime) {
+    config.restartTime = restartTime;
+    saveConfig();
+  }
+
+  public double getStartDelay() {
+    return config.startDelay;
+  }
+
+  public void setStartDelay(double startDelay) {
+    config.startDelay = startDelay;
+    saveConfig();
+  }
+
+  public double getRestartDelay() {
+    return config.restartDelay;
+  }
+
+  public void setRestartDelay(double restartDelay) {
+    config.restartDelay = restartDelay;
+    saveConfig();
+  }
+
   private static class Config {
 
     public String lastActiveDatabase;
     public boolean shareAnalytics = true;
     public String analyticsClientId;
+    public double startTime = 5.0;
+    public double restartTime = 5.0;
+    public double startDelay = 0.0;
+    public double restartDelay = 0.0;
   }
 }

@@ -225,6 +225,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
             auto_start_warmup_time: race.auto_start_warmup_time || 0,
             drift_time: race.drift_time ?? 0.5,
             min_lap_time: race.min_lap_time ?? 1.5,
+            start_time: race.start_time ?? 5.0,
+            restart_time: race.restart_time ?? 5.0,
+            start_delay: race.start_delay ?? 0.0,
+            restart_delay: race.restart_delay ?? 0.0,
           };
           if (!this.editingRace.fuel_options) {
             this.editingRace.fuel_options = {
@@ -353,6 +357,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       },
       min_lap_time: 1.5,
       drift_time: 0.5,
+      start_time: 5.0,
+      restart_time: 5.0,
+      start_delay: 0.0,
+      restart_delay: 0.0,
       team_options: {
         heat_lap_limit: 0,
         heat_time_limit: 0,
@@ -1283,6 +1291,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       auto_start_warmup_time: race.auto_start_warmup_time,
       min_lap_time: race.min_lap_time,
       drift_time: race.drift_time,
+      start_time: race.start_time,
+      restart_time: race.restart_time,
+      start_delay: race.start_delay,
+      restart_delay: race.restart_delay,
       team_options: race.team_options
         ? {
             heat_lap_limit: race.team_options.heat_lap_limit,

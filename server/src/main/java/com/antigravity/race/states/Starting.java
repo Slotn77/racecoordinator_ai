@@ -30,15 +30,36 @@ public class Starting implements IRaceState {
     }
     race.setAutoStartFired(true);
 
+    final double startTimeVal =
+        race.hasRacedInCurrentHeat()
+            ? race.getRaceModel().getRestartTime()
+            : race.getRaceModel().getStartTime();
+    final double delayLimitVal =
+        race.hasRacedInCurrentHeat()
+            ? race.getRaceModel().getRestartDelay()
+            : race.getRaceModel().getStartDelay();
+
+    final int randomTicks =
+        delayLimitVal > 0 ? new java.util.Random().nextInt((int) (delayLimitVal * 10)) + 1 : 0;
+
+    System.out.println(
+        "Starting state: startTimeVal="
+            + startTimeVal
+            + ", delayLimitVal="
+            + delayLimitVal
+            + ", randomTicks="
+            + randomTicks);
+
     scheduler = Executors.newScheduledThreadPool(1);
     final Runnable ticker =
         new Runnable() {
-          int countdown = 50; // 5 seconds * 10 (100ms interval)
+          int countdown = (int) (startTimeVal * 10);
+          int remainingRandomTicks = randomTicks;
 
           @Override
           public void run() {
             try {
-              float displayTime = countdown / 10.0f;
+              float displayTime = Math.max(0, countdown) / 10.0f;
 
               RaceTime raceTimeMsg = RaceTime.newBuilder().setTime(displayTime).build();
 
@@ -50,9 +71,11 @@ public class Starting implements IRaceState {
                   getFlagType(race),
                   (double) displayTime);
 
-              countdown--;
-
-              if (countdown < 0) {
+              if (countdown > 0) {
+                countdown--;
+              } else if (remainingRandomTicks > 0) {
+                remainingRandomTicks--;
+              } else {
                 race.changeState(new Racing());
               }
             } catch (Exception e) {

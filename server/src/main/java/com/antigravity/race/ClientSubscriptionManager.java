@@ -59,6 +59,10 @@ public class ClientSubscriptionManager {
     this.databaseContext = databaseContext;
   }
 
+  public synchronized DatabaseContext getDatabaseContext() {
+    return databaseContext;
+  }
+
   public void setShuttingDown(boolean shuttingDown) {
     this.isShuttingDown = shuttingDown;
   }

@@ -1,0 +1,165 @@
+package com.antigravity.race;
+
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
+
+import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.*;
+import com.antigravity.race.states.Racing;
+import com.antigravity.race.states.Starting;
+import com.antigravity.service.ServerConfigService;
+import java.util.Collections;
+import org.bson.types.ObjectId;
+import org.junit.Before;
+import org.junit.Test;
+
+public class StartingStateTest {
+
+  private com.antigravity.race.Race race;
+  private ServerConfigService configService;
+
+  @Before
+  public void setUp() throws Exception {
+    configService = mock(ServerConfigService.class);
+    when(configService.getStartDelay()).thenReturn(0.0);
+    when(configService.getRestartDelay()).thenReturn(0.0);
+
+    DatabaseContext dbContext = mock(DatabaseContext.class);
+    when(dbContext.getConfigService()).thenReturn(configService);
+
+    ClientSubscriptionManager manager = ClientSubscriptionManager.getInstance();
+    manager.setDatabaseContext(dbContext);
+
+    Track mockTrack = mock(Track.class);
+    when(mockTrack.getLanes()).thenReturn(Collections.singletonList(mock(Lane.class)));
+
+    Driver mockDriver = new Driver("Test Driver", "D1", "driver1", new ObjectId());
+    RaceParticipant mockParticipant = mock(RaceParticipant.class);
+    when(mockParticipant.getDriver()).thenReturn(mockDriver);
+    when(mockParticipant.getObjectId()).thenReturn("p1");
+
+    com.antigravity.models.Race raceModel =
+        new com.antigravity.models.Race.Builder().withStartTime(1.0).withRestartTime(2.0).build();
+
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .track(mockTrack)
+            .drivers(Collections.singletonList(mockParticipant))
+            .isDemoMode(true)
+            .build();
+
+    manager.setRace(race);
+  }
+
+  @Test
+  public void testStartingUsesStartTimeForNewHeat() throws Exception {
+    race.setHasRacedInCurrentHeat(false);
+    Starting starting = new Starting();
+
+    // We can't easily "spy" on the ticker since it's an anonymous class inside enter()
+    // but we can verify the state transitions.
+
+    starting.enter(race);
+
+    // Countdown is 1.0s (10 ticks). In each tick (100ms) it decrements.
+    // 1.0s + some buffer.
+
+    // After ~1s, it should transition to Racing
+    long start = System.currentTimeMillis();
+    while (!(race.getState() instanceof Racing) && (System.currentTimeMillis() - start) < 3000) {
+      Thread.sleep(100);
+    }
+
+    assertTrue("Race should be in Racing state after startTime", race.getState() instanceof Racing);
+    long duration = System.currentTimeMillis() - start;
+    assertTrue(
+        "Duration should be around 1000ms, was " + duration, duration >= 900 && duration < 2000);
+  }
+
+  @Test
+  public void testStartingUsesRestartTimeForRestart() throws Exception {
+    race.setHasRacedInCurrentHeat(true);
+    Starting starting = new Starting();
+
+    starting.enter(race);
+
+    // After ~2s, it should transition to Racing
+    long start = System.currentTimeMillis();
+    while (!(race.getState() instanceof Racing) && (System.currentTimeMillis() - start) < 4000) {
+      Thread.sleep(100);
+    }
+
+    assertTrue(
+        "Race should be in Racing state after restartTime", race.getState() instanceof Racing);
+    long duration = System.currentTimeMillis() - start;
+    assertTrue(
+        "Duration should be around 2000ms, was " + duration, duration >= 1900 && duration < 3000);
+  }
+
+  @Test
+  public void testStartingWaitRandomDelay() throws Exception {
+    // Set 1s countdown + 2s random delay in the model
+    com.antigravity.models.Race raceModel =
+        new com.antigravity.models.Race.Builder().withStartTime(1.0).withStartDelay(2.0).build();
+
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .track(race.getTrack())
+            .drivers(race.getDrivers())
+            .isDemoMode(true)
+            .build();
+
+    race.setHasRacedInCurrentHeat(false);
+
+    Starting starting = new Starting();
+    starting.enter(race);
+
+    // Total wait should be between 1.0s and 3.0s (countdown + random delay)
+    long start = System.currentTimeMillis();
+    while (!(race.getState() instanceof Racing) && (System.currentTimeMillis() - start) < 5000) {
+      Thread.sleep(100);
+    }
+
+    assertTrue("Race should be in Racing state", race.getState() instanceof Racing);
+    long duration = System.currentTimeMillis() - start;
+    // startTime is 1.0s. randomDelay is 0.1-2.0s.
+    assertTrue("Duration should be at least 1000ms, was " + duration, duration >= 1000);
+    assertTrue("Duration should be less than 4000ms, was " + duration, duration < 4000);
+  }
+
+  @Test
+  public void testStartingUsesRestartDelayForRestart() throws Exception {
+    // Set 0.5s countdown + 1.5s random restart delay
+    com.antigravity.models.Race raceModel =
+        new com.antigravity.models.Race.Builder()
+            .withRestartTime(0.5)
+            .withRestartDelay(1.5)
+            .build();
+
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .track(race.getTrack())
+            .drivers(race.getDrivers())
+            .isDemoMode(true)
+            .build();
+
+    race.setHasRacedInCurrentHeat(true); // Is a restart
+
+    Starting starting = new Starting();
+    starting.enter(race);
+
+    long start = System.currentTimeMillis();
+    while (!(race.getState() instanceof Racing) && (System.currentTimeMillis() - start) < 5000) {
+      Thread.sleep(100);
+    }
+
+    assertTrue("Race should be in Racing state", race.getState() instanceof Racing);
+    long duration = System.currentTimeMillis() - start;
+    // restartTime is 0.5s. randomDelay is 0.1-1.5s.
+    assertTrue("Duration should be at least 500ms, was " + duration, duration >= 500);
+    assertTrue("Duration should be less than 3000ms, was " + duration, duration < 3000);
+  }
+}

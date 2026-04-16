@@ -5,7 +5,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
@@ -19,6 +22,7 @@ import com.antigravity.race.states.Paused;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import com.antigravity.race.states.Starting;
+import com.antigravity.service.ServerConfigService;
 import com.antigravity.util.CsvExporter;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +38,15 @@ public class RaceStatisticsTest {
 
   @Before
   public void setUp() {
+    ServerConfigService configService = mock(ServerConfigService.class);
+    when(configService.getStartDelay()).thenReturn(0.0);
+    when(configService.getRestartDelay()).thenReturn(0.0);
+
+    DatabaseContext dbContext = mock(DatabaseContext.class);
+    when(dbContext.getConfigService()).thenReturn(configService);
+
+    ClientSubscriptionManager.getInstance().setDatabaseContext(dbContext);
+
     HeatScoring heatScoring =
         new HeatScoring(
             HeatScoring.FinishMethod.Lap,

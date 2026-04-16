@@ -82,6 +82,10 @@ message RaceModel {
   double auto_advance_warmup_time = 12;
   double auto_start_warmup_time = 13;
   double drift_time = 14;
+  double start_time = 15;
+  double restart_time = 16;
+  double start_delay = 17;
+  double restart_delay = 18;
 }
 
 enum FuelUsageType {

@@ -63,6 +63,22 @@ public class Race extends Model {
   @JsonProperty("drift_time")
   private final double driftTime;
 
+  @BsonProperty("start_time")
+  @JsonProperty("start_time")
+  private final double startTime;
+
+  @BsonProperty("restart_time")
+  @JsonProperty("restart_time")
+  private final double restartTime;
+
+  @BsonProperty("start_delay")
+  @JsonProperty("start_delay")
+  private final double startDelay;
+
+  @BsonProperty("restart_delay")
+  @JsonProperty("restart_delay")
+  private final double restartDelay;
+
   @BsonCreator
   @JsonCreator
   public Race(
@@ -86,6 +102,10 @@ public class Race extends Model {
       @BsonProperty("auto_start_warmup_time") @JsonProperty("auto_start_warmup_time")
           Double autoStartWarmupTime,
       @BsonProperty("drift_time") @JsonProperty("drift_time") Double driftTime,
+      @BsonProperty("start_time") @JsonProperty("start_time") Double startTime,
+      @BsonProperty("restart_time") @JsonProperty("restart_time") Double restartTime,
+      @BsonProperty("start_delay") @JsonProperty("start_delay") Double startDelay,
+      @BsonProperty("restart_delay") @JsonProperty("restart_delay") Double restartDelay,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -107,6 +127,10 @@ public class Race extends Model {
     this.autoAdvanceWarmupTime = autoAdvanceWarmupTime != null ? autoAdvanceWarmupTime : 0.0;
     this.autoStartWarmupTime = autoStartWarmupTime != null ? autoStartWarmupTime : 0.0;
     this.driftTime = driftTime != null ? driftTime : 0.5;
+    this.startTime = startTime != null ? startTime : 5.0;
+    this.restartTime = restartTime != null ? restartTime : 5.0;
+    this.startDelay = startDelay != null ? startDelay : 0.0;
+    this.restartDelay = restartDelay != null ? restartDelay : 0.0;
   }
 
   public static class Builder {
@@ -125,6 +149,10 @@ public class Race extends Model {
     private double autoAdvanceWarmupTime = 0.0;
     private double autoStartWarmupTime = 0.0;
     private double driftTime = 0.5;
+    private double startTime = 5.0;
+    private double restartTime = 5.0;
+    private double startDelay = 0.0;
+    private double restartDelay = 0.0;
     private String entityId;
     private ObjectId id;
 
@@ -198,6 +226,26 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withStartTime(double startTime) {
+      this.startTime = startTime;
+      return this;
+    }
+
+    public Builder withRestartTime(double restartTime) {
+      this.restartTime = restartTime;
+      return this;
+    }
+
+    public Builder withStartDelay(double startDelay) {
+      this.startDelay = startDelay;
+      return this;
+    }
+
+    public Builder withRestartDelay(double restartDelay) {
+      this.restartDelay = restartDelay;
+      return this;
+    }
+
     public Builder withEntityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -225,6 +273,10 @@ public class Race extends Model {
           autoAdvanceWarmupTime,
           autoStartWarmupTime,
           driftTime,
+          startTime,
+          restartTime,
+          startDelay,
+          restartDelay,
           entityId,
           id);
     }
@@ -284,5 +336,21 @@ public class Race extends Model {
 
   public double getDriftTime() {
     return driftTime;
+  }
+
+  public double getStartTime() {
+    return startTime;
+  }
+
+  public double getRestartTime() {
+    return restartTime;
+  }
+
+  public double getStartDelay() {
+    return startDelay;
+  }
+
+  public double getRestartDelay() {
+    return restartDelay;
   }
 }
