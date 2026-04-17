@@ -103,6 +103,7 @@ describe("DefaultRacedayComponent", () => {
   let lapsSubject: Subject<com.antigravity.ILap>;
   let raceStateSubject: Subject<com.antigravity.RaceState>;
   let standingsUpdateSubject: Subject<com.antigravity.IStandingsUpdate>;
+  let recordDataSubject: Subject<com.antigravity.IRecordData>;
   let participantsSubject: Subject<any[]>;
 
   beforeEach(async () => {
@@ -117,6 +118,7 @@ describe("DefaultRacedayComponent", () => {
     lapsSubject = mocks.lapsSubject;
     raceStateSubject = mocks.raceStateSubject;
     standingsUpdateSubject = mocks.standingsUpdateSubject;
+    recordDataSubject = mocks.recordDataSubject;
     participantsSubject = mocks.participantsSubject;
 
     mockSettings = createDefaultSettings({
@@ -1367,6 +1369,78 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component.isLanesMenuOpen).toBeFalse();
       expect(component.isDriversStationOpen).toBeFalse();
+    });
+  });
+
+  describe("recordData$ handling", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
+    it("should display record values and holders when provided", () => {
+      const mockRecords: com.antigravity.IRecordData = {
+        heatBestLap: {
+          value: 3.449,
+          holderNickname: "Fart Goblin",
+        },
+        raceBestLap: {
+          value: 3.449,
+          holderNickname: "Fart Goblin",
+        },
+        overallBestLap: {
+          value: 3.123,
+          holderNickname: "Champion",
+        },
+      };
+
+      recordDataSubject.next(mockRecords);
+
+      expect(component["heatBestTime"]).toBe(3.449);
+      expect(component["heatBestNickname"]).toBe("Fart Goblin");
+      expect(component["currentRaceBestTime"]).toBe(3.449);
+      expect(component["currentRaceBestNickname"]).toBe("Fart Goblin");
+      expect(component["raceRecordLapTime"]).toBe(3.123);
+      expect(component["raceRecordLapNickname"]).toBe("Champion");
+    });
+
+    it("should use placeholders '---' and '--.---' when record value is 0", () => {
+      const mockRecords: com.antigravity.IRecordData = {
+        heatBestLap: {
+          value: 0,
+          holderNickname: "Should Be Ignored",
+        },
+        raceBestLap: {
+          value: 0,
+          holderNickname: "Should Be Ignored",
+        },
+        overallBestLap: {
+          value: 0,
+          holderNickname: "Should Be Ignored",
+        },
+        overallBestScore: {
+          value: 0,
+          holderNickname: "Should Be Ignored",
+        },
+      };
+
+      recordDataSubject.next(mockRecords);
+
+      expect(component["heatBestTime"]).toBe(0);
+      expect(component["heatBestNickname"]).toBe("---");
+      expect(component["currentRaceBestTime"]).toBe(0);
+      expect(component["currentRaceBestNickname"]).toBe("---");
+      expect(component["raceRecordLapTime"]).toBe(0);
+      expect(component["raceRecordLapNickname"]).toBe("---");
+
+      // Verify HTML template would show placeholders (via TS state)
+      // The HTML uses heatBestTime > 0 ? ... : '--.---'
+    });
+
+    it("should handle null record properties gracefully", () => {
+      recordDataSubject.next({});
+
+      expect(component["heatBestNickname"]).toBe("---");
+      expect(component["heatBestTime"]).toBe(0);
     });
   });
 });

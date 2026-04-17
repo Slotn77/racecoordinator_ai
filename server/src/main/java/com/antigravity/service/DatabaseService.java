@@ -34,6 +34,13 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 public class DatabaseService {
+  private static final DatabaseService instance = new DatabaseService();
+
+  public static DatabaseService getInstance() {
+    return instance;
+  }
+
+  private DatabaseService() {}
 
   public void resetToFactory(DatabaseContext context, MongoDatabase database) {
     System.out.println("Resetting database to factory settings...");
@@ -422,11 +429,12 @@ public class DatabaseService {
       MongoDatabase database, com.antigravity.race.Race runtimeRace) {
     if (runtimeRace == null) return;
     try {
+      String raceId = runtimeRace.getRaceModel().getEntityId();
       MongoCollection<GlobalStatistics> statsCollection =
           database.getCollection("global_statistics", GlobalStatistics.class);
-      GlobalStatistics stats = statsCollection.find(Filters.eq("singleton_id", "global")).first();
+      GlobalStatistics stats = statsCollection.find(Filters.eq("race_entity_id", raceId)).first();
       if (stats == null) {
-        stats = new GlobalStatistics();
+        stats = new GlobalStatistics(raceId);
         statsCollection.insertOne(stats);
       }
 
@@ -436,36 +444,64 @@ public class DatabaseService {
         stats.addRaceTimeMs(runtimeRace.getStatistics().getDurationMillis());
       }
 
+      long now = System.currentTimeMillis();
       int totalLaps = 0;
       for (RaceParticipant p : runtimeRace.getDrivers()) {
         totalLaps += p.getTotalLaps();
         double bestLap = p.getBestLapTime();
-        if (bestLap > 0 && bestLap < stats.getFastestLapTime()) {
+        if (bestLap > 0
+            && (stats.getFastestLapTime() == 0 || bestLap < stats.getFastestLapTime())) {
           stats.setFastestLapTime(bestLap);
+          stats.setFastestLapDate(now);
           if (p.getDriver() != null) {
             stats.setFastestLapDriverName(p.getDriver().getName());
+            stats.setFastestLapDriverNickname(p.getDriver().getNickname());
           }
           if (runtimeRace.getTrack() != null) {
             stats.setFastestLapTrackName(runtimeRace.getTrack().getName());
           }
         }
+
+        double score = p.getRankValue();
+        if (score > stats.getHighestLapCount()) {
+          stats.setHighestLapCount(score);
+          stats.setHighestLapCountDate(now);
+          if (p.getDriver() != null) {
+            String name = p.getDriver().getName();
+            String nickname = p.getDriver().getNickname();
+
+            if (p.isTeamParticipant() && p.getTeam() != null) {
+              name = p.getTeam().getName();
+              nickname = name;
+            }
+
+            stats.setHighestLapCountHolderName(name);
+            stats.setHighestLapCountHolderNickname(nickname);
+          }
+          if (runtimeRace.getTrack() != null) {
+            stats.setHighestLapCountTrackName(runtimeRace.getTrack().getName());
+          }
+        }
       }
       stats.addLaps(totalLaps);
 
-      statsCollection.replaceOne(Filters.eq("singleton_id", "global"), stats);
-      System.out.println("Global statistics updated.");
+      statsCollection.replaceOne(
+          Filters.eq("race_entity_id", raceId), stats, new ReplaceOptions().upsert(true));
+      System.out.println("Race statistics updated for race: " + raceId);
     } catch (Exception e) {
       System.err.println("Failed to update global statistics: " + e.getMessage());
       e.printStackTrace();
     }
   }
 
-  public GlobalStatistics getGlobalStatistics(MongoDatabase database) {
+  public GlobalStatistics getGlobalStatistics(MongoDatabase database, String raceEntityId) {
+    if (raceEntityId == null) return new GlobalStatistics();
     MongoCollection<GlobalStatistics> statsCollection =
         database.getCollection("global_statistics", GlobalStatistics.class);
-    GlobalStatistics stats = statsCollection.find(Filters.eq("singleton_id", "global")).first();
+    GlobalStatistics stats =
+        statsCollection.find(Filters.eq("race_entity_id", raceEntityId)).first();
     if (stats == null) {
-      return new GlobalStatistics();
+      return new GlobalStatistics(raceEntityId);
     }
     return stats;
   }

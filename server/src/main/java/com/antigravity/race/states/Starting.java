@@ -139,8 +139,9 @@ public class Starting implements IRaceState {
   }
 
   @Override
-  public void onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
+  public boolean onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
     // Not while starting
+    return false;
   }
 
   @Override

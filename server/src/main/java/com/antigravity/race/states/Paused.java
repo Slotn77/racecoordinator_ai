@@ -66,7 +66,7 @@ public class Paused implements IRaceState {
   }
 
   @Override
-  public void onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
+  public boolean onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
     if (race != null && race.getRaceModel() != null) {
       double driftTime = race.getRaceModel().getDriftTime();
       if (driftTime > 0) {
@@ -78,7 +78,7 @@ public class Paused implements IRaceState {
                   + "ms, Drift: "
                   + (driftTime * 1000)
                   + "ms");
-          handleLap(race, lane, lapTime, interfaceId, true);
+          return handleLap(race, lane, lapTime, interfaceId, true);
         } else {
           System.out.println(
               "Paused: Drift time expired. Lap ignored. Elapsed: "
@@ -89,6 +89,7 @@ public class Paused implements IRaceState {
         }
       }
     }
+    return false;
   }
 
   @Override

@@ -50,7 +50,7 @@ public class RaceStatisticsTest {
     HeatScoring heatScoring =
         new HeatScoring(
             HeatScoring.FinishMethod.Lap,
-            1L,
+            10L,
             HeatScoring.HeatRanking.LAP_COUNT,
             HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
             HeatScoring.AllowFinish.None);
@@ -280,5 +280,52 @@ public class RaceStatisticsTest {
     for (Heat heat : restoredRace.getHeats()) {
       assertNotNull(heat.getStatistics());
     }
+  }
+
+  @Test
+  public void testOnLapRecordTimingConsistency() {
+    // 1. Setup participant with a reaction time
+    // We MUST get the participant from the race object, as the builder clones the list
+    RaceParticipant p = race.getDrivers().get(0);
+    // Reaction time is stored in DriverHeatData
+    DriverHeatData dhd = race.getCurrentHeat().getDrivers().get(0);
+    dhd.setReactionTime(0.5); // 500ms reaction time
+
+    // 2. Start Race
+    race.changeState(new Racing());
+
+    // 3. Trigger raw hardware lap of 2.0s
+    // effectiveLapTime should be 2.5s (2.0 + 0.5)
+    race.onLap(0, 2.0, 0, 0);
+
+    // 4. Verify RecordData reflects effective time
+    assertEquals("Lap count should be 1", 1, p.getTotalLaps());
+    assertEquals("Lane Best Lap should be 2.5", 2.5, p.getBestLapTime(), 0.001);
+
+    com.antigravity.proto.RecordData records = race.getRecordData();
+    assertEquals(
+        "Race Best Lap record should be 2.5", 2.5, records.getRaceBestLap().getValue(), 0.001);
+    assertEquals(
+        "Heat Best Lap record should be 2.5", 2.5, records.getHeatBestLap().getValue(), 0.001);
+
+    // 5. Subsequent lap should NOT add reaction time again
+    race.onLap(0, 1.8, 0, 0); // Raw 1.8s
+
+    // Explicitly update overall standings before final assertion
+    race.updateAndBroadcastOverallStandings();
+
+    // FIND the driver by name to be 100% sure we have the right reference after sorting
+    p =
+        race.getDrivers().stream()
+            .filter(d -> d.getDriver() != null && "Driver 1".equals(d.getDriver().getName()))
+            .findFirst()
+            .orElse(p);
+
+    assertEquals("Lap count should be 2", 2, p.getTotalLaps());
+    assertEquals("Lane Best Lap should be 1.8", 1.8, p.getBestLapTime(), 0.001);
+
+    records = race.getRecordData();
+    assertEquals(
+        "Race Best Lap record should be 1.8", 1.8, records.getRaceBestLap().getValue(), 0.001);
   }
 }

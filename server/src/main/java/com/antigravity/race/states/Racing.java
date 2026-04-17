@@ -318,8 +318,8 @@ public class Racing implements IRaceState {
   }
 
   @Override
-  public void onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
-    handleLap(race, lane, lapTime, interfaceId, false);
+  public boolean onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
+    return handleLap(race, lane, lapTime, interfaceId, false);
   }
 
   @Override

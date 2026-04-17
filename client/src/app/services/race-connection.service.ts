@@ -60,6 +60,10 @@ export class RaceConnectionService implements OnDestroy {
   );
   raceFlag$ = this.raceFlagSubject.asObservable();
 
+  private recordDataSubject =
+    new BehaviorSubject<com.antigravity.IRecordData | null>(null);
+  recordData$ = this.recordDataSubject.asObservable();
+
   // Watchdog variables
   private noStatusWatchdog: any;
   private disconnectedTimeout: any;
@@ -248,6 +252,12 @@ export class RaceConnectionService implements OnDestroy {
       }),
     );
 
+    this.subscriptions.push(
+      this.dataService.getRecordData().subscribe((records) => {
+        this.recordDataSubject.next(records);
+      }),
+    );
+
     this.dataService.connectToInterfaceDataSocket();
     this.resetWatchdog();
   }
@@ -325,6 +335,10 @@ export class RaceConnectionService implements OnDestroy {
       const currentHeat = HeatConverter.fromProto(update.currentHeat);
       this.raceService.setCurrentHeat(currentHeat);
       raceDataChanged = true;
+    }
+
+    if (update.recordData) {
+      this.recordDataSubject.next(update.recordData);
     }
 
     // Gaps updating after race update might be needed, or it's handled by StandingsUpdate

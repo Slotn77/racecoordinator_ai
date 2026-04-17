@@ -30,26 +30,26 @@ public class OverallStandings {
     // 1. Strings heats to drivers
     for (Heat heat : heats) {
       for (DriverHeatData dhd : heat.getDrivers()) {
-        driverHeats.computeIfAbsent(dhd.getDriver().getObjectId(), k -> new ArrayList<>()).add(dhd);
+        driverHeats.computeIfAbsent(dhd.getDriver().getStableId(), k -> new ArrayList<>()).add(dhd);
       }
     }
 
     // 2. Aggregate stats for each driver
     for (RaceParticipant driver : drivers) {
       List<DriverHeatData> myHeats =
-          driverHeats.getOrDefault(driver.getObjectId(), new ArrayList<>());
+          driverHeats.getOrDefault(driver.getStableId(), new ArrayList<>());
       List<DriverHeatData> scoringHeats = getScoringHeats(myHeats);
 
       int totalLaps = 0;
       double totalTime = 0.0;
-      double bestLap = 0.0;
+      double bestLap = Double.MAX_VALUE;
 
       List<Double> allScoringLaps = new ArrayList<>();
       for (DriverHeatData dhd : scoringHeats) {
         totalLaps += dhd.getLapCount();
         totalTime += dhd.getTotalTime();
 
-        if (dhd.getBestLapTime() > 0 && (bestLap == 0 || dhd.getBestLapTime() < bestLap)) {
+        if (dhd.getBestLapTime() > 0 && dhd.getBestLapTime() < bestLap) {
           bestLap = dhd.getBestLapTime();
         }
         for (DriverHeatData.LapData lap : dhd.getLaps()) {
@@ -58,6 +58,9 @@ public class OverallStandings {
       }
 
       // Updating driver stats
+      if (bestLap == Double.MAX_VALUE) {
+        bestLap = 0.0;
+      }
       driver.setTotalLaps(totalLaps);
       driver.setTotalTime(totalTime);
       driver.setBestLapTime(bestLap);

@@ -215,6 +215,54 @@ public class DatabaseContextTest {
   }
 
   @Test
+  public void testCopyDatabaseExclusions() throws IOException {
+    String sourceDbName = "TEST_DB_EXCL_SRC";
+    String targetDbName = "TEST_DB_EXCL_TARGET";
+    databaseContext.createDatabase(sourceDbName);
+    databaseContext.switchDatabase(sourceDbName);
+
+    // Add data to collections that SHOULD be excluded
+    databaseContext
+        .getDatabase()
+        .getCollection("global_statistics")
+        .insertOne(new Document("race_entity_id", "some_id"));
+    databaseContext
+        .getDatabase()
+        .getCollection("race_history")
+        .insertOne(new Document("model", new Document("name", "historical_race")));
+    databaseContext
+        .getDatabase()
+        .getCollection("saved_races")
+        .insertOne(new Document("name", "auto_save"));
+
+    // Add data to a collection that SHOULD be copied
+    databaseContext
+        .getDatabase()
+        .getCollection("drivers")
+        .insertOne(new Document("name", "Test Driver"));
+
+    databaseContext.copyDatabase(sourceDbName, targetDbName);
+
+    // Switch to target and verify
+    databaseContext.switchDatabase(targetDbName);
+    assertTrue(
+        "Drivers should be copied",
+        databaseContext.getDatabase().getCollection("drivers").countDocuments() > 0);
+    assertEquals(
+        "global_statistics should be empty",
+        0,
+        databaseContext.getDatabase().getCollection("global_statistics").countDocuments());
+    assertEquals(
+        "race_history should be empty",
+        0,
+        databaseContext.getDatabase().getCollection("race_history").countDocuments());
+    assertEquals(
+        "saved_races should be empty",
+        0,
+        databaseContext.getDatabase().getCollection("saved_races").countDocuments());
+  }
+
+  @Test
   public void testDeleteDatabaseWithAssets() throws IOException {
     String dbName = "TEST_DB_DEL";
     databaseContext.createDatabase(dbName);

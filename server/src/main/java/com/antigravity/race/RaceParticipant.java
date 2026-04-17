@@ -41,6 +41,8 @@ public class RaceParticipant extends ServerToClientObject {
     this.isTeamParticipant = true;
     // Create synthetic driver for the team
     // Prefix ID with t_ to avoid clashing with real driver IDs in the client cache
+    // TODO(aufderheide): Replace this with a builder. There are too many parameters
+    // for this to be readable.
     this.driver =
         new Driver(
             team.getName(),
@@ -176,5 +178,16 @@ public class RaceParticipant extends ServerToClientObject {
 
   public void setFuelLevel(double fuelLevel) {
     this.fuelLevel = fuelLevel;
+  }
+
+  public String getStableId() {
+    if (isTeamParticipant && team != null) {
+      return "t:" + team.getEntityId();
+    }
+    if (driver != null) {
+      return "d:" + driver.getEntityId();
+    }
+    // TODO(aufderheide): Is this an error case? What happens if we fallback here?
+    return getObjectId(); // Fallback to objectId if both are missing
   }
 }

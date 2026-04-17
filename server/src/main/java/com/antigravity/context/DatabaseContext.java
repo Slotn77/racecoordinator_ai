@@ -105,7 +105,10 @@ public class DatabaseContext {
     target.drop();
 
     for (String collectionName : source.listCollectionNames()) {
-      if (collectionName.startsWith("system.")) {
+      if (collectionName.startsWith("system.")
+          || collectionName.equals("global_statistics")
+          || collectionName.equals("race_history")
+          || collectionName.equals("saved_races")) {
         continue;
       }
 
@@ -191,7 +194,7 @@ public class DatabaseContext {
   public void resetDatabaseToFactory(String dbName) {
     MongoDatabase db = mongoClient.getDatabase(dbName);
     new AssetService(db, dataRoot + dbName + "/assets").resetAssets();
-    new DatabaseService().resetToFactory(this, db);
+    DatabaseService.getInstance().resetToFactory(this, db);
   }
 
   public DatabaseStats getDatabaseStats(String dbName) {

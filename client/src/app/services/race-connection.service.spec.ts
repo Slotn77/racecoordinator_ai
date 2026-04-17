@@ -36,6 +36,7 @@ describe("RaceConnectionService", () => {
       "connectToInterfaceDataSocket",
       "disconnectFromInterfaceDataSocket",
       "updateRaceSubscription",
+      "getRecordData",
     ]);
 
     mockDataService.getInterfaceEvents.and.returnValue(
@@ -58,6 +59,7 @@ describe("RaceConnectionService", () => {
     mockDataService.getRaceFlag.and.returnValue(
       of(com.antigravity.RaceFlag.RED),
     );
+    mockDataService.getRecordData.and.returnValue(of(null));
 
     mockRaceService = jasmine.createSpyObj("RaceService", [
       "getRace",

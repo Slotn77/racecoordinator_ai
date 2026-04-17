@@ -1,11 +1,13 @@
 package com.antigravity.race;
 
+import com.antigravity.context.DatabaseContext;
 import com.antigravity.converters.HeatConverter;
 import com.antigravity.converters.RaceConverter;
 import com.antigravity.converters.RaceParticipantConverter;
 import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.Driver;
 import com.antigravity.models.FuelOptions;
+import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.Track;
 import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.InterfaceEvent;
@@ -14,9 +16,10 @@ import com.antigravity.proto.InterfaceStatusEvent;
 import com.antigravity.proto.OverallStandingsUpdate;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
-import com.antigravity.proto.RaceModel;
 import com.antigravity.proto.RaceState;
 import com.antigravity.proto.RaceTime;
+import com.antigravity.proto.RecordData;
+import com.antigravity.proto.RecordEntry;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.ProtocolListener;
@@ -30,12 +33,12 @@ import com.antigravity.race.states.Paused;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import com.antigravity.race.states.Starting;
+import com.antigravity.service.DatabaseService;
 import com.google.protobuf.GeneratedMessageV3;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class Race implements ProtocolListener {
 
@@ -53,6 +56,7 @@ public class Race implements ProtocolListener {
 
   private ProtocolDelegate protocols;
   private boolean isDemoMode;
+  private DatabaseContext databaseContext;
 
   // Dynamic race data
   private IRaceState state;
@@ -68,12 +72,33 @@ public class Race implements ProtocolListener {
   private HeatExecutionManager executionManager;
   private RaceStatistics statistics;
 
+  // Record tracking
+  private double overallBestLap = Double.MAX_VALUE;
+  private String overallBestLapHolder = "";
+  private String overallBestLapHolderNickname = "";
+  private long overallBestLapDate = 0;
+
+  private double overallBestScore = 0;
+  private String overallBestScoreHolder = "";
+  private String overallBestScoreHolderNickname = "";
+  private long overallBestScoreDate = 0;
+
+  private double raceBestLap = Double.MAX_VALUE;
+  private String raceBestLapHolder = "";
+  private String raceBestLapHolderNickname = "";
+
+  private double heatBestLap = Double.MAX_VALUE;
+  private String heatBestLapHolder = "";
+  private String heatBestLapHolderNickname = "";
+
   private Race(Builder builder) {
     this.model = builder.model;
     this.track = builder.track;
     this.drivers = builder.drivers;
+    this.databaseContext = builder.databaseContext;
 
-    // If not a restored race, ensure drivers are populated correctly and heats are built
+    // If not a restored race, ensure drivers are populated correctly and heats are
+    // built
     if (builder.heats == null) {
       for (int i = 0; i < this.drivers.size(); i++) {
         this.drivers.get(i).setSeed(i + 1);
@@ -84,6 +109,7 @@ public class Race implements ProtocolListener {
       }
       this.heats = HeatBuilder.buildHeats(this, this.drivers);
       this.currentHeat = this.heats.get(0);
+      resetHeatRecords();
     } else {
       this.heats = builder.heats;
       if (builder.currentHeatIndex >= 0 && builder.currentHeatIndex < this.heats.size()) {
@@ -127,6 +153,49 @@ public class Race implements ProtocolListener {
     if (builder.heats == null) {
       initializeFuelLevels();
     }
+
+    loadGlobalRecords();
+    broadcastRecords();
+
+    // Ensure initial ranks are calculated and broadcasted immediately
+    updateAndBroadcastOverallStandings();
+  }
+
+  private void loadGlobalRecords() {
+    if (databaseContext == null) {
+      System.err.println("DatabaseContext is missing - skipping global record loading.");
+      return;
+    }
+
+    try {
+      DatabaseService dbService = DatabaseService.getInstance();
+      GlobalStatistics stats =
+          dbService.getGlobalStatistics(
+              databaseContext.getDatabase(), getRaceModel().getEntityId());
+      if (stats != null) {
+        this.overallBestLap = stats.getFastestLapTime();
+        this.overallBestLapHolder = stats.getFastestLapDriverName();
+        this.overallBestLapHolderNickname = stats.getFastestLapDriverNickname();
+        this.overallBestLapDate = stats.getFastestLapDate();
+        this.overallBestScore = stats.getHighestLapCount();
+        this.overallBestScoreHolder = stats.getHighestLapCountHolderName();
+        this.overallBestScoreHolderNickname = stats.getHighestLapCountHolderNickname();
+        this.overallBestScoreDate = stats.getHighestLapCountDate();
+
+        System.out.println(
+            "Global records loaded: bestLap="
+                + this.overallBestLap
+                + ", bestScore="
+                + this.overallBestScore
+                + " for "
+                + this.overallBestScoreHolderNickname);
+      } else {
+        System.out.println("No global records found in database.");
+      }
+    } catch (Exception e) {
+      System.err.println("Failed to load global records: " + e.getMessage());
+      e.printStackTrace();
+    }
   }
 
   public static class Builder {
@@ -134,6 +203,7 @@ public class Race implements ProtocolListener {
     private List<RaceParticipant> drivers;
     private Track track;
     private boolean isDemoMode = false;
+    private DatabaseContext databaseContext;
     private List<Heat> heats;
     private int currentHeatIndex = 0;
     private float accumulatedRaceTime = 0f;
@@ -160,6 +230,11 @@ public class Race implements ProtocolListener {
 
     public Builder isDemoMode(boolean isDemoMode) {
       this.isDemoMode = isDemoMode;
+      return this;
+    }
+
+    public Builder databaseContext(DatabaseContext databaseContext) {
+      this.databaseContext = databaseContext;
       return this;
     }
 
@@ -329,6 +404,8 @@ public class Race implements ProtocolListener {
 
   public void setCurrentHeat(Heat currentHeat) {
     this.currentHeat = currentHeat;
+    resetHeatRecords();
+    broadcastRecords();
   }
 
   public IRaceState getState() {
@@ -349,6 +426,12 @@ public class Race implements ProtocolListener {
 
   public void resetRaceTime() {
     accumulatedRaceTime = 0.0f;
+  }
+
+  public void resetHeatRecords() {
+    this.heatBestLap = Double.MAX_VALUE;
+    this.heatBestLapHolder = "";
+    this.heatBestLapHolderNickname = "";
   }
 
   public boolean hasRacedInCurrentHeat() {
@@ -652,6 +735,10 @@ public class Race implements ProtocolListener {
 
       broadcast(RaceData.newBuilder().setRace(raceProto).build());
 
+      // Reset heat records and broadcast them
+      resetHeatRecords();
+      broadcastRecords();
+
       // Also broadcast time reset
       broadcastTime();
     }
@@ -683,9 +770,149 @@ public class Race implements ProtocolListener {
 
   @Override
   public void onLap(int lane, double lapTime, int interfaceId, int interfaceIndex) {
-    state.onLap(lane, lapTime, interfaceId, false);
-    // Optionally we could broadcast an InterfaceEvent here too if the UI needs it
-    // but Racing state usually handles Lap updates via overall snapshot.
+    try {
+      if (state.onLap(lane, lapTime, interfaceId, false)) {
+        // Calculate effective lap time (including reaction time for first lap)
+        // to match HeatExecutionManager calculation
+        double effectiveLapTime = lapTime;
+        DriverHeatData dhd = currentHeat.getDrivers().get(lane);
+        if (dhd != null && dhd.getLapCount() == 1) { // dhd.addLap was already called in state.onLap
+          // At this point, dhd.getLapCount() is already 1 because handleLapTime called addLap()
+          // We need to look at the last lap time added to the driver data
+          List<DriverHeatData.LapData> laps = dhd.getLaps();
+          if (!laps.isEmpty()) {
+            effectiveLapTime = laps.get(laps.size() - 1).getLapTime();
+          }
+        }
+
+        // Update records with the same effective time shown in lane data
+        updateRecords(lane, effectiveLapTime);
+      }
+    } catch (Exception e) {
+      System.err.println("Error in onLap for lane " + lane + ": " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+
+  private void updateRecords(int lane, double lapTime) {
+    if (lapTime <= 0) return;
+
+    DriverHeatData dhd = currentHeat.getDrivers().get(lane);
+    if (dhd == null) return;
+
+    String driverName = "Driver";
+    String driverNickname = "Driver";
+
+    Driver actualDriver = dhd.getActualDriver();
+    if (actualDriver == Driver.EMPTY_DRIVER) return;
+
+    if (actualDriver != null) {
+      driverName = actualDriver.getName();
+      driverNickname = actualDriver.getNickname();
+      if (driverNickname == null || driverNickname.isEmpty()) {
+        driverNickname = driverName;
+      }
+    } else if (dhd.getDriver() != null) {
+      // Fallback to participant level driver/name
+      driverName = dhd.getDriver().getDriver().getName();
+      driverNickname = dhd.getDriver().getDriver().getNickname();
+      if (driverNickname == null || driverNickname.isEmpty()) {
+        driverNickname = driverName;
+      }
+    }
+
+    String lapHolderName = driverName;
+    String lapHolderNickname = driverNickname;
+    String scoreHolderName = driverName;
+    String scoreHolderNickname = driverNickname;
+
+    RaceParticipant participant = dhd.getDriver();
+    if (participant.isTeamParticipant() && participant.getTeam() != null) {
+      scoreHolderName = participant.getTeam().getName();
+      // For teams, we use the team name for both name and nickname for consistency
+      scoreHolderNickname = scoreHolderName;
+    }
+
+    boolean changed = false;
+
+    // Heat Best Lap
+    if (lapTime < heatBestLap) {
+      heatBestLap = lapTime;
+      heatBestLapHolder = lapHolderName;
+      heatBestLapHolderNickname = lapHolderNickname;
+      changed = true;
+    }
+
+    // Race Best Lap
+    if (lapTime < raceBestLap) {
+      raceBestLap = lapTime;
+      raceBestLapHolder = lapHolderName;
+      raceBestLapHolderNickname = lapHolderNickname;
+      changed = true;
+    }
+
+    // Overall Best Lap
+    if (overallBestLap == 0 || lapTime < overallBestLap) {
+      overallBestLap = lapTime;
+      overallBestLapHolder = lapHolderName;
+      overallBestLapHolderNickname = lapHolderNickname;
+      overallBestLapDate = System.currentTimeMillis();
+      changed = true;
+    }
+
+    // Overall Best Score (Highest Lap Count)
+    double currentScore = participant.getRankValue();
+    if (currentScore > overallBestScore) {
+      overallBestScore = currentScore;
+      overallBestScoreHolder = scoreHolderName;
+      overallBestScoreHolderNickname = scoreHolderNickname;
+      overallBestScoreDate = System.currentTimeMillis();
+      changed = true;
+    }
+
+    if (changed) {
+      broadcastRecords();
+    }
+  }
+
+  public RecordData getRecordData() {
+    return RecordData.newBuilder()
+        .setOverallBestLap(
+            RecordEntry.newBuilder()
+                .setValue(overallBestLap == Double.MAX_VALUE ? 0 : overallBestLap)
+                .setHolderName(overallBestLapHolder != null ? overallBestLapHolder : "")
+                .setHolderNickname(
+                    overallBestLapHolderNickname != null ? overallBestLapHolderNickname : "")
+                .setDate(overallBestLapDate)
+                .build())
+        .setOverallBestScore(
+            RecordEntry.newBuilder()
+                .setValue(overallBestScore)
+                .setHolderName(overallBestScoreHolder != null ? overallBestScoreHolder : "")
+                .setHolderNickname(
+                    overallBestScoreHolderNickname != null ? overallBestScoreHolderNickname : "")
+                .setDate(overallBestScoreDate)
+                .build())
+        .setRaceBestLap(
+            RecordEntry.newBuilder()
+                .setValue(raceBestLap == Double.MAX_VALUE ? 0 : raceBestLap)
+                .setHolderName(raceBestLapHolder != null ? raceBestLapHolder : "")
+                .setHolderNickname(
+                    raceBestLapHolderNickname != null ? raceBestLapHolderNickname : "")
+                .build())
+        .setHeatBestLap(
+            RecordEntry.newBuilder()
+                .setValue(heatBestLap == Double.MAX_VALUE ? 0 : heatBestLap)
+                .setHolderName(heatBestLapHolder != null ? heatBestLapHolder : "")
+                .setHolderNickname(
+                    heatBestLapHolderNickname != null ? heatBestLapHolderNickname : "")
+                .build())
+        .build();
+  }
+
+  public void broadcastRecords() {
+    RecordData recordData = getRecordData();
+    broadcast(RaceData.newBuilder().setRecordData(recordData).build());
   }
 
   @Override
@@ -742,31 +969,24 @@ public class Race implements ProtocolListener {
   // the race object while we're creating the snapshot.
   public synchronized RaceData createSnapshot() {
     Set<String> sentObjectIds = new HashSet<>();
-    RaceModel raceProto = RaceConverter.toProto(model, track, sentObjectIds);
+    com.antigravity.proto.Race raceUpdate = RaceConverter.toProto(this, sentObjectIds);
 
-    List<com.antigravity.proto.RaceParticipant> driverModels = new ArrayList<>();
-    for (RaceParticipant participant : drivers) {
-      if (participant.getDriver() != Driver.EMPTY_DRIVER) {
-        driverModels.add(RaceParticipantConverter.toProto(participant, sentObjectIds));
-      }
-    }
-
-    List<com.antigravity.proto.Heat> heatProtos =
-        heats.stream()
-            .map(h -> HeatConverter.toProto(h, sentObjectIds))
-            .collect(Collectors.toList());
-
-    com.antigravity.proto.Race raceUpdate =
-        com.antigravity.proto.Race.newBuilder()
-            .setRace(raceProto)
-            .addAllDrivers(driverModels)
-            .addAllHeats(heatProtos)
-            .setCurrentHeat(HeatConverter.toProto(currentHeat, sentObjectIds))
+    // Update state and flag correctly from current state
+    raceUpdate =
+        raceUpdate.toBuilder()
             .setState(getProtoState(state))
             .setFlag(state.getFlagType(this))
             .build();
 
-    return RaceData.newBuilder().setRace(raceUpdate).build();
+    RecordData recordData = getRecordData();
+    System.out.println(
+        "Snapshot created with records: overallBestLap="
+            + recordData.getOverallBestLap().getValue()
+            + " ("
+            + recordData.getOverallBestLap().getHolderNickname()
+            + ")");
+
+    return RaceData.newBuilder().setRace(raceUpdate).setRecordData(recordData).build();
   }
 
   public void moveToNextHeat() {

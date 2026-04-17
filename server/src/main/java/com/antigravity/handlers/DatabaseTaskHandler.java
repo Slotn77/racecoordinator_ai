@@ -690,7 +690,7 @@ public class DatabaseTaskHandler {
   }
 
   private void getFactoryTrack(Context ctx) {
-    ctx.json(new DatabaseService().getFactoryTrack());
+    ctx.json(DatabaseService.getInstance().getFactoryTrack());
   }
 
   public void getRaces(Context ctx) {
@@ -951,7 +951,7 @@ public class DatabaseTaskHandler {
 
   private void getRaceHistoryList(Context ctx) {
     try {
-      DatabaseService dbService = new DatabaseService();
+      DatabaseService dbService = DatabaseService.getInstance();
       List<RaceHistoryRecord> history = dbService.getRaceHistory(databaseContext.getDatabase());
       ctx.json(history);
     } catch (Exception e) {
@@ -963,7 +963,7 @@ public class DatabaseTaskHandler {
   private void getRaceHistoryById(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      DatabaseService dbService = new DatabaseService();
+      DatabaseService dbService = DatabaseService.getInstance();
       RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext.getDatabase(), id);
       if (history == null) {
         ctx.status(404).result("Race history not found");
@@ -979,7 +979,7 @@ public class DatabaseTaskHandler {
   private void exportRaceHistoryCsv(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      DatabaseService dbService = new DatabaseService();
+      DatabaseService dbService = DatabaseService.getInstance();
       RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext.getDatabase(), id);
       if (history == null) {
         ctx.status(404).result("Race history not found");
@@ -1014,8 +1014,9 @@ public class DatabaseTaskHandler {
 
   private void getGlobalStatistics(Context ctx) {
     try {
-      DatabaseService dbService = new DatabaseService();
-      GlobalStatistics stats = dbService.getGlobalStatistics(databaseContext.getDatabase());
+      DatabaseService dbService = DatabaseService.getInstance();
+      GlobalStatistics stats =
+          dbService.getGlobalStatistics(databaseContext.getDatabase(), "global");
       ctx.json(stats);
     } catch (Exception e) {
       e.printStackTrace();

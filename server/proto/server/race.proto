@@ -5,6 +5,7 @@ import "client/race_model.proto";
 import "server/heat.proto";
 import "server/race_participant.proto";
 import "server/race_state.proto";
+import "server/record_data.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -17,4 +18,5 @@ message Race {
   Heat current_heat = 4;
   RaceState state = 5;
   RaceFlag flag = 6;
+  RecordData record_data = 7;
 }

@@ -25,12 +25,13 @@ public interface IRaceState {
   void deferHeat(Race race);
 
   // From the protocol listener
-  void onLap(int lane, double lapTime, int interfaceId, boolean isDrift);
+  boolean onLap(int lane, double lapTime, int interfaceId, boolean isDrift);
 
-  default void handleLap(Race race, int lane, double lapTime, int interfaceId, boolean isDrift) {
+  default boolean handleLap(Race race, int lane, double lapTime, int interfaceId, boolean isDrift) {
     if (race != null && race.getHeatExecutionManager() != null) {
-      race.getHeatExecutionManager().onLap(lane, lapTime, interfaceId, false, true, isDrift);
+      return race.getHeatExecutionManager().onLap(lane, lapTime, interfaceId, false, true, isDrift);
     }
+    return false;
   }
 
   void onSegment(int lane, double segmentTime, int interfaceId);

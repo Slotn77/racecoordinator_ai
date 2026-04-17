@@ -157,7 +157,7 @@ public class ClientCommandTaskHandler {
 
   // Visible for testing
   TaskResult handleInitializeRace(InitializeRaceRequest request) throws Exception {
-    DatabaseService dbService = new DatabaseService();
+    DatabaseService dbService = DatabaseService.getInstance();
     Race raceModel = dbService.getRace(databaseContext.getDatabase(), request.getRaceId());
 
     if (raceModel == null) {
@@ -292,13 +292,15 @@ public class ClientCommandTaskHandler {
       }
     }
     Track raceTrack =
-        new DatabaseService().getTrack(databaseContext.getDatabase(), raceModel.getTrackEntityId());
+        DatabaseService.getInstance()
+            .getTrack(databaseContext.getDatabase(), raceModel.getTrackEntityId());
 
     com.antigravity.race.Race runtimeRace =
         new com.antigravity.race.Race.Builder()
             .model(raceModel)
             .drivers(participants)
             .track(raceTrack)
+            .databaseContext(databaseContext)
             .isDemoMode(request.getIsDemoMode())
             .build();
 
@@ -736,7 +738,7 @@ public class ClientCommandTaskHandler {
       List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
       if (lane >= 0 && lane < drivers.size()) {
         DriverHeatData dhd = drivers.get(lane);
-        DatabaseService dbService = new DatabaseService();
+        DatabaseService dbService = DatabaseService.getInstance();
         List<Driver> driversList =
             dbService.getDrivers(
                 databaseContext.getDatabase(), Collections.singletonList(driverId));
@@ -843,7 +845,7 @@ public class ClientCommandTaskHandler {
       String saveName = timestamp + "_" + raceName + ".json";
       saveData.setSaveName(saveName);
 
-      DatabaseService dbService = new DatabaseService();
+      DatabaseService dbService = DatabaseService.getInstance();
       dbService.saveManualRace(databaseContext.getDatabase(), saveData);
 
       ctx.status(200).result("Race saved successfully: " + saveName);
@@ -856,7 +858,7 @@ public class ClientCommandTaskHandler {
 
   void getSavedRaces(Context ctx) {
     try {
-      DatabaseService dbService = new DatabaseService();
+      DatabaseService dbService = DatabaseService.getInstance();
       List<RaceSaveData> saves = dbService.getSavedRaces(databaseContext.getDatabase());
       List<String> files =
           saves.stream().map(RaceSaveData::getSaveName).collect(Collectors.toList());
@@ -871,7 +873,7 @@ public class ClientCommandTaskHandler {
   void deleteSavedRace(Context ctx) {
     try {
       String saveName = ctx.pathParam("filename");
-      DatabaseService dbService = new DatabaseService();
+      DatabaseService dbService = DatabaseService.getInstance();
       boolean deleted = dbService.deleteSavedRace(databaseContext.getDatabase(), saveName);
       if (deleted) {
         ctx.status(200).result("Save deleted: " + saveName);
@@ -894,7 +896,7 @@ public class ClientCommandTaskHandler {
         return;
       }
 
-      DatabaseService dbService = new DatabaseService();
+      DatabaseService dbService = DatabaseService.getInstance();
       RaceSaveData saveData = dbService.getSavedRace(databaseContext.getDatabase(), saveName);
 
       if (saveData == null) {
@@ -905,7 +907,7 @@ public class ClientCommandTaskHandler {
       // Compare Track
       Track savedTrack = saveData.getTrack();
       Track dbTrack =
-          new DatabaseService()
+          DatabaseService.getInstance()
               .getTrack(databaseContext.getDatabase(), saveData.getModel().getTrackEntityId());
 
       Track trackToUse = savedTrack;

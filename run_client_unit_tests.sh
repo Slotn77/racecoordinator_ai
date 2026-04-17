@@ -13,13 +13,20 @@ mkdir -p "$ISOLATED_DIR"
 
 # Sync current source and configuration to isolated directory
 echo "Syncing source to $ISOLATED_DIR..."
+# Ensure the parent directory for server/proto exists for the relative path ../server/proto to work
+mkdir -p "$(dirname "$ISOLATED_DIR")/server"
 # Use rsync for faster incremental syncs (only copies changed files)
 if command -v rsync &>/dev/null; then
   rsync -a --delete src/ "$ISOLATED_DIR/src/"
+  rsync -a --delete "$PROJECT_ROOT/server/proto/" "$(dirname "$ISOLATED_DIR")/server/proto/"
   rsync -a karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
 else
   rm -rf "$ISOLATED_DIR/src"
-  cp -Rf src karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
+  rm -rf "$(dirname "$ISOLATED_DIR")/server/proto"
+  cp -Rf src "$ISOLATED_DIR/"
+  mkdir -p "$(dirname "$ISOLATED_DIR")/server"
+  cp -Rf "$PROJECT_ROOT/server/proto" "$(dirname "$ISOLATED_DIR")/server/"
+  cp -f karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
 fi
 
 cd "$ISOLATED_DIR" || exit

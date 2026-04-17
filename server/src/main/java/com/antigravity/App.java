@@ -293,7 +293,7 @@ public class App {
       MongoDatabase db = databaseContext.getDatabase();
       String dataRoot = databaseContext.getDataRoot();
       new AssetService(db, dataRoot + initialDbName + "/assets").resetAssets();
-      new DatabaseService().resetToFactory(databaseContext, db);
+      DatabaseService.getInstance().resetToFactory(databaseContext, db);
     }
 
     System.out.println("Connected to MongoDB successfully.");

@@ -141,6 +141,7 @@ public class RaceConverter {
                 .map(h -> HeatConverter.toProto(h, sentObjectIds))
                 .collect(Collectors.toList()))
         .setCurrentHeat(HeatConverter.toProto(race.getCurrentHeat(), sentObjectIds))
+        .setRecordData(race.getRecordData())
         .build();
   }
 }

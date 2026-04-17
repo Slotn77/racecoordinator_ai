@@ -129,12 +129,16 @@ public class RaceLifecycleTest {
     // Total lanes is 2, but only 1 real driver was added in setUp.
     // The padding logic in Race constructor adds an EMPTY_DRIVER for the second
     // lane.
-    // createSnapshot() should filter it out.
-
     RaceData snapshot = race.createSnapshot();
 
-    // Verify only the real driver is in the overall drivers list
-    assertEquals(1, snapshot.getRace().getDriversCount());
+    // Verify all lanes are present in the drivers list (for lane sync)
+    assertEquals(2, snapshot.getRace().getDriversCount());
+
+    // But ensure the first one is our real driver
     assertEquals("Test Driver", snapshot.getRace().getDrivers(0).getDriver().getName());
+    // And rank should be 1 for real driver
+    assertEquals(1, snapshot.getRace().getDrivers(0).getRank());
+    // And rank should be 0 for empty driver (index 1)
+    assertEquals(0, snapshot.getRace().getDrivers(1).getRank());
   }
 }

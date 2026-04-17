@@ -69,14 +69,15 @@ export class DefaultRacedayComponent
   protected participants: RaceParticipant[] = [];
 
   // Static record values for now as requested
-  protected raceRecordLapNickname: string = "Placeholder";
-  protected raceRecordLapTime: number = 10.456;
-  protected raceRecordScoreNickname: string = "Placeholder";
-  protected raceRecordScore: number = 150.5;
-  protected currentRaceBestNickname: string = "Placeholder";
-  protected currentRaceBestTime: number = 11.123;
-  protected heatBestNickname: string = "Placeholder";
-  protected heatBestTime: number = 11.456;
+  // Record values
+  protected raceRecordLapNickname: string = "";
+  protected raceRecordLapTime: number = 0;
+  protected raceRecordScoreNickname: string = "";
+  protected raceRecordScore: number = 0;
+  protected currentRaceBestNickname: string = "";
+  protected currentRaceBestTime: number = 0;
+  protected heatBestNickname: string = "";
+  protected heatBestTime: number = 0;
 
   // Stable-order list. DOM order never changes; visual position is from rank.
   protected leaderboardEntries: any[] = [];
@@ -526,11 +527,75 @@ export class DefaultRacedayComponent
     );
 
     this.subscriptions.push(
+      this.raceConnectionService.recordData$.subscribe((records) => {
+        if (records) {
+          if (records.overallBestLap) {
+            const hasLap =
+              records.overallBestLap.value && records.overallBestLap.value > 0;
+            this.raceRecordLapNickname = hasLap
+              ? records.overallBestLap.holderNickname ||
+                records.overallBestLap.holderName ||
+                "---"
+              : "---";
+            this.raceRecordLapTime = records.overallBestLap.value || 0;
+          } else {
+            this.raceRecordLapNickname = "---";
+            this.raceRecordLapTime = 0;
+          }
+          if (records.overallBestScore) {
+            this.raceRecordScoreNickname =
+              records.overallBestScore.holderNickname ||
+              records.overallBestScore.holderName ||
+              "---";
+            this.raceRecordScore = records.overallBestScore.value || 0;
+          } else {
+            this.raceRecordScoreNickname = "---";
+            this.raceRecordScore = 0;
+          }
+          if (records.raceBestLap) {
+            const hasLap =
+              records.raceBestLap.value && records.raceBestLap.value > 0;
+            this.currentRaceBestNickname = hasLap
+              ? records.raceBestLap.holderNickname ||
+                records.raceBestLap.holderName ||
+                "---"
+              : "---";
+            this.currentRaceBestTime = records.raceBestLap.value || 0;
+          } else {
+            this.currentRaceBestNickname = "---";
+            this.currentRaceBestTime = 0;
+          }
+          if (records.heatBestLap) {
+            const hasLap =
+              records.heatBestLap.value && records.heatBestLap.value > 0;
+            this.heatBestNickname = hasLap
+              ? records.heatBestLap.holderNickname ||
+                records.heatBestLap.holderName ||
+                "---"
+              : "---";
+            this.heatBestTime = records.heatBestLap.value || 0;
+          } else {
+            this.heatBestNickname = "---";
+            this.heatBestTime = 0;
+          }
+          if (!this.isDestroyed) {
+            this.cdr.detectChanges();
+          }
+        }
+      }),
+    );
+
+    this.subscriptions.push(
       this.raceConnectionService.raceState$.subscribe((state) => {
         this.raceState = state;
-        if (state === com.antigravity.RaceState.RACING) {
-          this.hasRacedInCurrentHeat = true;
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
         }
+      }),
+    );
+
+    this.subscriptions.push(
+      this.raceConnectionService.raceFlag$.subscribe((flag) => {
         if (!this.isDestroyed) {
           this.cdr.detectChanges();
         }

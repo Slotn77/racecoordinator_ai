@@ -1,4 +1,4 @@
-import { of, Subject } from "rxjs";
+import { BehaviorSubject, of, Subject } from "rxjs";
 
 import { com } from "../../../proto/message";
 import { MOCK_DRIVERS } from "../../../testing/data/drivers_data";
@@ -16,12 +16,31 @@ export function createRacedayMocks(overrides: any = {}) {
     titleKey: string;
     messageKey: string;
   }>();
-  const raceTimeSubject = new Subject<com.antigravity.IRaceTime>();
+  const raceTimeSubject = new BehaviorSubject<com.antigravity.IRaceTime>({
+    time: 0,
+  });
   const lapsSubject = new Subject<com.antigravity.ILap>();
-  const raceStateSubject = new Subject<com.antigravity.RaceState>();
+  const raceStateSubject = new BehaviorSubject<com.antigravity.RaceState>(
+    com.antigravity.RaceState.UNKNOWN_STATE,
+  );
   const standingsUpdateSubject =
     new Subject<com.antigravity.IStandingsUpdate>();
   const participantsSubject = new Subject<any[]>();
+  const recordDataSubject =
+    new BehaviorSubject<com.antigravity.IRecordData | null>(null);
+  const segmentSubject = new BehaviorSubject<com.antigravity.ISegment | null>(
+    null,
+  );
+  const reactionTimeSubject =
+    new BehaviorSubject<com.antigravity.IReactionTime | null>(null);
+  const carDataSubject = new BehaviorSubject<com.antigravity.ICarData>({});
+  const raceFlagSubject = new BehaviorSubject<com.antigravity.RaceFlag>(
+    com.antigravity.RaceFlag.RED,
+  );
+  const interfaceStatusSubject =
+    new BehaviorSubject<com.antigravity.InterfaceStatus>(
+      com.antigravity.InterfaceStatus.DISCONNECTED,
+    );
 
   const mockDataService = jasmine.createSpyObj("DataService", [
     "updateRaceSubscription",
@@ -40,6 +59,7 @@ export function createRacedayMocks(overrides: any = {}) {
     "getCarData",
     "getSegments",
     "getRaceFlag",
+    "getRecordData",
   ]);
   mockDataService.listAssets.and.returnValue(of([]));
   mockDataService.getRaceFlag.and.returnValue(of(com.antigravity.RaceFlag.RED));
@@ -51,6 +71,14 @@ export function createRacedayMocks(overrides: any = {}) {
         bestLapAudio: { url: "", type: "none", text: "" },
       })),
     ),
+  );
+  mockDataService.getReactionTimes.and.returnValue(
+    reactionTimeSubject.asObservable(),
+  );
+  mockDataService.getCarData.and.returnValue(carDataSubject.asObservable());
+  mockDataService.getSegments.and.returnValue(segmentSubject.asObservable());
+  mockDataService.getRecordData.and.returnValue(
+    recordDataSubject.asObservable(),
   );
   mockDataService.serverUrl = "http://localhost";
 
@@ -64,12 +92,16 @@ export function createRacedayMocks(overrides: any = {}) {
     interfaceAlertSubject.asObservable();
   mockRaceConnectionService.raceTime$ = raceTimeSubject.asObservable();
   mockRaceConnectionService.laps$ = lapsSubject.asObservable();
-  mockRaceConnectionService.carData$ = of({});
-  mockRaceConnectionService.segments$ = of(null);
-  mockRaceConnectionService.reactionTimes$ = of(null);
+  mockRaceConnectionService.carData$ = carDataSubject.asObservable();
+  mockRaceConnectionService.segments$ = segmentSubject.asObservable();
+  mockRaceConnectionService.reactionTimes$ = reactionTimeSubject.asObservable();
   mockRaceConnectionService.standingsUpdate$ =
     standingsUpdateSubject.asObservable();
   mockRaceConnectionService.raceState$ = raceStateSubject.asObservable();
+  mockRaceConnectionService.recordData$ = recordDataSubject.asObservable();
+  mockRaceConnectionService.raceFlag$ = raceFlagSubject.asObservable();
+  mockRaceConnectionService.interfaceStatus$ =
+    interfaceStatusSubject.asObservable();
   mockRaceConnectionService.isInterfaceConnected = false;
 
   const mockRaceService = jasmine.createSpyObj("RaceService", [
@@ -125,6 +157,12 @@ export function createRacedayMocks(overrides: any = {}) {
     raceStateSubject,
     standingsUpdateSubject,
     participantsSubject,
+    recordDataSubject,
+    segmentSubject,
+    reactionTimeSubject,
+    carDataSubject,
+    raceFlagSubject,
+    interfaceStatusSubject,
     ...overrides,
   };
 }

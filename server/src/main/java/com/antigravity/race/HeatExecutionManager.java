@@ -56,7 +56,19 @@ public class HeatExecutionManager {
     handleRefueling(delta);
   }
 
-  public void onLap(
+  /**
+   * Processes a sensor hit as a lap.
+   *
+   * @param lane The lane index where the hit occurred.
+   * @param lapTime The time measured for the hit.
+   * @param interfaceId The ID of the interface that recorded the hit.
+   * @param ignoreTeamLimits Whether to skip team lap/time limit checks.
+   * @param checkFinish Whether to check if this lap finishes the heat for the driver.
+   * @param isDrift Whether this is a drift lap (recorded during a pause).
+   * @return {@code true} if the hit was counted as a legitimate lap (eligible for records), {@code
+   *     false} if it was a reaction time hit or was rejected.
+   */
+  public boolean onLap(
       int lane,
       double lapTime,
       int interfaceId,
@@ -68,19 +80,20 @@ public class HeatExecutionManager {
 
     DriverHeatData driverData = validateInput(lane);
     if (driverData == null) {
-      return;
+      return false;
     }
 
     if (!ignoreTeamLimits && checkTeamLimits(driverData, lapTime)) {
       System.out.println("HeatExecutionManager: Lane " + lane + " lap rejected due to team limits");
       handleAnalogFuelLapTime(driverData, lapTime - driverData.getReactionTime(), lane);
-      return;
+      return false;
     }
 
     if (handleReactionTime(driverData, lapTime, lane, interfaceId)) {
-      return;
+      return false;
     }
 
+    boolean lapCounted = false;
     double minLapTime = this.race.getRaceModel().getMinLapTime();
     if (minLapTime > 0) {
       driverData.addPendingLapTime(lapTime);
@@ -94,17 +107,17 @@ public class HeatExecutionManager {
                 + minLapTime
                 + ". Accumulated: "
                 + driverData.getPendingLapTime());
-        return;
+        return false;
       }
       double finalLapTime = driverData.getPendingLapTime();
       driverData.setPendingLapTime(0.0);
-      handleLapTime(driverData, finalLapTime, lane, interfaceId, isDrift);
+      lapCounted = handleLapTime(driverData, finalLapTime, lane, interfaceId, isDrift);
     } else {
-      handleLapTime(driverData, lapTime, lane, interfaceId, isDrift);
+      lapCounted = handleLapTime(driverData, lapTime, lane, interfaceId, isDrift);
     }
 
     // Check for finish condition immediately after a lap if requested
-    if (checkFinish) {
+    if (lapCounted && checkFinish) {
       HeatScoring scoring = race.getRaceModel().getHeatScoring();
       if (scoring != null) {
         AllowFinish allowFinish = scoring.getAllowFinish();
@@ -150,6 +163,7 @@ public class HeatExecutionManager {
         }
       }
     }
+    return lapCounted;
   }
 
   public void onSegment(int lane, double segmentTime, int interfaceId) {
@@ -541,7 +555,7 @@ public class HeatExecutionManager {
     }
   }
 
-  private void handleLapTime(
+  private boolean handleLapTime(
       DriverHeatData driverData, double lapTime, int lane, int interfaceId, boolean isDrift) {
     double effectiveLapTime = lapTime;
     if (driverData.getLapCount() == 0) {
@@ -584,6 +598,7 @@ public class HeatExecutionManager {
 
     updateProtocolStandings();
     this.race.updateAndBroadcastOverallStandings();
+    return true;
   }
 
   private void handleAnalogFuelLapTime(DriverHeatData driverData, double lapTime, int lane) {

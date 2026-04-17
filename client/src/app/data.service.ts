@@ -768,9 +768,10 @@ export class DataService {
   });
   private lapSubject = new Subject<com.antigravity.ILap>();
   private reactionTimeSubject = new Subject<com.antigravity.IReactionTime>();
-  private standingsSubject = new Subject<com.antigravity.IStandingsUpdate>();
+  private standingsSubject =
+    new ReplaySubject<com.antigravity.IStandingsUpdate>(1);
   private overallStandingsSubject =
-    new Subject<com.antigravity.IOverallStandingsUpdate>();
+    new ReplaySubject<com.antigravity.IOverallStandingsUpdate>(1);
   private raceUpdateSubject = new ReplaySubject<com.antigravity.IRace>(1);
   private interfaceEventSubject =
     new Subject<com.antigravity.IInterfaceEvent>();
@@ -782,6 +783,7 @@ export class DataService {
   private flagSubject = new BehaviorSubject<com.antigravity.RaceFlag>(
     com.antigravity.RaceFlag.UNKNOWN_FLAG,
   );
+  private recordDataSubject = new ReplaySubject<com.antigravity.IRecordData>(1);
 
   private shouldSubscribeToRaceData = false;
 
@@ -894,6 +896,9 @@ export class DataService {
           console.log("WS: Received RaceFlag", raceData.flag);
           this.flagSubject.next(raceData.flag);
         }
+        if (raceData.recordData) {
+          this.recordDataSubject.next(raceData.recordData);
+        }
       } catch (e) {
         console.error("Error parsing race data message", e);
       }
@@ -1004,6 +1009,10 @@ export class DataService {
 
   public getSegments(): Observable<com.antigravity.ISegment> {
     return this.segmentSubject.asObservable();
+  }
+
+  public getRecordData(): Observable<com.antigravity.IRecordData> {
+    return this.recordDataSubject.asObservable();
   }
   public changeActualDriver(
     lane: number,

@@ -38,7 +38,7 @@ public class RaceOver implements IRaceState {
 
     // Save history and update stats
     try {
-      DatabaseService dbService = new DatabaseService();
+      DatabaseService dbService = DatabaseService.getInstance();
       com.mongodb.client.MongoDatabase db =
           ClientSubscriptionManager.getInstance().getDatabaseContext().getDatabase();
       dbService.saveRaceHistory(db, race);
@@ -90,7 +90,9 @@ public class RaceOver implements IRaceState {
   }
 
   @Override
-  public void onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {}
+  public boolean onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
+    return false;
+  }
 
   @Override
   public void onSegment(int lane, double segmentTime, int interfaceId) {}

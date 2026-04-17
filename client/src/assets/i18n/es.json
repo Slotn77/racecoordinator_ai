@@ -441,6 +441,10 @@
   "RD_COL_SEGMENT_TIME": "TIEMPO PARCIAL",
   "RD_COL_TEAM": "EQUIPO",
   "RD_DRIFT_LAP": "DRIFT",
+  "RD_RECORD_RACE_LAP": "Record Race Lap",
+  "RD_RECORD_RACE_SCORE": "Record Race Score",
+  "RD_RECORD_CURRENT_RACE_BEST": "Current Race Best Lap",
+  "RD_RECORD_HEAT_BEST": "Heat Best Lap",
 
   "RD_EMPTY_LANE": "Carril Vacío",
   "RD_ERROR_NO_DRIVERS": "Sin pilotos seleccionados.",

@@ -45,6 +45,9 @@ describe("AnalyticsService", () => {
             measurementId: "G-TEST12345",
           }),
         ),
+      getRecordData: jasmine
+        .createSpy("getRecordData")
+        .and.returnValue(of(null)),
     };
 
     // Create a robust mock for Document that catches createElement and appendChild

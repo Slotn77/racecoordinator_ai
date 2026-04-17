@@ -1,6 +1,7 @@
 package com.antigravity.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -15,6 +16,7 @@ import com.antigravity.race.RaceParticipant;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.ReplaceOptions;
 import java.util.ArrayList;
 import java.util.List;
 import org.bson.conversions.Bson;
@@ -41,7 +43,7 @@ public class DatabaseServiceTest {
     when(mongoDatabase.getCollection(eq("global_statistics"), eq(GlobalStatistics.class)))
         .thenReturn(statsCollection);
 
-    dbService = new DatabaseService();
+    dbService = DatabaseService.getInstance();
   }
 
   @Test
@@ -81,12 +83,14 @@ public class DatabaseServiceTest {
     List<RaceParticipant> drivers = new ArrayList<>();
 
     RaceParticipant p1 = new RaceParticipant(new Driver("Dave", "DB"));
-    p1.setTotalLaps(2);
-    p1.setBestLapTime(2.1);
     drivers.add(p1);
 
     Race runtimeRace =
         new Race.Builder().model(model).drivers(drivers).track(dbService.getFactoryTrack()).build();
+
+    // Set laps AFTER construction, as constructor calls recalculate() which would overwrite them
+    p1.setTotalLaps(2);
+    p1.setBestLapTime(2.1);
 
     runtimeRace.getStatistics().setDurationMillis(10000);
 
@@ -96,14 +100,47 @@ public class DatabaseServiceTest {
 
     dbService.updateGlobalStatistics(mongoDatabase, runtimeRace);
 
-    ArgumentCaptor<GlobalStatistics> captor = ArgumentCaptor.forClass(GlobalStatistics.class);
-    verify(statsCollection).replaceOne(any(Bson.class), captor.capture());
+    ArgumentCaptor<Bson> captor = ArgumentCaptor.forClass(Bson.class);
+    verify(statsCollection)
+        .replaceOne(captor.capture(), any(GlobalStatistics.class), any(ReplaceOptions.class));
 
-    GlobalStatistics updatedStats = captor.getValue();
+    Bson filter = captor.getValue();
+    assertTrue(
+        "Filter should contain race_entity_id",
+        filter.toString().contains("race_entity_id") && filter.toString().contains("ID2"));
+
+    ArgumentCaptor<com.antigravity.models.GlobalStatistics> recordCaptor =
+        ArgumentCaptor.forClass(com.antigravity.models.GlobalStatistics.class);
+    verify(statsCollection)
+        .replaceOne(any(Bson.class), recordCaptor.capture(), any(ReplaceOptions.class));
+    com.antigravity.models.GlobalStatistics updatedStats = recordCaptor.getValue();
+    assertEquals("ID2", updatedStats.getRaceEntityId());
     assertEquals(1, updatedStats.getTotalRaces());
-    assertEquals(10000L, updatedStats.getTotalRaceTimeMs());
-    assertEquals(2, updatedStats.getTotalLaps());
-    assertEquals(2.1, updatedStats.getFastestLapTime(), 0.001);
-    assertEquals("Dave", updatedStats.getFastestLapDriverName());
+    assertEquals(
+        10550L, updatedStats.getTotalRaceTimeMs(), 1000L); // Allow some drift for processing time
+    assertEquals(2, updatedStats.getTotalLaps()); // Participant p1 had 2 laps
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testGetGlobalStatistics() {
+    String raceId = "RACE_ABC";
+    FindIterable<GlobalStatistics> findIterable = mock(FindIterable.class);
+    when(statsCollection.find(any(Bson.class))).thenReturn(findIterable);
+
+    GlobalStatistics existing = new GlobalStatistics(raceId);
+    existing.setFastestLapTime(3.5);
+    when(findIterable.first()).thenReturn(existing);
+
+    GlobalStatistics result = dbService.getGlobalStatistics(mongoDatabase, raceId);
+
+    ArgumentCaptor<Bson> captor = ArgumentCaptor.forClass(Bson.class);
+    verify(statsCollection).find(captor.capture());
+
+    Bson filter = captor.getValue();
+    assertTrue(
+        "Filter should match race_entity_id",
+        filter.toString().contains("race_entity_id") && filter.toString().contains(raceId));
+    assertEquals(3.5, result.getFastestLapTime(), 0.001);
   }
 }

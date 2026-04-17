@@ -1,0 +1,20 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "RecordDataProto";
+
+message RecordEntry {
+  double value = 1;
+  string holder_name = 2;
+  int64 date = 3;
+  string holder_nickname = 4;
+}
+
+message RecordData {
+  RecordEntry overall_best_lap = 1;
+  RecordEntry overall_best_score = 2;
+  RecordEntry race_best_lap = 3;
+  RecordEntry heat_best_lap = 4;
+}
