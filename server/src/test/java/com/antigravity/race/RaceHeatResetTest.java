@@ -66,7 +66,7 @@ public class RaceHeatResetTest {
     race.getCurrentHeat().getDrivers().get(0).setReactionTime(0.5);
     race.onLap(0, 1.5, 0, 0); // 1.5 + 0.5 = 2.0
 
-    assertEquals(2.0, race.getRecordData().getHeatBestLap().getValue(), 0.001);
+    assertEquals(2.0, race.getRecordData().getCurrent().getHeatFastestLap().getValue(), 0.001);
 
     // 2. Advance to next heat (simulated by setCurrentHeat)
     // In a real scenario, this is called by Race.nextHeat()
@@ -78,18 +78,18 @@ public class RaceHeatResetTest {
     assertEquals(
         "Heat record should be reset to 0",
         0.0,
-        race.getRecordData().getHeatBestLap().getValue(),
+        race.getRecordData().getCurrent().getHeatFastestLap().getValue(),
         0.001);
     assertEquals(
         "Heat record holder should be empty",
         "",
-        race.getRecordData().getHeatBestLap().getHolderName());
+        race.getRecordData().getCurrent().getHeatFastestLap().getHolderName());
 
     // 4. Verify race record is PRESERVED
     assertEquals(
         "Race record should be preserved",
         2.0,
-        race.getRecordData().getRaceBestLap().getValue(),
+        race.getRecordData().getCurrent().getFastestLap().getValue(),
         0.001);
   }
 }

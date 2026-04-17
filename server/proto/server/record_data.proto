@@ -10,11 +10,25 @@ message RecordEntry {
   string holder_name = 2;
   int64 date = 3;
   string holder_nickname = 4;
+  string holder_team_name = 5;
 }
 
 message RecordData {
-  RecordEntry overall_best_lap = 1;
-  RecordEntry overall_best_score = 2;
-  RecordEntry race_best_lap = 3;
-  RecordEntry heat_best_lap = 4;
+  OverallRecords overall = 1;
+  CurrentRecords current = 2;
+}
+
+message OverallRecords {
+  RecordEntry fastest_lap = 1;
+  RecordEntry highest_score = 2;
+  repeated RecordEntry lane_fastest_lap = 3;
+  repeated RecordEntry lane_highest_score = 4;
+}
+
+message CurrentRecords {
+  RecordEntry fastest_lap = 1;
+  RecordEntry highest_score = 2;
+  RecordEntry heat_fastest_lap = 3;
+  repeated RecordEntry lane_fastest_lap = 4;
+  repeated RecordEntry lane_highest_score = 5;
 }

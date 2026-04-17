@@ -6,6 +6,10 @@ import static org.mockito.Mockito.when;
 
 import com.antigravity.models.Driver;
 import com.antigravity.models.Track;
+import com.antigravity.proto.CurrentRecords;
+import com.antigravity.proto.OverallRecords;
+import com.antigravity.proto.RecordData;
+import com.antigravity.proto.RecordEntry;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.Race;
@@ -59,6 +63,27 @@ public class CsvExporterTest {
     // Setup Current Lap (uncompleted segments)
     when(dhd.getSegments()).thenReturn(Arrays.asList(1.5, 1.8, 2.0));
 
+    // Setup RecordData (nested structure) to avoid NPE
+    RecordEntry emptyEntry =
+        RecordEntry.newBuilder().setValue(0).setHolderName("").setHolderNickname("").build();
+    OverallRecords overall =
+        OverallRecords.newBuilder()
+            .setFastestLap(emptyEntry)
+            .setHighestScore(emptyEntry)
+            .addAllLaneFastestLap(Collections.nCopies(4, emptyEntry))
+            .addAllLaneHighestScore(Collections.nCopies(4, emptyEntry))
+            .build();
+    CurrentRecords current =
+        CurrentRecords.newBuilder()
+            .setFastestLap(emptyEntry)
+            .setHighestScore(emptyEntry)
+            .setHeatFastestLap(emptyEntry)
+            .addAllLaneFastestLap(Collections.nCopies(4, emptyEntry))
+            .addAllLaneHighestScore(Collections.nCopies(4, emptyEntry))
+            .build();
+    RecordData recordData = RecordData.newBuilder().setOverall(overall).setCurrent(current).build();
+    when(mockRace.getRecordData()).thenReturn(recordData);
+
     String csv = CsvExporter.export(mockRace);
 
     assertTrue(
@@ -69,12 +94,12 @@ public class CsvExporterTest {
     // Verify Lap data contains historical segments columns (max is 3 from current)
     assertTrue(
         "Csv output should contain Lap header with Segment titles",
-        csv.contains("#Lap,Driver,Nickname,Lap Time,Drift,Segment 1,Segment 2,Segment 3"));
+        csv.contains("#Lap,Driver,Nickname,Team,Lap Time,Drift,Segment 1,Segment 2,Segment 3"));
     // Verify first lap row data includes its own historical segment values (size 2)
     // and empty padding
     assertTrue(
         "Csv output should render completed lap values with historical segments",
-        csv.contains("1,Driver 1,,5.5,false,1.2,2.3,"));
+        csv.contains("1,Driver 1,,,5.5,false,1.2,2.3,"));
 
     // Verify Current Lap isolated sub-section
     assertTrue(

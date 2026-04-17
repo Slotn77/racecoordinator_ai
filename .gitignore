@@ -77,6 +77,7 @@ client/tmp-karma/
 server/generated-sources/
 server/target_generated/
 server/target_generated_3/
+target_generated_3/
 server/protoc_local.exe
 server/target_test/
 client/.npmrc

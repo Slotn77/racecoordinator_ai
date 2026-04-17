@@ -304,9 +304,15 @@ public class RaceStatisticsTest {
 
     com.antigravity.proto.RecordData records = race.getRecordData();
     assertEquals(
-        "Race Best Lap record should be 2.5", 2.5, records.getRaceBestLap().getValue(), 0.001);
+        "Race Fastest Lap record should be 2.5",
+        2.5,
+        records.getCurrent().getFastestLap().getValue(),
+        0.001);
     assertEquals(
-        "Heat Best Lap record should be 2.5", 2.5, records.getHeatBestLap().getValue(), 0.001);
+        "Heat Fastest Lap record should be 2.5",
+        2.5,
+        records.getCurrent().getHeatFastestLap().getValue(),
+        0.001);
 
     // 5. Subsequent lap should NOT add reaction time again
     race.onLap(0, 1.8, 0, 0); // Raw 1.8s
@@ -326,6 +332,9 @@ public class RaceStatisticsTest {
 
     records = race.getRecordData();
     assertEquals(
-        "Race Best Lap record should be 1.8", 1.8, records.getRaceBestLap().getValue(), 0.001);
+        "Race Fastest Lap record should be 1.8",
+        1.8,
+        records.getCurrent().getFastestLap().getValue(),
+        0.001);
   }
 }

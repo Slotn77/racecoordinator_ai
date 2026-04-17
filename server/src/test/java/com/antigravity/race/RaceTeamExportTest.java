@@ -98,20 +98,23 @@ public class RaceTeamExportTest {
     // 4. Export to CSV
     String csv = CsvExporter.export(race);
 
-    // 5. Verify #Lane row (Show team name and N/A nickname)
-    assertTrue("CSV should contain team name in lane summary", csv.contains("1,The Team,N/A,"));
+    // 5. Verify #Lane row (Show actual driver, nickname, and team name)
+    assertTrue(
+        "CSV should contain team name in lane summary", csv.contains("1,Teammate B,TB,The Team,"));
 
     // 6. Verify #Lap header (Show Driver and Nickname columns)
     assertTrue(
         "CSV should contain updated #Lap header",
-        csv.contains("#Lap,Driver,Nickname,Lap Time,Drift"));
+        csv.contains("#Lap,Driver,Nickname,Team,Lap Time,Drift"));
 
     // 7. Verify Lap 1 (Teammate A)
     assertTrue(
-        "CSV should attribute Lap 1 to Teammate A", csv.contains("1,Teammate A,TA,10.5,false"));
+        "CSV should attribute Lap 1 to Teammate A",
+        csv.contains("1,Teammate A,TA,The Team,10.5,false"));
 
     // 8. Verify Lap 2 (Teammate B)
     assertTrue(
-        "CSV should attribute Lap 2 to Teammate B", csv.contains("2,Teammate B,TB,12.3,false"));
+        "CSV should attribute Lap 2 to Teammate B",
+        csv.contains("2,Teammate B,TB,The Team,12.3,false"));
   }
 }

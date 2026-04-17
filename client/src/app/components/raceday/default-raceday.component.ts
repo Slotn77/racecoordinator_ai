@@ -529,55 +529,63 @@ export class DefaultRacedayComponent
     this.subscriptions.push(
       this.raceConnectionService.recordData$.subscribe((records) => {
         if (records) {
-          if (records.overallBestLap) {
+          const overall = records.overall;
+          const current = records.current;
+
+          if (overall?.fastestLap) {
             const hasLap =
-              records.overallBestLap.value && records.overallBestLap.value > 0;
+              overall.fastestLap.value && overall.fastestLap.value > 0;
             this.raceRecordLapNickname = hasLap
-              ? records.overallBestLap.holderNickname ||
-                records.overallBestLap.holderName ||
+              ? overall.fastestLap.holderNickname ||
+                overall.fastestLap.holderName ||
                 "---"
               : "---";
-            this.raceRecordLapTime = records.overallBestLap.value || 0;
+            this.raceRecordLapTime = overall.fastestLap.value || 0;
           } else {
             this.raceRecordLapNickname = "---";
             this.raceRecordLapTime = 0;
           }
-          if (records.overallBestScore) {
+
+          if (overall?.highestScore) {
             this.raceRecordScoreNickname =
-              records.overallBestScore.holderNickname ||
-              records.overallBestScore.holderName ||
+              overall.highestScore.holderTeamName ||
+              overall.highestScore.holderNickname ||
+              overall.highestScore.holderName ||
               "---";
-            this.raceRecordScore = records.overallBestScore.value || 0;
+            this.raceRecordScore = overall.highestScore.value || 0;
           } else {
             this.raceRecordScoreNickname = "---";
             this.raceRecordScore = 0;
           }
-          if (records.raceBestLap) {
+
+          if (current?.fastestLap) {
             const hasLap =
-              records.raceBestLap.value && records.raceBestLap.value > 0;
+              current.fastestLap.value && current.fastestLap.value > 0;
             this.currentRaceBestNickname = hasLap
-              ? records.raceBestLap.holderNickname ||
-                records.raceBestLap.holderName ||
+              ? current.fastestLap.holderNickname ||
+                current.fastestLap.holderName ||
                 "---"
               : "---";
-            this.currentRaceBestTime = records.raceBestLap.value || 0;
+            this.currentRaceBestTime = current.fastestLap.value || 0;
           } else {
             this.currentRaceBestNickname = "---";
             this.currentRaceBestTime = 0;
           }
-          if (records.heatBestLap) {
+
+          if (current?.heatFastestLap) {
             const hasLap =
-              records.heatBestLap.value && records.heatBestLap.value > 0;
+              current.heatFastestLap.value && current.heatFastestLap.value > 0;
             this.heatBestNickname = hasLap
-              ? records.heatBestLap.holderNickname ||
-                records.heatBestLap.holderName ||
+              ? current.heatFastestLap.holderNickname ||
+                current.heatFastestLap.holderName ||
                 "---"
               : "---";
-            this.heatBestTime = records.heatBestLap.value || 0;
+            this.heatBestTime = current.heatFastestLap.value || 0;
           } else {
             this.heatBestNickname = "---";
             this.heatBestTime = 0;
           }
+
           if (!this.isDestroyed) {
             this.cdr.detectChanges();
           }

@@ -1379,17 +1379,21 @@ describe("DefaultRacedayComponent", () => {
 
     it("should display record values and holders when provided", () => {
       const mockRecords: com.antigravity.IRecordData = {
-        heatBestLap: {
-          value: 3.449,
-          holderNickname: "Fart Goblin",
+        overall: {
+          fastestLap: {
+            value: 3.123,
+            holderNickname: "Champion",
+          },
         },
-        raceBestLap: {
-          value: 3.449,
-          holderNickname: "Fart Goblin",
-        },
-        overallBestLap: {
-          value: 3.123,
-          holderNickname: "Champion",
+        current: {
+          fastestLap: {
+            value: 3.449,
+            holderNickname: "Fart Goblin",
+          },
+          heatFastestLap: {
+            value: 3.449,
+            holderNickname: "Fart Goblin",
+          },
         },
       };
 
@@ -1405,21 +1409,25 @@ describe("DefaultRacedayComponent", () => {
 
     it("should use placeholders '---' and '--.---' when record value is 0", () => {
       const mockRecords: com.antigravity.IRecordData = {
-        heatBestLap: {
-          value: 0,
-          holderNickname: "Should Be Ignored",
+        overall: {
+          fastestLap: {
+            value: 0,
+            holderNickname: "Should Be Ignored",
+          },
+          highestScore: {
+            value: 0,
+            holderNickname: "Should Be Ignored",
+          },
         },
-        raceBestLap: {
-          value: 0,
-          holderNickname: "Should Be Ignored",
-        },
-        overallBestLap: {
-          value: 0,
-          holderNickname: "Should Be Ignored",
-        },
-        overallBestScore: {
-          value: 0,
-          holderNickname: "Should Be Ignored",
+        current: {
+          fastestLap: {
+            value: 0,
+            holderNickname: "Should Be Ignored",
+          },
+          heatFastestLap: {
+            value: 0,
+            holderNickname: "Should Be Ignored",
+          },
         },
       };
 

@@ -444,46 +444,48 @@ public class DatabaseService {
         stats.addRaceTimeMs(runtimeRace.getStatistics().getDurationMillis());
       }
 
-      long now = System.currentTimeMillis();
       int totalLaps = 0;
       for (RaceParticipant p : runtimeRace.getDrivers()) {
         totalLaps += p.getTotalLaps();
-        double bestLap = p.getBestLapTime();
-        if (bestLap > 0
-            && (stats.getFastestLapTime() == 0 || bestLap < stats.getFastestLapTime())) {
-          stats.setFastestLapTime(bestLap);
-          stats.setFastestLapDate(now);
-          if (p.getDriver() != null) {
-            stats.setFastestLapDriverName(p.getDriver().getName());
-            stats.setFastestLapDriverNickname(p.getDriver().getNickname());
-          }
-          if (runtimeRace.getTrack() != null) {
-            stats.setFastestLapTrackName(runtimeRace.getTrack().getName());
-          }
-        }
-
-        double score = p.getRankValue();
-        if (score > stats.getHighestLapCount()) {
-          stats.setHighestLapCount(score);
-          stats.setHighestLapCountDate(now);
-          if (p.getDriver() != null) {
-            String name = p.getDriver().getName();
-            String nickname = p.getDriver().getNickname();
-
-            if (p.isTeamParticipant() && p.getTeam() != null) {
-              name = p.getTeam().getName();
-              nickname = name;
-            }
-
-            stats.setHighestLapCountHolderName(name);
-            stats.setHighestLapCountHolderNickname(nickname);
-          }
-          if (runtimeRace.getTrack() != null) {
-            stats.setHighestLapCountTrackName(runtimeRace.getTrack().getName());
-          }
-        }
       }
       stats.addLaps(totalLaps);
+
+      // Save overall records from the runtime race object
+      stats.setFastestLapTime(runtimeRace.getOverallFastestLap());
+      stats.setFastestLapDriverName(runtimeRace.getOverallFastestLapHolder());
+      stats.setFastestLapDriverNickname(runtimeRace.getOverallFastestLapHolderNickname());
+      stats.setFastestLapTeamName(runtimeRace.getOverallFastestLapHolderTeamName());
+      stats.setFastestLapDate(runtimeRace.getOverallFastestLapDate());
+
+      stats.setHighestScore(runtimeRace.getOverallHighestScoreValue());
+      stats.setHighestScoreHolderName(runtimeRace.getOverallHighestScoreHolder());
+      stats.setHighestScoreHolderNickname(runtimeRace.getOverallHighestScoreHolderNickname());
+      stats.setHighestScoreTeamName(runtimeRace.getOverallHighestScoreHolderTeamName());
+      stats.setHighestScoreDate(runtimeRace.getOverallHighestScoreDate());
+
+      if (runtimeRace.getTrack() != null) {
+        stats.setFastestLapTrackName(runtimeRace.getTrack().getName());
+        stats.setHighestScoreTrackName(runtimeRace.getTrack().getName());
+      }
+
+      // Save per-lane records
+      stats.setLaneFastestLapTimes(new ArrayList<>(runtimeRace.getOverallLaneFastestLapTimes()));
+      stats.setLaneFastestLapDriverNames(
+          new ArrayList<>(runtimeRace.getOverallLaneFastestLapHolders()));
+      stats.setLaneFastestLapDriverNicknames(
+          new ArrayList<>(runtimeRace.getOverallLaneFastestLapHolderNicknames()));
+      stats.setLaneFastestLapTeamNames(
+          new ArrayList<>(runtimeRace.getOverallLaneFastestLapHolderTeamNames()));
+      stats.setLaneFastestLapDates(new ArrayList<>(runtimeRace.getOverallLaneFastestLapDates()));
+      stats.setLaneHighestScores(new ArrayList<>(runtimeRace.getOverallLaneHighestScores()));
+      stats.setLaneHighestScoreHolderNames(
+          new ArrayList<>(runtimeRace.getOverallLaneHighestScoreHolders()));
+      stats.setLaneHighestScoreHolderNicknames(
+          new ArrayList<>(runtimeRace.getOverallLaneHighestScoreHolderNicknames()));
+      stats.setLaneHighestScoreTeamNames(
+          new ArrayList<>(runtimeRace.getOverallLaneHighestScoreHolderTeamNames()));
+      stats.setLaneHighestScoreDates(
+          new ArrayList<>(runtimeRace.getOverallLaneHighestScoreDates()));
 
       statsCollection.replaceOne(
           Filters.eq("race_entity_id", raceId), stats, new ReplaceOptions().upsert(true));

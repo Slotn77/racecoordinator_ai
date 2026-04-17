@@ -5,6 +5,10 @@ import com.antigravity.models.DigitalFuelOptions;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Lane;
 import com.antigravity.models.Track;
+import com.antigravity.proto.CurrentRecords;
+import com.antigravity.proto.OverallRecords;
+import com.antigravity.proto.RecordData;
+import com.antigravity.proto.RecordEntry;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.DriverHeatData.LapData;
 import com.antigravity.race.Heat;
@@ -12,14 +16,160 @@ import com.antigravity.race.Race;
 import com.antigravity.race.RaceHeatStatistics;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.RaceStatistics;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 public class CsvExporter {
 
   public static String export(Race race) {
     StringBuilder sb = new StringBuilder();
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    sdf.setTimeZone(TimeZone.getDefault());
+
+    // Section 0: Race Record Data
+    sb.append("#Section,Race Record Data\n");
+    RecordData recordData = race.getRecordData();
+    OverallRecords overall = recordData.getOverall();
+    CurrentRecords current = recordData.getCurrent();
+
+    // --- Overall Records (All-time) ---
+    sb.append("#--- Overall Records (All-time) ---\n");
+    // Overall Fastest Lap
+    RecordEntry fastestLap = overall.getFastestLap();
+    sb.append("#Overall Fastest Lap,Holder,Nickname,Team,Date,Time\n");
+    String fastestLapDate =
+        fastestLap.getDate() > 0 ? sdf.format(new Date(fastestLap.getDate())) : "N/A";
+    sb.append("Overall Fastest Lap,")
+        .append(escape(fastestLap.getHolderName()))
+        .append(",")
+        .append(escape(fastestLap.getHolderNickname()))
+        .append(",")
+        .append(escape(fastestLap.getHolderTeamName()))
+        .append(",")
+        .append(escape(fastestLapDate))
+        .append(",")
+        .append(fastestLap.getValue())
+        .append("\n\n");
+
+    // Overall Highest Score
+    RecordEntry highestScore = overall.getHighestScore();
+    sb.append("#Overall Highest Score,Holder,Nickname,Team,Date,Score\n");
+    String highestScoreDate =
+        highestScore.getDate() > 0 ? sdf.format(new Date(highestScore.getDate())) : "N/A";
+    sb.append("Overall Highest Score,")
+        .append(escape(highestScore.getHolderName()))
+        .append(",")
+        .append(escape(highestScore.getHolderNickname()))
+        .append(",")
+        .append(escape(highestScore.getHolderTeamName()))
+        .append(",")
+        .append(escape(highestScoreDate))
+        .append(",")
+        .append(highestScore.getValue())
+        .append("\n\n");
+
+    // Overall Lane Records
+    sb.append("#Overall Lane Records\n");
+    sb.append(
+        "#Lane,Fastest Lap Holder,Nickname,Team,Date,Time,Highest Score Holder,Nickname,Team,Date,Score\n");
+    List<RecordEntry> oLaneLaps = overall.getLaneFastestLapList();
+    List<RecordEntry> oLaneScores = overall.getLaneHighestScoreList();
+
+    for (int i = 0; i < oLaneLaps.size(); i++) {
+      RecordEntry lLap = oLaneLaps.get(i);
+      RecordEntry lScore = oLaneScores.get(i);
+
+      String lLapDate = lLap.getDate() > 0 ? sdf.format(new Date(lLap.getDate())) : "N/A";
+      String lScoreDate = lScore.getDate() > 0 ? sdf.format(new Date(lScore.getDate())) : "N/A";
+
+      sb.append(i + 1)
+          .append(",")
+          .append(escape(lLap.getHolderName()))
+          .append(",")
+          .append(escape(lLap.getHolderNickname()))
+          .append(",")
+          .append(escape(lLap.getHolderTeamName()))
+          .append(",")
+          .append(escape(lLapDate))
+          .append(",")
+          .append(lLap.getValue())
+          .append(",")
+          .append(escape(lScore.getHolderName()))
+          .append(",")
+          .append(escape(lScore.getHolderNickname()))
+          .append(",")
+          .append(escape(lScore.getHolderTeamName()))
+          .append(",")
+          .append(escape(lScoreDate))
+          .append(",")
+          .append(lScore.getValue())
+          .append("\n");
+    }
+    sb.append("\n");
+
+    // --- Current Race Records ---
+    sb.append("#--- Current Race Records ---\n");
+    // Race Fastest Lap
+    RecordEntry rFastestLap = current.getFastestLap();
+    sb.append("#Race Fastest Lap,Holder,Nickname,Team,Time\n");
+    sb.append("Race Fastest Lap,")
+        .append(escape(rFastestLap.getHolderName()))
+        .append(",")
+        .append(escape(rFastestLap.getHolderNickname()))
+        .append(",")
+        .append(escape(rFastestLap.getHolderTeamName()))
+        .append(",")
+        .append(rFastestLap.getValue())
+        .append("\n\n");
+
+    // Race Highest Score
+    RecordEntry rHighestScore = current.getHighestScore();
+    sb.append("#Race Highest Score,Holder,Nickname,Team,Score\n");
+    sb.append("Race Highest Score,")
+        .append(escape(rHighestScore.getHolderName()))
+        .append(",")
+        .append(escape(rHighestScore.getHolderNickname()))
+        .append(",")
+        .append(escape(rHighestScore.getHolderTeamName()))
+        .append(",")
+        .append(rHighestScore.getValue())
+        .append("\n\n");
+
+    // Lane Records (Current Race)
+    sb.append("#Lane Records (Current Race)\n");
+    sb.append(
+        "#Lane,Fastest Lap Holder,Nickname,Fastest Lap Team,Time,Highest Score Holder,Nickname,Highest Score Team,Score\n");
+    List<RecordEntry> rLaneLaps = current.getLaneFastestLapList();
+    List<RecordEntry> rLaneScores = current.getLaneHighestScoreList();
+
+    for (int i = 0; i < rLaneLaps.size(); i++) {
+      RecordEntry lLap = rLaneLaps.get(i);
+      RecordEntry lScore = rLaneScores.get(i);
+
+      sb.append(i + 1)
+          .append(",")
+          .append(escape(lLap.getHolderName()))
+          .append(",")
+          .append(escape(lLap.getHolderNickname()))
+          .append(",")
+          .append(escape(lLap.getHolderTeamName()))
+          .append(",")
+          .append(lLap.getValue())
+          .append(",")
+          .append(escape(lScore.getHolderName()))
+          .append(",")
+          .append(escape(lScore.getHolderNickname()))
+          .append(",")
+          .append(escape(lScore.getHolderTeamName()))
+          .append(",")
+          .append(lScore.getValue())
+          .append("\n");
+    }
+    sb.append("\n");
 
     // Section 1: Track Information
     sb.append("#Section,Track Information\n");
@@ -87,7 +237,7 @@ public class CsvExporter {
     // Section 3: Overall Standings
     sb.append("#Section,Overall Standings\n");
     sb.append(
-        "#Rank,Seed,Driver,Nickname,Total Laps,Total Time,Rank Value,Gap Leader,Gap Position,Best Lap,Avg Lap,Median Lap\n");
+        "#Rank,Seed,Driver,Nickname,Team,Total Laps,Total Time,Rank Value,Gap Leader,Gap Position,Best Lap,Avg Lap,Median Lap\n");
     List<RaceParticipant> drivers = race.getDrivers(); // Usually sorted after standings recalculate
     for (int i = 0; i < drivers.size(); i++) {
       RaceParticipant p = drivers.get(i);
@@ -110,6 +260,8 @@ public class CsvExporter {
                   p.getDriver() != null && p.getDriver().getNickname() != null
                       ? p.getDriver().getNickname()
                       : ""))
+          .append(",")
+          .append(escape(p.getTeam() != null ? p.getTeam().getName() : ""))
           .append(",")
           .append(p.getTotalLaps())
           .append(",")
@@ -159,15 +311,17 @@ public class CsvExporter {
             .append(hDuration)
             .append("\n\n");
         sb.append(
-            "#Lane,Driver,Nickname,Reaction Time,Gap Leader,Gap Position,Best Lap,Avg Lap,Median Lap,Total Laps\n");
+            "#Lane,Driver,Nickname,Team,Reaction Time,Gap Leader,Gap Position,Best Lap,Avg Lap,Median Lap,Total Laps\n");
         for (int lIdx = 0; lIdx < heat.getDrivers().size(); lIdx++) {
           DriverHeatData dhd = heat.getDrivers().get(lIdx);
           String driverName = "N/A";
           String nickname = "";
-          if (dhd.getDriver() != null && dhd.getDriver().isTeamParticipant()) {
-            driverName = dhd.getDriver().getTeam().getName();
-            nickname = "N/A";
-          } else if (dhd.getActualDriver() != null) {
+          String teamName = "";
+          if (dhd.getDriver() != null && dhd.getDriver().getTeam() != null) {
+            teamName = dhd.getDriver().getTeam().getName();
+          }
+
+          if (dhd.getActualDriver() != null) {
             driverName = dhd.getActualDriver().getName();
             nickname =
                 dhd.getActualDriver().getNickname() != null
@@ -185,6 +339,8 @@ public class CsvExporter {
               .append(escape(driverName))
               .append(",")
               .append(escape(nickname))
+              .append(",")
+              .append(escape(teamName))
               .append(",")
               .append(dhd.getReactionTime())
               .append(",")
@@ -230,13 +386,13 @@ public class CsvExporter {
             }
 
             if (hasSegments) {
-              sb.append("#Lap,Driver,Nickname,Lap Time,Drift");
+              sb.append("#Lap,Driver,Nickname,Team,Lap Time,Drift");
               for (int i = 0; i < maxSegments; i++) {
                 sb.append(",Segment ").append(i + 1);
               }
               sb.append("\n");
             } else {
-              sb.append("#Lap,Driver,Nickname,Lap Time,Drift\n");
+              sb.append("#Lap,Driver,Nickname,Team,Lap Time,Drift\n");
             }
 
             if (hasLaps) {
@@ -254,6 +410,8 @@ public class CsvExporter {
                     .append(escape(lapDriverName))
                     .append(",")
                     .append(escape(lapNickname))
+                    .append(",")
+                    .append(escape(teamName)) // Global team name for this lane
                     .append(",")
                     .append(lap.getLapTime())
                     .append(",")

@@ -10,9 +10,11 @@ import com.antigravity.models.FuelOptions;
 import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.Track;
 import com.antigravity.proto.CallbuttonEvent;
+import com.antigravity.proto.CurrentRecords;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.InterfaceStatusEvent;
+import com.antigravity.proto.OverallRecords;
 import com.antigravity.proto.OverallStandingsUpdate;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
@@ -72,24 +74,57 @@ public class Race implements ProtocolListener {
   private HeatExecutionManager executionManager;
   private RaceStatistics statistics;
 
-  // Record tracking
-  private double overallBestLap = Double.MAX_VALUE;
-  private String overallBestLapHolder = "";
-  private String overallBestLapHolderNickname = "";
-  private long overallBestLapDate = 0;
+  // Record tracking - Overall (All-time)
+  private double overallFastestLap = Double.MAX_VALUE;
+  private String overallFastestLapHolder = "";
+  private String overallFastestLapHolderNickname = "";
+  private String overallFastestLapHolderTeamName = "";
+  private long overallFastestLapDate = 0;
 
-  private double overallBestScore = 0;
-  private String overallBestScoreHolder = "";
-  private String overallBestScoreHolderNickname = "";
-  private long overallBestScoreDate = 0;
+  private double overallHighestScore = 0;
+  private String overallHighestScoreHolder = "";
+  private String overallHighestScoreHolderNickname = "";
+  private String overallHighestScoreHolderTeamName = "";
+  private long overallHighestScoreDate = 0;
 
-  private double raceBestLap = Double.MAX_VALUE;
-  private String raceBestLapHolder = "";
-  private String raceBestLapHolderNickname = "";
+  private List<Double> overallLaneFastestLapTimes = new ArrayList<>();
+  private List<String> overallLaneFastestLapHolders = new ArrayList<>();
+  private List<String> overallLaneFastestLapHolderNicknames = new ArrayList<>();
+  private List<String> overallLaneFastestLapHolderTeamNames = new ArrayList<>();
+  private List<Long> overallLaneFastestLapDates = new ArrayList<>();
 
-  private double heatBestLap = Double.MAX_VALUE;
-  private String heatBestLapHolder = "";
-  private String heatBestLapHolderNickname = "";
+  private List<Double> overallLaneHighestScores = new ArrayList<>();
+  private List<String> overallLaneHighestScoreHolders = new ArrayList<>();
+  private List<String> overallLaneHighestScoreHolderNicknames = new ArrayList<>();
+  private List<String> overallLaneHighestScoreHolderTeamNames = new ArrayList<>();
+  private List<Long> overallLaneHighestScoreDates = new ArrayList<>();
+
+  // Record tracking - Current Race
+  private double raceFastestLap = Double.MAX_VALUE;
+  private String raceFastestLapHolder = "";
+  private String raceFastestLapHolderNickname = "";
+  private String raceFastestLapHolderTeamName = "";
+
+  private double raceHighestScore = 0;
+  private String raceHighestScoreHolder = "";
+  private String raceHighestScoreHolderNickname = "";
+  private String raceHighestScoreHolderTeamName = "";
+
+  private List<Double> raceLaneFastestLapTimes = new ArrayList<>();
+  private List<String> raceLaneFastestLapHolders = new ArrayList<>();
+  private List<String> raceLaneFastestLapHolderNicknames = new ArrayList<>();
+  private List<String> raceLaneFastestLapHolderTeamNames = new ArrayList<>();
+
+  private List<Double> raceLaneHighestScores = new ArrayList<>();
+  private List<String> raceLaneHighestScoreHolders = new ArrayList<>();
+  private List<String> raceLaneHighestScoreHolderNicknames = new ArrayList<>();
+  private List<String> raceLaneHighestScoreHolderTeamNames = new ArrayList<>();
+
+  // Record tracking - Current Heat
+  private double heatFastestLap = Double.MAX_VALUE;
+  private String heatFastestLapHolder = "";
+  private String heatFastestLapHolderNickname = "";
+  private String heatFastestLapHolderTeamName = "";
 
   private Race(Builder builder) {
     this.model = builder.model;
@@ -161,9 +196,58 @@ public class Race implements ProtocolListener {
     updateAndBroadcastOverallStandings();
   }
 
+  private void initializeLaneRecords() {
+    int laneCount = this.track.getLanes().size();
+
+    // Overall (All-time)
+    this.overallLaneFastestLapTimes = new ArrayList<>(laneCount);
+    this.overallLaneFastestLapHolders = new ArrayList<>(laneCount);
+    this.overallLaneFastestLapHolderNicknames = new ArrayList<>(laneCount);
+    this.overallLaneFastestLapHolderTeamNames = new ArrayList<>(laneCount);
+    this.overallLaneFastestLapDates = new ArrayList<>(laneCount);
+    this.overallLaneHighestScores = new ArrayList<>(laneCount);
+    this.overallLaneHighestScoreHolders = new ArrayList<>(laneCount);
+    this.overallLaneHighestScoreHolderNicknames = new ArrayList<>(laneCount);
+    this.overallLaneHighestScoreHolderTeamNames = new ArrayList<>(laneCount);
+    this.overallLaneHighestScoreDates = new ArrayList<>(laneCount);
+
+    // Current Race
+    this.raceLaneFastestLapTimes = new ArrayList<>(laneCount);
+    this.raceLaneFastestLapHolders = new ArrayList<>(laneCount);
+    this.raceLaneFastestLapHolderNicknames = new ArrayList<>(laneCount);
+    this.raceLaneFastestLapHolderTeamNames = new ArrayList<>(laneCount);
+    this.raceLaneHighestScores = new ArrayList<>(laneCount);
+    this.raceLaneHighestScoreHolders = new ArrayList<>(laneCount);
+    this.raceLaneHighestScoreHolderNicknames = new ArrayList<>(laneCount);
+    this.raceLaneHighestScoreHolderTeamNames = new ArrayList<>(laneCount);
+
+    for (int i = 0; i < laneCount; i++) {
+      this.overallLaneFastestLapTimes.add(Double.MAX_VALUE);
+      this.overallLaneFastestLapHolders.add("");
+      this.overallLaneFastestLapHolderNicknames.add("");
+      this.overallLaneFastestLapHolderTeamNames.add("");
+      this.overallLaneFastestLapDates.add(0L);
+      this.overallLaneHighestScores.add(0.0);
+      this.overallLaneHighestScoreHolders.add("");
+      this.overallLaneHighestScoreHolderNicknames.add("");
+      this.overallLaneHighestScoreHolderTeamNames.add("");
+      this.overallLaneHighestScoreDates.add(0L);
+
+      this.raceLaneFastestLapTimes.add(Double.MAX_VALUE);
+      this.raceLaneFastestLapHolders.add("");
+      this.raceLaneFastestLapHolderNicknames.add("");
+      this.raceLaneFastestLapHolderTeamNames.add("");
+      this.raceLaneHighestScores.add(0.0);
+      this.raceLaneHighestScoreHolders.add("");
+      this.raceLaneHighestScoreHolderNicknames.add("");
+      this.raceLaneHighestScoreHolderTeamNames.add("");
+    }
+  }
+
   private void loadGlobalRecords() {
     if (databaseContext == null) {
-      System.err.println("DatabaseContext is missing - skipping global record loading.");
+      System.err.println("DatabaseContext is missing - initialization of empty lane records.");
+      initializeLaneRecords();
       return;
     }
 
@@ -173,28 +257,79 @@ public class Race implements ProtocolListener {
           dbService.getGlobalStatistics(
               databaseContext.getDatabase(), getRaceModel().getEntityId());
       if (stats != null) {
-        this.overallBestLap = stats.getFastestLapTime();
-        this.overallBestLapHolder = stats.getFastestLapDriverName();
-        this.overallBestLapHolderNickname = stats.getFastestLapDriverNickname();
-        this.overallBestLapDate = stats.getFastestLapDate();
-        this.overallBestScore = stats.getHighestLapCount();
-        this.overallBestScoreHolder = stats.getHighestLapCountHolderName();
-        this.overallBestScoreHolderNickname = stats.getHighestLapCountHolderNickname();
-        this.overallBestScoreDate = stats.getHighestLapCountDate();
+        this.overallFastestLap = stats.getFastestLapTime();
+        this.overallFastestLapHolder = stats.getFastestLapDriverName();
+        this.overallFastestLapHolderNickname = stats.getFastestLapDriverNickname();
+        this.overallFastestLapHolderTeamName = stats.getFastestLapTeamName();
+        this.overallFastestLapDate = stats.getFastestLapDate();
+
+        this.overallHighestScore = stats.getHighestScore();
+        this.overallHighestScoreHolder = stats.getHighestScoreHolderName();
+        this.overallHighestScoreHolderNickname = stats.getHighestScoreHolderNickname();
+        this.overallHighestScoreHolderTeamName = stats.getHighestScoreTeamName();
+        this.overallHighestScoreDate = stats.getHighestScoreDate();
+
+        // Load per-lane records
+        initializeLaneRecords();
+        int laneCount = this.track.getLanes().size();
+        for (int i = 0; i < laneCount; i++) {
+          if (stats.getLaneFastestLapTimes() != null && i < stats.getLaneFastestLapTimes().size()) {
+            this.overallLaneFastestLapTimes.set(i, stats.getLaneFastestLapTimes().get(i));
+          }
+          if (stats.getLaneFastestLapDriverNames() != null
+              && i < stats.getLaneFastestLapDriverNames().size()) {
+            this.overallLaneFastestLapHolders.set(i, stats.getLaneFastestLapDriverNames().get(i));
+          }
+          if (stats.getLaneFastestLapDriverNicknames() != null
+              && i < stats.getLaneFastestLapDriverNicknames().size()) {
+            this.overallLaneFastestLapHolderNicknames.set(
+                i, stats.getLaneFastestLapDriverNicknames().get(i));
+          }
+          if (stats.getLaneFastestLapTeamNames() != null
+              && i < stats.getLaneFastestLapTeamNames().size()) {
+            this.overallLaneFastestLapHolderTeamNames.set(
+                i, stats.getLaneFastestLapTeamNames().get(i));
+          }
+          if (stats.getLaneFastestLapDates() != null && i < stats.getLaneFastestLapDates().size()) {
+            this.overallLaneFastestLapDates.set(i, stats.getLaneFastestLapDates().get(i));
+          }
+
+          if (stats.getLaneHighestScores() != null && i < stats.getLaneHighestScores().size()) {
+            this.overallLaneHighestScores.set(i, stats.getLaneHighestScores().get(i));
+          }
+          if (stats.getLaneHighestScoreHolderNames() != null
+              && i < stats.getLaneHighestScoreHolderNames().size()) {
+            this.overallLaneHighestScoreHolders.set(
+                i, stats.getLaneHighestScoreHolderNames().get(i));
+          }
+          if (stats.getLaneHighestScoreHolderNicknames() != null
+              && i < stats.getLaneHighestScoreHolderNicknames().size()) {
+            this.overallLaneHighestScoreHolderNicknames.set(
+                i, stats.getLaneHighestScoreHolderNicknames().get(i));
+          }
+          if (stats.getLaneHighestScoreTeamNames() != null
+              && i < stats.getLaneHighestScoreTeamNames().size()) {
+            this.overallLaneHighestScoreHolderTeamNames.set(
+                i, stats.getLaneHighestScoreTeamNames().get(i));
+          }
+          if (stats.getLaneHighestScoreDates() != null
+              && i < stats.getLaneHighestScoreDates().size()) {
+            this.overallLaneHighestScoreDates.set(i, stats.getLaneHighestScoreDates().get(i));
+          }
+        }
 
         System.out.println(
-            "Global records loaded: bestLap="
-                + this.overallBestLap
-                + ", bestScore="
-                + this.overallBestScore
-                + " for "
-                + this.overallBestScoreHolderNickname);
+            "Global records loaded: fastestLap="
+                + this.overallFastestLap
+                + ", highestScore="
+                + this.overallHighestScore);
       } else {
+        initializeLaneRecords();
         System.out.println("No global records found in database.");
       }
     } catch (Exception e) {
-      System.err.println("Failed to load global records: " + e.getMessage());
-      e.printStackTrace();
+      System.err.println("Failed to load global statistics: " + e.getMessage());
+      initializeLaneRecords();
     }
   }
 
@@ -429,9 +564,9 @@ public class Race implements ProtocolListener {
   }
 
   public void resetHeatRecords() {
-    this.heatBestLap = Double.MAX_VALUE;
-    this.heatBestLapHolder = "";
-    this.heatBestLapHolderNickname = "";
+    this.heatFastestLap = Double.MAX_VALUE;
+    this.heatFastestLapHolder = "";
+    this.heatFastestLapHolderNickname = "";
   }
 
   public boolean hasRacedInCurrentHeat() {
@@ -777,7 +912,8 @@ public class Race implements ProtocolListener {
         double effectiveLapTime = lapTime;
         DriverHeatData dhd = currentHeat.getDrivers().get(lane);
         if (dhd != null && dhd.getLapCount() == 1) { // dhd.addLap was already called in state.onLap
-          // At this point, dhd.getLapCount() is already 1 because handleLapTime called addLap()
+          // At this point, dhd.getLapCount() is already 1 because handleLapTime called
+          // addLap()
           // We need to look at the last lap time added to the driver data
           List<DriverHeatData.LapData> laps = dhd.getLaps();
           if (!laps.isEmpty()) {
@@ -823,51 +959,98 @@ public class Race implements ProtocolListener {
 
     String lapHolderName = driverName;
     String lapHolderNickname = driverNickname;
-    String scoreHolderName = driverName;
-    String scoreHolderNickname = driverNickname;
+    String countHolderName = driverName;
+    String countHolderNickname = driverNickname;
+    String teamName = "";
 
     RaceParticipant participant = dhd.getDriver();
-    if (participant.isTeamParticipant() && participant.getTeam() != null) {
-      scoreHolderName = participant.getTeam().getName();
-      // For teams, we use the team name for both name and nickname for consistency
-      scoreHolderNickname = scoreHolderName;
+    if (participant.getTeam() != null) {
+      teamName = participant.getTeam().getName();
     }
 
     boolean changed = false;
+    long timestamp = System.currentTimeMillis();
 
-    // Heat Best Lap
-    if (lapTime < heatBestLap) {
-      heatBestLap = lapTime;
-      heatBestLapHolder = lapHolderName;
-      heatBestLapHolderNickname = lapHolderNickname;
+    // 1. Heat Records (Current Heat)
+    if (lapTime < heatFastestLap) {
+      heatFastestLap = lapTime;
+      heatFastestLapHolder = lapHolderName;
+      heatFastestLapHolderNickname = lapHolderNickname;
+      heatFastestLapHolderTeamName = teamName;
       changed = true;
     }
 
-    // Race Best Lap
-    if (lapTime < raceBestLap) {
-      raceBestLap = lapTime;
-      raceBestLapHolder = lapHolderName;
-      raceBestLapHolderNickname = lapHolderNickname;
+    // 2. Race Records (Current Race Instance)
+    if (lapTime < raceFastestLap) {
+      raceFastestLap = lapTime;
+      raceFastestLapHolder = lapHolderName;
+      raceFastestLapHolderNickname = lapHolderNickname;
+      raceFastestLapHolderTeamName = teamName;
       changed = true;
     }
 
-    // Overall Best Lap
-    if (overallBestLap == 0 || lapTime < overallBestLap) {
-      overallBestLap = lapTime;
-      overallBestLapHolder = lapHolderName;
-      overallBestLapHolderNickname = lapHolderNickname;
-      overallBestLapDate = System.currentTimeMillis();
-      changed = true;
-    }
-
-    // Overall Best Score (Highest Lap Count)
     double currentScore = participant.getRankValue();
-    if (currentScore > overallBestScore) {
-      overallBestScore = currentScore;
-      overallBestScoreHolder = scoreHolderName;
-      overallBestScoreHolderNickname = scoreHolderNickname;
-      overallBestScoreDate = System.currentTimeMillis();
+    if (currentScore > raceHighestScore) {
+      raceHighestScore = currentScore;
+      raceHighestScoreHolder = countHolderName;
+      raceHighestScoreHolderNickname = countHolderNickname;
+      raceHighestScoreHolderTeamName = teamName;
       changed = true;
+    }
+
+    if (lane >= 0 && lane < raceLaneFastestLapTimes.size()) {
+      if (lapTime < raceLaneFastestLapTimes.get(lane)) {
+        raceLaneFastestLapTimes.set(lane, lapTime);
+        raceLaneFastestLapHolders.set(lane, lapHolderName);
+        raceLaneFastestLapHolderNicknames.set(lane, lapHolderNickname);
+        raceLaneFastestLapHolderTeamNames.set(lane, teamName);
+        changed = true;
+      }
+      if (currentScore > raceLaneHighestScores.get(lane)) {
+        raceLaneHighestScores.set(lane, currentScore);
+        raceLaneHighestScoreHolders.set(lane, countHolderName);
+        raceLaneHighestScoreHolderNicknames.set(lane, countHolderNickname);
+        raceLaneHighestScoreHolderTeamNames.set(lane, teamName);
+        changed = true;
+      }
+    }
+
+    // 3. Overall Records (All-time)
+    if (overallFastestLap == 0 || lapTime < overallFastestLap) {
+      overallFastestLap = lapTime;
+      overallFastestLapHolder = lapHolderName;
+      overallFastestLapHolderNickname = lapHolderNickname;
+      overallFastestLapHolderTeamName = teamName;
+      overallFastestLapDate = timestamp;
+      changed = true;
+    }
+
+    if (currentScore > overallHighestScore) {
+      overallHighestScore = currentScore;
+      overallHighestScoreHolder = countHolderName;
+      overallHighestScoreHolderNickname = countHolderNickname;
+      overallHighestScoreHolderTeamName = teamName;
+      overallHighestScoreDate = timestamp;
+      changed = true;
+    }
+
+    if (lane >= 0 && lane < overallLaneFastestLapTimes.size()) {
+      if (lapTime < overallLaneFastestLapTimes.get(lane)) {
+        overallLaneFastestLapTimes.set(lane, lapTime);
+        overallLaneFastestLapHolders.set(lane, lapHolderName);
+        overallLaneFastestLapHolderNicknames.set(lane, lapHolderNickname);
+        overallLaneFastestLapHolderTeamNames.set(lane, teamName);
+        overallLaneFastestLapDates.set(lane, timestamp);
+        changed = true;
+      }
+      if (currentScore > overallLaneHighestScores.get(lane)) {
+        overallLaneHighestScores.set(lane, currentScore);
+        overallLaneHighestScoreHolders.set(lane, countHolderName);
+        overallLaneHighestScoreHolderNicknames.set(lane, countHolderNickname);
+        overallLaneHighestScoreHolderTeamNames.set(lane, teamName);
+        overallLaneHighestScoreDates.set(lane, timestamp);
+        changed = true;
+      }
     }
 
     if (changed) {
@@ -876,37 +1059,119 @@ public class Race implements ProtocolListener {
   }
 
   public RecordData getRecordData() {
+    OverallRecords.Builder overallBuilder =
+        OverallRecords.newBuilder()
+            .setFastestLap(
+                RecordEntry.newBuilder()
+                    .setValue(overallFastestLap == Double.MAX_VALUE ? 0 : overallFastestLap)
+                    .setHolderName(overallFastestLapHolder != null ? overallFastestLapHolder : "")
+                    .setHolderNickname(
+                        overallFastestLapHolderNickname != null
+                            ? overallFastestLapHolderNickname
+                            : "")
+                    .setHolderTeamName(
+                        overallFastestLapHolderTeamName != null
+                            ? overallFastestLapHolderTeamName
+                            : "")
+                    .setDate(overallFastestLapDate)
+                    .build())
+            .setHighestScore(
+                RecordEntry.newBuilder()
+                    .setValue(overallHighestScore)
+                    .setHolderName(
+                        overallHighestScoreHolder != null ? overallHighestScoreHolder : "")
+                    .setHolderNickname(
+                        overallHighestScoreHolderNickname != null
+                            ? overallHighestScoreHolderNickname
+                            : "")
+                    .setHolderTeamName(
+                        overallHighestScoreHolderTeamName != null
+                            ? overallHighestScoreHolderTeamName
+                            : "")
+                    .setDate(overallHighestScoreDate)
+                    .build());
+
+    for (int i = 0; i < overallLaneFastestLapTimes.size(); i++) {
+      overallBuilder.addLaneFastestLap(
+          RecordEntry.newBuilder()
+              .setValue(
+                  overallLaneFastestLapTimes.get(i) == Double.MAX_VALUE
+                      ? 0
+                      : overallLaneFastestLapTimes.get(i))
+              .setHolderName(overallLaneFastestLapHolders.get(i))
+              .setHolderNickname(overallLaneFastestLapHolderNicknames.get(i))
+              .setHolderTeamName(overallLaneFastestLapHolderTeamNames.get(i))
+              .setDate(overallLaneFastestLapDates.get(i))
+              .build());
+
+      overallBuilder.addLaneHighestScore(
+          RecordEntry.newBuilder()
+              .setValue(overallLaneHighestScores.get(i))
+              .setHolderName(overallLaneHighestScoreHolders.get(i))
+              .setHolderNickname(overallLaneHighestScoreHolderNicknames.get(i))
+              .setHolderTeamName(overallLaneHighestScoreHolderTeamNames.get(i))
+              .setDate(overallLaneHighestScoreDates.get(i))
+              .build());
+    }
+
+    CurrentRecords.Builder currentBuilder =
+        CurrentRecords.newBuilder()
+            .setFastestLap(
+                RecordEntry.newBuilder()
+                    .setValue(raceFastestLap == Double.MAX_VALUE ? 0 : raceFastestLap)
+                    .setHolderName(raceFastestLapHolder != null ? raceFastestLapHolder : "")
+                    .setHolderNickname(
+                        raceFastestLapHolderNickname != null ? raceFastestLapHolderNickname : "")
+                    .setHolderTeamName(
+                        raceFastestLapHolderTeamName != null ? raceFastestLapHolderTeamName : "")
+                    .build())
+            .setHighestScore(
+                RecordEntry.newBuilder()
+                    .setValue(raceHighestScore)
+                    .setHolderName(raceHighestScoreHolder != null ? raceHighestScoreHolder : "")
+                    .setHolderNickname(
+                        raceHighestScoreHolderNickname != null
+                            ? raceHighestScoreHolderNickname
+                            : "")
+                    .setHolderTeamName(
+                        raceHighestScoreHolderTeamName != null
+                            ? raceHighestScoreHolderTeamName
+                            : "")
+                    .build())
+            .setHeatFastestLap(
+                RecordEntry.newBuilder()
+                    .setValue(heatFastestLap == Double.MAX_VALUE ? 0 : heatFastestLap)
+                    .setHolderName(heatFastestLapHolder != null ? heatFastestLapHolder : "")
+                    .setHolderNickname(
+                        heatFastestLapHolderNickname != null ? heatFastestLapHolderNickname : "")
+                    .setHolderTeamName(
+                        heatFastestLapHolderTeamName != null ? heatFastestLapHolderTeamName : "")
+                    .build());
+
+    for (int i = 0; i < raceLaneFastestLapTimes.size(); i++) {
+      currentBuilder.addLaneFastestLap(
+          RecordEntry.newBuilder()
+              .setValue(
+                  raceLaneFastestLapTimes.get(i) == Double.MAX_VALUE
+                      ? 0
+                      : raceLaneFastestLapTimes.get(i))
+              .setHolderName(raceLaneFastestLapHolders.get(i))
+              .setHolderNickname(raceLaneFastestLapHolderNicknames.get(i))
+              .setHolderTeamName(raceLaneFastestLapHolderTeamNames.get(i))
+              .build());
+
+      currentBuilder.addLaneHighestScore(
+          RecordEntry.newBuilder()
+              .setValue(raceLaneHighestScores.get(i))
+              .setHolderName(raceLaneHighestScoreHolders.get(i))
+              .setHolderNickname(raceLaneHighestScoreHolderNicknames.get(i))
+              .setHolderTeamName(raceLaneHighestScoreHolderTeamNames.get(i))
+              .build());
+    }
+
     return RecordData.newBuilder()
-        .setOverallBestLap(
-            RecordEntry.newBuilder()
-                .setValue(overallBestLap == Double.MAX_VALUE ? 0 : overallBestLap)
-                .setHolderName(overallBestLapHolder != null ? overallBestLapHolder : "")
-                .setHolderNickname(
-                    overallBestLapHolderNickname != null ? overallBestLapHolderNickname : "")
-                .setDate(overallBestLapDate)
-                .build())
-        .setOverallBestScore(
-            RecordEntry.newBuilder()
-                .setValue(overallBestScore)
-                .setHolderName(overallBestScoreHolder != null ? overallBestScoreHolder : "")
-                .setHolderNickname(
-                    overallBestScoreHolderNickname != null ? overallBestScoreHolderNickname : "")
-                .setDate(overallBestScoreDate)
-                .build())
-        .setRaceBestLap(
-            RecordEntry.newBuilder()
-                .setValue(raceBestLap == Double.MAX_VALUE ? 0 : raceBestLap)
-                .setHolderName(raceBestLapHolder != null ? raceBestLapHolder : "")
-                .setHolderNickname(
-                    raceBestLapHolderNickname != null ? raceBestLapHolderNickname : "")
-                .build())
-        .setHeatBestLap(
-            RecordEntry.newBuilder()
-                .setValue(heatBestLap == Double.MAX_VALUE ? 0 : heatBestLap)
-                .setHolderName(heatBestLapHolder != null ? heatBestLapHolder : "")
-                .setHolderNickname(
-                    heatBestLapHolderNickname != null ? heatBestLapHolderNickname : "")
-                .build())
+        .setOverall(overallBuilder.build())
+        .setCurrent(currentBuilder.build())
         .build();
   }
 
@@ -980,10 +1245,10 @@ public class Race implements ProtocolListener {
 
     RecordData recordData = getRecordData();
     System.out.println(
-        "Snapshot created with records: overallBestLap="
-            + recordData.getOverallBestLap().getValue()
+        "Snapshot created with records: overallFastestLap="
+            + recordData.getOverall().getFastestLap().getValue()
             + " ("
-            + recordData.getOverallBestLap().getHolderNickname()
+            + recordData.getOverall().getFastestLap().getHolderNickname()
             + ")");
 
     return RaceData.newBuilder().setRace(raceUpdate).setRecordData(recordData).build();
@@ -997,9 +1262,89 @@ public class Race implements ProtocolListener {
     state.nextHeat(this);
   }
 
-  // TODO(aufderheide): We should ask the state for it's enum value rather than
-  // doing all these instanceof checks.
+  public List<Double> getOverallLaneFastestLapTimes() {
+    return overallLaneFastestLapTimes;
+  }
+
+  public List<String> getOverallLaneFastestLapHolders() {
+    return overallLaneFastestLapHolders;
+  }
+
+  public List<String> getOverallLaneFastestLapHolderNicknames() {
+    return overallLaneFastestLapHolderNicknames;
+  }
+
+  public List<Long> getOverallLaneFastestLapDates() {
+    return overallLaneFastestLapDates;
+  }
+
+  public List<Double> getOverallLaneHighestScores() {
+    return overallLaneHighestScores;
+  }
+
+  public List<String> getOverallLaneHighestScoreHolders() {
+    return overallLaneHighestScoreHolders;
+  }
+
+  public List<String> getOverallLaneHighestScoreHolderNicknames() {
+    return overallLaneHighestScoreHolderNicknames;
+  }
+
+  public List<Long> getOverallLaneHighestScoreDates() {
+    return overallLaneHighestScoreDates;
+  }
+
+  public double getOverallFastestLap() {
+    return overallFastestLap;
+  }
+
+  public String getOverallFastestLapHolder() {
+    return overallFastestLapHolder;
+  }
+
+  public String getOverallFastestLapHolderNickname() {
+    return overallFastestLapHolderNickname;
+  }
+
+  public String getOverallFastestLapHolderTeamName() {
+    return overallFastestLapHolderTeamName;
+  }
+
+  public long getOverallFastestLapDate() {
+    return overallFastestLapDate;
+  }
+
+  public double getOverallHighestScoreValue() {
+    return overallHighestScore;
+  }
+
+  public String getOverallHighestScoreHolder() {
+    return overallHighestScoreHolder;
+  }
+
+  public String getOverallHighestScoreHolderNickname() {
+    return overallHighestScoreHolderNickname;
+  }
+
+  public String getOverallHighestScoreHolderTeamName() {
+    return overallHighestScoreHolderTeamName;
+  }
+
+  public long getOverallHighestScoreDate() {
+    return overallHighestScoreDate;
+  }
+
+  public List<String> getOverallLaneFastestLapHolderTeamNames() {
+    return overallLaneFastestLapHolderTeamNames;
+  }
+
+  public List<String> getOverallLaneHighestScoreHolderTeamNames() {
+    return overallLaneHighestScoreHolderTeamNames;
+  }
+
   private RaceState getProtoState(IRaceState state) {
+    // TODO(aufderheide): We should ask the state for it's enum value rather than
+    // doing all these instanceof checks.
     if (state instanceof NotStarted) {
       return RaceState.NOT_STARTED;
     } else if (state instanceof Starting) {
