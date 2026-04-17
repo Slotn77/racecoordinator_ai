@@ -11,6 +11,9 @@ import com.antigravity.models.Track;
 import com.antigravity.race.Race;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
@@ -150,6 +153,29 @@ public class AnalyticsServiceTest {
     enabledField.set(service, originalEnabled);
     measurementIdField.set(service, originalMeasurement);
     apiSecretField.set(service, originalSecret);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testPayloadDataTypes() {
+    Map<String, Object> params = new HashMap<>();
+    params.put("engagement_time_msec", 1L);
+    params.put("session_id", System.currentTimeMillis());
+
+    Map<String, Object> payload = service.createPayload("test_event", params);
+
+    assertNotNull(payload);
+    List<Map<String, Object>> events = (List<Map<String, Object>>) payload.get("events");
+    assertNotNull(events);
+    assertEquals(1, events.size());
+
+    Map<String, Object> event = events.get(0);
+    Map<String, Object> eventParams = (Map<String, Object>) event.get("params");
+
+    assertTrue(
+        "engagement_time_msec should be a Long",
+        eventParams.get("engagement_time_msec") instanceof Long);
+    assertTrue("session_id should be a Long", eventParams.get("session_id") instanceof Long);
   }
 
   @Test

@@ -114,29 +114,32 @@ describe("AnalyticsService", () => {
   });
 
   describe("initTracking", () => {
-    it("should inject Google Analytics scripts into DOM when shareAnalytics is true", () => {
+    it("should inject Google Analytics scripts and call config in correct order", () => {
       mockSettings.shareAnalytics = true;
+      const window = mockDocument.defaultView;
+      const gtagSpy = spyOn(window, "gtag").and.callThrough();
+
       service.initTracking();
 
       // Should have checked settings
       expect(mockSettingsService.getSettings).toHaveBeenCalled();
 
-      // Should have injected two scripts into the document head
-      expect(mockDocument.createElement).toHaveBeenCalledWith("script");
-      expect(mockDocument.head.appendChild).toHaveBeenCalledTimes(2);
+      // Verify call order: js, then config
+      const calls = gtagSpy.calls.all();
+      expect(calls.length).toBeGreaterThanOrEqual(2);
+      expect(calls[0].args[0]).toBe("js");
+      expect(calls[1].args).toEqual([
+        "config",
+        "G-TEST12345",
+        {
+          send_page_view: false,
+          client_id: "test-client-id-123",
+        },
+      ]);
 
-      const elements = mockDocument._createdElements;
-      expect(elements.length).toBe(2);
-      expect(elements[0].src).toContain(
-        "https://www.googletagmanager.com/gtag/js?id=G-TEST12345",
-      );
-      expect(elements[1].innerHTML).toContain(
-        "window.dataLayer = window.dataLayer || [];",
-      );
-      expect(elements[1].innerHTML).toContain(
-        "client_id: 'test-client-id-123'",
-      );
-      expect(elements[1].innerHTML).toContain("gtag('config', 'G-TEST12345'");
+      // Should have injected the GTAG library script into the document head
+      expect(mockDocument.createElement).toHaveBeenCalledWith("script");
+      expect(mockDocument.head.appendChild).toHaveBeenCalledTimes(1);
     });
 
     it("should NOT inject Google Analytics scripts if measurementId is completely missing/empty", () => {
@@ -168,8 +171,8 @@ describe("AnalyticsService", () => {
       service.updateOptOutStatus();
       service.updateOptOutStatus();
 
-      // Even after 3 updates, it should only create/append 2 scripts total
-      expect(mockDocument.head.appendChild).toHaveBeenCalledTimes(2);
+      // Even after 3 updates, it should only create/append 1 script total
+      expect(mockDocument.head.appendChild).toHaveBeenCalledTimes(1);
       expect(console.debug).toHaveBeenCalledWith(
         jasmine.stringMatching("Analytics: updateOptOutStatus called"),
         jasmine.any(Object),
@@ -192,6 +195,8 @@ describe("AnalyticsService", () => {
 
       expect((window as any).gtag).toHaveBeenCalledWith("event", "page_view", {
         page_path: "/fake-redirect-url",
+        page_location: jasmine.stringMatching("/fake-redirect-url"),
+        page_title: jasmine.any(String),
       });
     });
 

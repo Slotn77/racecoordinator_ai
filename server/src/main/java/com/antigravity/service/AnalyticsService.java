@@ -70,20 +70,12 @@ public class AnalyticsService {
       return;
     }
 
-    Map<String, Object> eventParams = new HashMap<>();
-    eventParams.put("analytics_enabled", newStatus);
-    eventParams.put("engagement_time_msec", "1");
-    eventParams.put("session_id", String.valueOf(System.currentTimeMillis()));
+    Map<String, Object> params = new HashMap<>();
+    params.put("analytics_enabled", newStatus);
+    params.put("engagement_time_msec", 1L);
+    params.put("session_id", System.currentTimeMillis());
 
-    Map<String, Object> event = new HashMap<>();
-    event.put("name", "analytics_toggled");
-    event.put("params", eventParams);
-
-    Map<String, Object> payload = new HashMap<>();
-    payload.put("client_id", getClientId());
-    payload.put("events", Collections.singletonList(event));
-
-    sendPayload(payload);
+    sendPayload(createPayload("analytics_toggled", params));
   }
 
   public boolean isUserEnabled() {
@@ -110,29 +102,29 @@ public class AnalyticsService {
       return;
     }
 
-    Map<String, Object> eventParams = new HashMap<>();
-    eventParams.put(
+    Map<String, Object> params = new HashMap<>();
+    params.put(
         "number_of_lanes",
         race.getTrack() != null && race.getTrack().getLanes() != null
             ? race.getTrack().getLanes().size()
             : 0);
-    eventParams.put("driver_count", race.getDrivers() != null ? race.getDrivers().size() : 0);
-    eventParams.put("is_demo", race.isDemoMode());
-    eventParams.put("engagement_time_msec", "1"); // Required for GA4 Realtime reports
-    eventParams.put(
-        "session_id",
-        String.valueOf(System.currentTimeMillis())); // Forces GA4 to create a session for
-    // Realtime processing
+    params.put("driver_count", race.getDrivers() != null ? race.getDrivers().size() : 0);
+    params.put("is_demo", race.isDemoMode());
+    params.put("engagement_time_msec", 1L);
+    params.put("session_id", System.currentTimeMillis());
 
+    sendPayload(createPayload("backend_race_started", params));
+  }
+
+  /* package */ Map<String, Object> createPayload(String eventName, Map<String, Object> params) {
     Map<String, Object> event = new HashMap<>();
-    event.put("name", "backend_race_started");
-    event.put("params", eventParams);
+    event.put("name", eventName);
+    event.put("params", params);
 
     Map<String, Object> payload = new HashMap<>();
     payload.put("client_id", getClientId());
     payload.put("events", Collections.singletonList(event));
-
-    sendPayload(payload);
+    return payload;
   }
 
   private void sendPayload(Map<String, Object> payload) {

@@ -128,6 +128,18 @@ export class AnalyticsService {
         }
 
         const clientId = config.clientId;
+        console.info("Analytics: Configuring GTAG for ID", this.measurementId);
+
+        // Push config to dataLayer immediately via fallback
+        const window = this.document.defaultView as any;
+        if (window && typeof window.gtag === "function") {
+          window.gtag("js", new Date());
+          window.gtag("config", this.measurementId, {
+            send_page_view: false,
+            client_id: clientId, // Linked to the server-generated client ID
+          });
+        }
+
         const script1 = this.document.createElement("script");
         script1.async = true;
         script1.src = `https://www.googletagmanager.com/gtag/js?id=${this.measurementId}`;
@@ -137,18 +149,7 @@ export class AnalyticsService {
           console.error("Analytics: GTAG library script failed to load.", e);
         this.document.head.appendChild(script1);
 
-        const script2 = this.document.createElement("script");
-        script2.innerHTML = `
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${this.measurementId}', { 
-            send_page_view: false,
-            client_id: '${clientId}'
-          });
-        `;
-        this.document.head.appendChild(script2);
-        console.info("Analytics: Inline config script appended to head.");
+        console.info("Analytics: GTAG library script appended to head.");
       },
       error: (err) => {
         console.warn(
@@ -158,19 +159,18 @@ export class AnalyticsService {
         if (!this.measurementId) return;
 
         // Fallback without client_id
+        if (!this.measurementId) return;
+
+        const window = this.document.defaultView as any;
+        if (window && typeof window.gtag === "function") {
+          window.gtag("js", new Date());
+          window.gtag("config", this.measurementId, { send_page_view: false });
+        }
+
         const script1 = this.document.createElement("script");
         script1.async = true;
         script1.src = `https://www.googletagmanager.com/gtag/js?id=${this.measurementId}`;
         this.document.head.appendChild(script1);
-
-        const script2 = this.document.createElement("script");
-        script2.innerHTML = `
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${this.measurementId}', { send_page_view: false });
-        `;
-        this.document.head.appendChild(script2);
       },
     });
   }
@@ -182,9 +182,15 @@ export class AnalyticsService {
     }
 
     try {
-      console.info("Analytics: Tracking page view", url);
+      const window = this.document.defaultView as any;
+      const title = this.document.title || "Race Coordinator AI";
+      const fullUrl = window ? window.location.origin + url : url;
+
+      console.info("Analytics: Tracking page view", { url, title });
       gtag("event", "page_view", {
         page_path: url,
+        page_location: fullUrl,
+        page_title: title,
       });
     } catch (e) {
       console.warn("Analytics: Error in trackPageView", e);
