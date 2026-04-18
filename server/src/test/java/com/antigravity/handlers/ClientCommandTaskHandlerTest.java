@@ -91,6 +91,8 @@ public class ClientCommandTaskHandlerTest {
     MongoCollection<RaceSaveData> saveCollection = mock(MongoCollection.class);
     when(mongoDatabase.getCollection(eq("saved_races"), eq(RaceSaveData.class)))
         .thenReturn(saveCollection);
+    when(mongoDatabase.getCollection(eq("demo_saved_races"), eq(RaceSaveData.class)))
+        .thenReturn(saveCollection);
 
     String tmpDir = System.getProperty("java.io.tmpdir");
     File tempFile = new File(tmpDir, "saved_races_test");
@@ -343,9 +345,9 @@ public class ClientCommandTaskHandlerTest {
 
     verify(res).setStatus(200);
 
-    // Verify it was inserted into the MongoCollection
+    // Verify it was inserted into the correct MongoCollection
     MongoCollection<RaceSaveData> saveCollection =
-        mongoDatabase.getCollection("saved_races", RaceSaveData.class);
+        mongoDatabase.getCollection("demo_saved_races", RaceSaveData.class);
     org.mockito.ArgumentCaptor<RaceSaveData> captor =
         org.mockito.ArgumentCaptor.forClass(RaceSaveData.class);
     verify(saveCollection).insertOne(captor.capture());

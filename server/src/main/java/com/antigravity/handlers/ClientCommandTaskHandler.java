@@ -858,8 +858,9 @@ public class ClientCommandTaskHandler {
 
   void getSavedRaces(Context ctx) {
     try {
+      boolean isDemo = "true".equals(ctx.queryParam("demo"));
       DatabaseService dbService = DatabaseService.getInstance();
-      List<RaceSaveData> saves = dbService.getSavedRaces(databaseContext.getDatabase());
+      List<RaceSaveData> saves = dbService.getSavedRaces(databaseContext.getDatabase(), isDemo);
       List<String> files =
           saves.stream().map(RaceSaveData::getSaveName).collect(Collectors.toList());
       ObjectMapper mapper = getObjectMapper();
@@ -874,8 +875,9 @@ public class ClientCommandTaskHandler {
   void deleteSavedRace(Context ctx) {
     try {
       String saveName = ctx.pathParam("filename");
+      boolean isDemo = "true".equals(ctx.queryParam("demo"));
       DatabaseService dbService = DatabaseService.getInstance();
-      boolean deleted = dbService.deleteSavedRace(databaseContext.getDatabase(), saveName);
+      boolean deleted = dbService.deleteSavedRace(databaseContext.getDatabase(), saveName, isDemo);
       if (deleted) {
         ctx.status(200).result("Save deleted: " + saveName);
       } else {
@@ -890,15 +892,17 @@ public class ClientCommandTaskHandler {
   @SuppressWarnings("unchecked")
   private void loadRace(Context ctx) {
     try {
-      Map<String, String> body = ctx.bodyAsClass(HashMap.class);
-      String saveName = body.get("filename");
+      Map<String, Object> body = ctx.bodyAsClass(HashMap.class);
+      String saveName = (String) body.get("filename");
+      boolean isDemo = Boolean.TRUE.equals(body.get("isDemo"));
       if (saveName == null) {
         ctx.status(400).result("Filename is required");
         return;
       }
 
       DatabaseService dbService = DatabaseService.getInstance();
-      RaceSaveData saveData = dbService.getSavedRace(databaseContext.getDatabase(), saveName);
+      RaceSaveData saveData =
+          dbService.getSavedRace(databaseContext.getDatabase(), saveName, isDemo);
 
       if (saveData == null) {
         ctx.status(404).result("Save file not found");

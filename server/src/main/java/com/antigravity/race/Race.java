@@ -258,7 +258,7 @@ public class Race implements ProtocolListener {
       DatabaseService dbService = DatabaseService.getInstance();
       GlobalStatistics stats =
           dbService.getGlobalStatistics(
-              databaseContext.getDatabase(), getRaceModel().getEntityId());
+              databaseContext.getDatabase(), getRaceModel().getEntityId(), isDemoMode());
       if (stats != null) {
         this.overallFastestLap = stats.getFastestLapTime();
         this.overallFastestLapHolder = stats.getFastestLapDriverName();
@@ -680,7 +680,7 @@ public class Race implements ProtocolListener {
     }
 
     if (state instanceof RaceOver) {
-      ClientSubscriptionManager.getInstance().deleteAutoSave(model.getEntityId());
+      ClientSubscriptionManager.getInstance().deleteAutoSave(model.getEntityId(), isDemoMode());
     }
   }
 

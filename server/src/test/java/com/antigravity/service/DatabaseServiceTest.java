@@ -132,7 +132,7 @@ public class DatabaseServiceTest {
     existing.setFastestLapTime(3.5);
     when(findIterable.first()).thenReturn(existing);
 
-    GlobalStatistics result = dbService.getGlobalStatistics(mongoDatabase, raceId);
+    GlobalStatistics result = dbService.getGlobalStatistics(mongoDatabase, raceId, false);
 
     ArgumentCaptor<Bson> captor = ArgumentCaptor.forClass(Bson.class);
     verify(statsCollection).find(captor.capture());

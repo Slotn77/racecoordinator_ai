@@ -38,9 +38,9 @@ else
 fi
 
 # JVM optimization for faster startup in tests
-JVM_OPTS="-XX:TieredStopAtLevel=1"
+JVM_OPTS="-XX:TieredStopAtLevel=1 -Dnet.bytebuddy.experimental=true"
 
-mvn test $MVN_THREADS \
+mvn test $MVN_THREADS "$@" \
   -Dbuild.dist.dir="$SERVER_BUILD_DIR" \
   -DskipProtobuf=true \
   -DforkCount="$FORK_COUNT" \

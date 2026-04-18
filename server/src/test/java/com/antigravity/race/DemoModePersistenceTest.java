@@ -50,7 +50,7 @@ public class DemoModePersistenceTest {
   }
 
   @Test
-  public void testRaceOverDoesNotSaveInDemoMode() {
+  public void testRaceOverSavesInDemoMode() {
     // Mock the static instances and methods
     try (MockedStatic<DatabaseService> dbServiceMock = mockStatic(DatabaseService.class);
         MockedStatic<ClientSubscriptionManager> managerMock =
@@ -70,9 +70,9 @@ public class DemoModePersistenceTest {
       RaceOver raceOver = new RaceOver();
       raceOver.enter(race);
 
-      // Verify that save methods were NEVER called
-      verify(mockService, never()).saveRaceHistory(any(), any());
-      verify(mockService, never()).updateGlobalStatistics(any(), any());
+      // Verify that save methods WERE called (now allowed in demo mode)
+      verify(mockService, times(1)).saveRaceHistory(any(), any());
+      verify(mockService, times(1)).updateGlobalStatistics(any(), any());
     }
   }
 

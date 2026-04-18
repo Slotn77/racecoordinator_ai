@@ -406,9 +406,11 @@ public class DatabaseService {
 
   public void saveRaceHistory(MongoDatabase database, com.antigravity.race.Race runtimeRace) {
     if (runtimeRace == null) return;
+    boolean isDemo = runtimeRace.isDemoMode();
     try {
       MongoCollection<RaceHistoryRecord> collection =
-          database.getCollection("race_history", RaceHistoryRecord.class);
+          database.getCollection(
+              getCollectionName("race_history", isDemo), RaceHistoryRecord.class);
       RaceHistoryRecord record = new RaceHistoryRecord();
       if (runtimeRace.getRaceModel() != null) {
         record.setOriginalEntityId(runtimeRace.getRaceModel().getEntityId());
@@ -421,7 +423,8 @@ public class DatabaseService {
       record.setStatistics(runtimeRace.getStatistics());
 
       collection.insertOne(record);
-      System.out.println("Race successfully saved to race_history.");
+      System.out.println(
+          "Race successfully saved to " + collection.getNamespace().getCollectionName());
     } catch (Exception e) {
       System.err.println("Failed to save race to history: " + e.getMessage());
       e.printStackTrace();
@@ -431,10 +434,12 @@ public class DatabaseService {
   public void updateGlobalStatistics(
       MongoDatabase database, com.antigravity.race.Race runtimeRace) {
     if (runtimeRace == null) return;
+    boolean isDemo = runtimeRace.isDemoMode();
     try {
       String raceId = runtimeRace.getRaceModel().getEntityId();
       MongoCollection<GlobalStatistics> statsCollection =
-          database.getCollection("global_statistics", GlobalStatistics.class);
+          database.getCollection(
+              getCollectionName("global_statistics", isDemo), GlobalStatistics.class);
       GlobalStatistics stats = statsCollection.find(Filters.eq("race_entity_id", raceId)).first();
       if (stats == null) {
         stats = new GlobalStatistics(raceId);
@@ -499,10 +504,12 @@ public class DatabaseService {
     }
   }
 
-  public GlobalStatistics getGlobalStatistics(MongoDatabase database, String raceEntityId) {
+  public GlobalStatistics getGlobalStatistics(
+      MongoDatabase database, String raceEntityId, boolean isDemo) {
     if (raceEntityId == null) return new GlobalStatistics();
     MongoCollection<GlobalStatistics> statsCollection =
-        database.getCollection("global_statistics", GlobalStatistics.class);
+        database.getCollection(
+            getCollectionName("global_statistics", isDemo), GlobalStatistics.class);
     GlobalStatistics stats =
         statsCollection.find(Filters.eq("race_entity_id", raceEntityId)).first();
     if (stats == null) {
@@ -511,9 +518,9 @@ public class DatabaseService {
     return stats;
   }
 
-  public List<RaceHistoryRecord> getRaceHistory(MongoDatabase database) {
+  public List<RaceHistoryRecord> getRaceHistory(MongoDatabase database, boolean isDemo) {
     MongoCollection<RaceHistoryRecord> collection =
-        database.getCollection("race_history", RaceHistoryRecord.class);
+        database.getCollection(getCollectionName("race_history", isDemo), RaceHistoryRecord.class);
     List<RaceHistoryRecord> history = new ArrayList<>();
     // You could sort by _id descending to get newest first natively, but BSON
     // default works for now.
@@ -521,17 +528,18 @@ public class DatabaseService {
     return history;
   }
 
-  public RaceHistoryRecord getRaceHistoryById(MongoDatabase database, String id) {
+  public RaceHistoryRecord getRaceHistoryById(MongoDatabase database, String id, boolean isDemo) {
     MongoCollection<RaceHistoryRecord> collection =
-        database.getCollection("race_history", RaceHistoryRecord.class);
+        database.getCollection(getCollectionName("race_history", isDemo), RaceHistoryRecord.class);
     return collection.find(Filters.eq("_id", new ObjectId(id))).first();
   }
 
   public void upsertAutoSave(MongoDatabase database, RaceSaveData data) {
     if (data == null) return;
+    boolean isDemo = data.isDemoMode();
     try {
       MongoCollection<RaceSaveData> collection =
-          database.getCollection("saved_races", RaceSaveData.class);
+          database.getCollection(getCollectionName("saved_races", isDemo), RaceSaveData.class);
       ReplaceOptions options = new ReplaceOptions().upsert(true);
       collection.replaceOne(Filters.eq("saveName", data.getSaveName()), data, options);
     } catch (Exception e) {
@@ -542,9 +550,10 @@ public class DatabaseService {
 
   public void saveManualRace(MongoDatabase database, RaceSaveData data) {
     if (data == null) return;
+    boolean isDemo = data.isDemoMode();
     try {
       MongoCollection<RaceSaveData> collection =
-          database.getCollection("saved_races", RaceSaveData.class);
+          database.getCollection(getCollectionName("saved_races", isDemo), RaceSaveData.class);
       collection.insertOne(data);
     } catch (Exception e) {
       System.err.println("Failed to save race manually: " + e.getMessage());
@@ -552,14 +561,17 @@ public class DatabaseService {
     }
   }
 
-  public List<RaceSaveData> getSavedRaces(MongoDatabase database) {
+  public List<RaceSaveData> getSavedRaces(MongoDatabase database, boolean isDemo) {
     long startTime = System.currentTimeMillis();
+    String collectionName = getCollectionName("saved_races", isDemo);
     MongoCollection<RaceSaveData> collection =
-        database.getCollection("saved_races", RaceSaveData.class);
+        database.getCollection(collectionName, RaceSaveData.class);
 
     long totalDocs = collection.countDocuments();
     logger.info(
-        "DIAGNOSTIC: Loading saved races from collection. Total documents found: {}", totalDocs);
+        "DIAGNOSTIC: Loading saved races from collection {}. Total documents found: {}",
+        collectionName,
+        totalDocs);
 
     List<RaceSaveData> saves = new ArrayList<>();
     try {
@@ -602,16 +614,20 @@ public class DatabaseService {
     return saves;
   }
 
-  public RaceSaveData getSavedRace(MongoDatabase database, String saveName) {
+  public RaceSaveData getSavedRace(MongoDatabase database, String saveName, boolean isDemo) {
     MongoCollection<RaceSaveData> collection =
-        database.getCollection("saved_races", RaceSaveData.class);
+        database.getCollection(getCollectionName("saved_races", isDemo), RaceSaveData.class);
     return collection.find(Filters.eq("saveName", saveName)).first();
   }
 
-  public boolean deleteSavedRace(MongoDatabase database, String saveName) {
+  public boolean deleteSavedRace(MongoDatabase database, String saveName, boolean isDemo) {
     MongoCollection<RaceSaveData> collection =
-        database.getCollection("saved_races", RaceSaveData.class);
+        database.getCollection(getCollectionName("saved_races", isDemo), RaceSaveData.class);
     DeleteResult result = collection.deleteOne(Filters.eq("saveName", saveName));
     return result.getDeletedCount() > 0;
+  }
+
+  private String getCollectionName(String baseName, boolean isDemo) {
+    return isDemo ? "demo_" + baseName : baseName;
   }
 }

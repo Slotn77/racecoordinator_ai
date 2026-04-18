@@ -953,8 +953,10 @@ public class DatabaseTaskHandler {
 
   private void getRaceHistoryList(Context ctx) {
     try {
+      boolean isDemo = "true".equals(ctx.queryParam("demo"));
       DatabaseService dbService = DatabaseService.getInstance();
-      List<RaceHistoryRecord> history = dbService.getRaceHistory(databaseContext.getDatabase());
+      List<RaceHistoryRecord> history =
+          dbService.getRaceHistory(databaseContext.getDatabase(), isDemo);
       ctx.json(history);
     } catch (Exception e) {
       e.printStackTrace();
@@ -965,8 +967,10 @@ public class DatabaseTaskHandler {
   private void getRaceHistoryById(Context ctx) {
     try {
       String id = ctx.pathParam("id");
+      boolean isDemo = "true".equals(ctx.queryParam("demo"));
       DatabaseService dbService = DatabaseService.getInstance();
-      RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext.getDatabase(), id);
+      RaceHistoryRecord history =
+          dbService.getRaceHistoryById(databaseContext.getDatabase(), id, isDemo);
       if (history == null) {
         ctx.status(404).result("Race history not found");
         return;
@@ -981,8 +985,10 @@ public class DatabaseTaskHandler {
   private void exportRaceHistoryCsv(Context ctx) {
     try {
       String id = ctx.pathParam("id");
+      boolean isDemo = "true".equals(ctx.queryParam("demo"));
       DatabaseService dbService = DatabaseService.getInstance();
-      RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext.getDatabase(), id);
+      RaceHistoryRecord history =
+          dbService.getRaceHistoryById(databaseContext.getDatabase(), id, isDemo);
       if (history == null) {
         ctx.status(404).result("Race history not found");
         return;
@@ -1016,9 +1022,10 @@ public class DatabaseTaskHandler {
 
   private void getGlobalStatistics(Context ctx) {
     try {
+      boolean isDemo = "true".equals(ctx.queryParam("demo"));
       DatabaseService dbService = DatabaseService.getInstance();
       GlobalStatistics stats =
-          dbService.getGlobalStatistics(databaseContext.getDatabase(), "global");
+          dbService.getGlobalStatistics(databaseContext.getDatabase(), "global", isDemo);
       ctx.json(stats);
     } catch (Exception e) {
       e.printStackTrace();

@@ -245,7 +245,7 @@ public class ClientSubscriptionManager {
     if (raceDataSubscribers.isEmpty() && currentRace != null) {
       logger.info(
           "Last interested client disconnected/unsubscribed. Stopping and clearing current race.");
-      deleteAutoSave(currentRace.getRaceModel().getEntityId());
+      deleteAutoSave(currentRace.getRaceModel().getEntityId(), currentRace.isDemoMode());
       setRace(null);
     }
   }
@@ -259,7 +259,7 @@ public class ClientSubscriptionManager {
   }
 
   public synchronized void autoSave(Race race) {
-    if (race == null || databaseContext == null || race.isDemoMode()) {
+    if (race == null || databaseContext == null) {
       return;
     }
     try {
@@ -287,20 +287,24 @@ public class ClientSubscriptionManager {
     }
   }
 
-  public synchronized void deleteAutoSave(String raceId) {
+  public synchronized void deleteAutoSave(String raceId, boolean isDemo) {
     if (databaseContext == null || raceId == null) {
       return;
     }
     try {
       String filename = "autosave_" + raceId + ".json";
       DatabaseService dbService = DatabaseService.getInstance();
-      boolean deleted = dbService.deleteSavedRace(databaseContext.getDatabase(), filename);
+      boolean deleted = dbService.deleteSavedRace(databaseContext.getDatabase(), filename, isDemo);
       if (deleted) {
-        logger.info("Deleted auto-save from db: {}", filename);
+        logger.info("Deleted auto-save from db (demo={}): {}", isDemo, filename);
       }
     } catch (Exception e) {
       logger.error("Error deleting auto-save", e);
     }
+  }
+
+  public synchronized void deleteAutoSave(String raceId) {
+    deleteAutoSave(raceId, false);
   }
 
   private ObjectMapper getObjectMapper() {
