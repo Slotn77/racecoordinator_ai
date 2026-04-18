@@ -3,6 +3,15 @@ set -e
 
 echo "Building Race Coordinator Release..."
 
+# 0. Check for Analytics Credentials
+ANALYTICS_FILE="server/src/main/resources/analytics.properties"
+if [ ! -f "$ANALYTICS_FILE" ]; then
+    echo "ERROR: $ANALYTICS_FILE is missing!"
+    echo "This file is required for analytics to work in the production build."
+    echo "Please create it using the keys from the secure vault before publishing a release."
+    exit 1
+fi
+
 # 1. Clean and Build Client
 echo "Building Client..."
 cd client

@@ -10,6 +10,15 @@ function Exec {
 
 # 0. Setup Environment
 Write-Host "Setting up environment..." -ForegroundColor Cyan
+
+# Check for Analytics Credentials
+$AnalyticsFile = "$PSScriptRoot\server\src\main\resources\analytics.properties"
+if (-not (Test-Path $AnalyticsFile)) {
+    Write-Error "ERROR: $AnalyticsFile is missing!"
+    Write-Host "This file is required for analytics to work in the production build." -ForegroundColor Red
+    Write-Host "Please create it using the keys from the secure vault before publishing a release." -ForegroundColor Red
+    exit 1
+}
 $env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.10.7-hotspot"
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User") + ";$env:JAVA_HOME\bin"
 
