@@ -118,6 +118,8 @@ export class RaceConnectionService implements OnDestroy {
 
     this.driversLoaded = false;
     this.pendingUpdate = null;
+    this.hasInitiallyConnected = false;
+    this.lastInterfaceStatus = -1;
     this.hydrateDrivers();
 
     this.dataService.updateRaceSubscription(true);
@@ -395,7 +397,12 @@ export class RaceConnectionService implements OnDestroy {
         );
       } else if (status === InterfaceStatus.CONNECTED) {
         this.clearDisconnectedError();
-        this.emitAlert("ACK_MODAL_TITLE_CONNECTED", "ACK_MODAL_MSG_CONNECTED");
+        if (this.hasInitiallyConnected) {
+          this.emitAlert(
+            "ACK_MODAL_TITLE_CONNECTED",
+            "ACK_MODAL_MSG_CONNECTED",
+          );
+        }
         this.hasInitiallyConnected = true;
       }
     }

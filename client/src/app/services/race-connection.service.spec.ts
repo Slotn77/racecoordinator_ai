@@ -139,10 +139,74 @@ describe("RaceConnectionService", () => {
       tick(5000); // Trigger timeout
       expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_DISCONNECTED");
 
+      // First connection should be silent (suppress CONNECTED alert)
+      // but it clears the previous error
+      interfaceEventsSubject.next({
+        status: { status: com.antigravity.InterfaceStatus.CONNECTED },
+      });
+
+      // The previous alert remains in emittedAlert because we didn't emit a new one
+      expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_DISCONNECTED");
+
+      sub.unsubscribe();
+      flush();
+    }));
+
+    it("should show CONNECTED alert only if it was previously connected during the session", fakeAsync(() => {
+      let emittedAlert: any = null;
+      const sub = service.interfaceAlert$.subscribe(
+        (alert) => (emittedAlert = alert),
+      );
+
+      service.connect();
+
+      // First connection - silent
+      interfaceEventsSubject.next({
+        status: { status: com.antigravity.InterfaceStatus.CONNECTED },
+      });
+      expect(emittedAlert).toBeNull();
+
+      // Disconnect
+      interfaceEventsSubject.next({
+        status: { status: com.antigravity.InterfaceStatus.DISCONNECTED },
+      });
+      tick(5000);
+      expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_DISCONNECTED");
+
+      // Reconnect - should show alert now because hasInitiallyConnected is true
       interfaceEventsSubject.next({
         status: { status: com.antigravity.InterfaceStatus.CONNECTED },
       });
       expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_CONNECTED");
+
+      sub.unsubscribe();
+      flush();
+    }));
+
+    it("should reset connection state on each NEW connection session (startConnection)", fakeAsync(() => {
+      let emittedAlert: any = null;
+      const sub = service.interfaceAlert$.subscribe(
+        (alert) => (emittedAlert = alert),
+      );
+
+      // --- SESSION 1 ---
+      service.connect();
+      interfaceEventsSubject.next({
+        status: { status: com.antigravity.InterfaceStatus.CONNECTED },
+      });
+      expect(emittedAlert).toBeNull(); // Silent first connect
+      service.disconnect();
+      flush();
+
+      // --- SESSION 2 ---
+      emittedAlert = null;
+      service.connect(); // Should call startConnection and reset hasInitiallyConnected
+
+      // First connection of second session should also be silent
+      interfaceEventsSubject.next({
+        status: { status: com.antigravity.InterfaceStatus.CONNECTED },
+      });
+      expect(emittedAlert).toBeNull();
 
       sub.unsubscribe();
       flush();
