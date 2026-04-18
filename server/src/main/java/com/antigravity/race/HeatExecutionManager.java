@@ -226,6 +226,12 @@ public class HeatExecutionManager {
       DriverHeatData driverData = drivers.get(i);
       RaceParticipant participant = driverData.getDriver();
 
+      if (participant == null
+          || participant.getDriver() == null
+          || participant.getDriver().isEmpty()) {
+        continue;
+      }
+
       if (refuelDelayRemaining[i] >= 0) {
         accumulatedRefuelTime[i] += delta;
         if (refuelDelayRemaining[i] > 0) {
@@ -286,6 +292,14 @@ public class HeatExecutionManager {
       return;
     }
 
+    DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(lane);
+    if (driverData == null
+        || driverData.getDriver() == null
+        || driverData.getDriver().getDriver() == null
+        || driverData.getDriver().getDriver().isEmpty()) {
+      return;
+    }
+
     CarLocation loc = carData.getLocation();
     boolean inPit =
         loc == CarLocation.PitRow
@@ -297,7 +311,6 @@ public class HeatExecutionManager {
     if (inPit && canRefuel) {
       if (!isRefueling[lane] && refuelDelayRemaining[lane] < 0) {
         // Check if already at full fuel
-        DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(lane);
         if (driverData.getDriver().getFuelLevel() < fuelOptions.getCapacity()) {
           refuelDelayRemaining[lane] = fuelOptions.getPitStopDelay();
           System.out.println(
@@ -331,6 +344,12 @@ public class HeatExecutionManager {
     }
 
     DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(lane);
+    if (driverData == null
+        || driverData.getDriver() == null
+        || driverData.getDriver().getDriver() == null
+        || driverData.getDriver().getDriver().isEmpty()) {
+      return;
+    }
     DigitalFuelOptions fuelOptions = this.race.getRaceModel().getDigitalFuelOptions();
 
     double throttle = carData.getCarThrottlePCT() * 100.0;
@@ -419,8 +438,9 @@ public class HeatExecutionManager {
     if (driverData == null
         || driverData.getDriver() == null
         || driverData.getDriver().getDriver() == null
-        || driverData.getDriver().getDriver().getEntityId() == null) {
-      System.out.println("HeatExecutionManager: Ignored onLap/onSegment - Invalid driver/entity");
+        || driverData.getDriver().getDriver().getEntityId() == null
+        || driverData.getDriver().getDriver().isEmpty()) {
+      System.out.println("HeatExecutionManager: Ignored onLap/onSegment - Invalid/Empty driver");
       return null;
     }
     return driverData;

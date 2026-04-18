@@ -15,6 +15,7 @@ import { RaceConverter } from "src/app/converters/race.converter";
 import { TrackConverter } from "src/app/converters/track.converter";
 import { DataService } from "src/app/data.service";
 import { CanComponentDeactivate } from "src/app/guards/raceday.guard";
+import { Driver } from "src/app/models/driver";
 import { FinishMethod, HeatScoring } from "src/app/models/heat_scoring";
 import { Race } from "src/app/models/race";
 import { RaceParticipant } from "src/app/models/race_participant";
@@ -94,12 +95,14 @@ export class DefaultRacedayComponent
    * Existing entries are updated in-place; new ones are appended.
    */
   private updateLeaderboardEntries(): void {
-    const incoming = (this.participants || []).map((p) => ({
-      name: p.team?.name || p.driver?.nickname || p.driver?.name || "Unknown",
-      score: p.totalLaps || 0,
-      rank: p.rank || 0,
-      entityId: p.driver?.entity_id || p.driver?.name || "",
-    }));
+    const incoming = (this.participants || [])
+      .filter((p) => p && p.driver && !Driver.isEmpty(p.driver))
+      .map((p) => ({
+        name: p.team?.name || p.driver?.nickname || p.driver?.name || "Unknown",
+        score: p.totalLaps || 0,
+        rank: p.rank || 0,
+        entityId: p.driver?.entity_id || p.driver?.name || "",
+      }));
 
     const existingIds = new Set(this.leaderboardEntries.map((e) => e.entityId));
 
@@ -128,13 +131,19 @@ export class DefaultRacedayComponent
   }
 
   protected getLeaderboardPosition(entry: any): number {
-    // If rank is set (> 0), use it directly: rank 1 = position 0, rank 2 = position 1, etc.
-    if (entry.rank > 0) {
-      return entry.rank - 1;
-    }
-    // Fallback: when ranks aren't assigned (all 0), use insertion order
-    const idx = this.leaderboardEntries.indexOf(entry);
-    return idx >= 0 ? idx : 0;
+    // Sort all entries to determine their relative visual position (dense ranking)
+    const sorted = [...this.leaderboardEntries].sort((a, b) => {
+      // Sort by rank (1 is best, 0 is unset)
+      if (a.rank !== b.rank) {
+        if (a.rank === 0) return 1;
+        if (b.rank === 0) return -1;
+        return a.rank - b.rank;
+      }
+      // If ranks are equal, sort alphabetically by name
+      return a.name.localeCompare(b.name);
+    });
+    const pos = sorted.findIndex((e) => e.entityId === entry.entityId);
+    return pos >= 0 ? pos : 0;
   }
 
   protected get autoStatusLabel(): string {
@@ -1769,7 +1778,7 @@ export class DefaultRacedayComponent
     }
 
     // Calculate fuel percentage if value is not provided or is a number
-    const level = hd.participant?.fuelLevel;
+    const level = hd.participant?.fuelLevel ?? (hd.driver as any)?.fuelLevel;
     const race = this.raceService.getRace();
     const capacity =
       (this.track?.hasDigitalFuel()
@@ -1827,22 +1836,20 @@ export class DefaultRacedayComponent
     return asset;
   }
 
-  private isEmptyDriver(hd: DriverHeatData): boolean {
+  private isEmptyDriver(hd: DriverHeatData | any): boolean {
     if (!hd) return true;
-    // TODO(aufderheide): An empty driver should be signified by a specific entity_id like
-    // undefined or 0.  We shouldn't be looking at the name to figure out if it's a valid
-    // driver or not.
-    const name = hd.actualDriver?.name || hd.driver?.name;
-    const entityId =
-      hd.actualDriver?.entity_id ?? hd.participant?.driver?.entity_id;
 
-    if (!name || name.trim() === "") {
-      return true;
-    }
+    // 1. Check actualDriver model
+    if (hd.actualDriver) return Driver.isEmpty(hd.actualDriver);
 
-    // A driver is empty IF it has the literal name "Empty" AND either an empty/missing entityId.
-    // This avoids false positives on minimal mocks in unit/screendiff tests that omit IDs.
-    return name === "Empty" && (!entityId || entityId === "");
+    // 2. Check nested driver model in participant (common in protos/mocks)
+    const nestedDriver = hd.driver?.driver || hd.participant?.driver;
+    if (nestedDriver) return Driver.isEmpty(nestedDriver);
+
+    // 3. Fallback to checking the driver property itself if it's a model
+    if (hd.driver && !hd.driver.driver) return Driver.isEmpty(hd.driver);
+
+    return true;
   }
 
   // Format any value based on property name
@@ -1886,14 +1893,26 @@ export class DefaultRacedayComponent
       if (this.isEmptyDriver(hd)) {
         return this.translationService.translate("RD_EMPTY_LANE");
       }
-      return hd.actualDriver?.name || hd.driver.name;
+      const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
+      return d?.name || "";
     } else if (baseKey === "driver.nickname") {
       if (this.isEmptyDriver(hd)) {
         return this.translationService.translate("RD_EMPTY_LANE");
       }
-      return hd.actualDriver?.nickname || hd.driver.nickname || hd.driver.name;
+      const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
+      return d?.nickname || d?.name || "";
     } else if (baseKey === "participant.team.name") {
-      return hd.participant?.team?.name || "";
+      if (this.isEmptyDriver(hd)) {
+        // Only show "Empty Lane" for team name if it's the primary (CenterCenter) property
+        if (
+          column &&
+          column.layout[AnchorPoint.CenterCenter] === propertyName
+        ) {
+          return this.translationService.translate("RD_EMPTY_LANE");
+        }
+        return "";
+      }
+      return hd.participant?.team?.name || (hd.driver as any)?.team?.name || "";
     } else if (baseKey === "participant.fuelLevel") {
       return value !== undefined ? value.toFixed(1) : "--.-";
     } else if (baseKey === "fuelCapacity") {
@@ -1903,7 +1922,7 @@ export class DefaultRacedayComponent
         : race?.fuel_options?.capacity;
       return capacity !== undefined ? capacity.toFixed(1) : "--.-";
     } else if (baseKey === "fuelPercentage") {
-      const level = hd.participant?.fuelLevel;
+      const level = hd.participant?.fuelLevel ?? (hd.driver as any)?.fuelLevel;
       const race = this.raceService.getRace();
       const capacity = this.track?.hasDigitalFuel()
         ? race?.digital_fuel_options?.capacity
@@ -1916,7 +1935,7 @@ export class DefaultRacedayComponent
     } else if (baseKey === "driver.avatarUrl") {
       return this.getFullUrl(value);
     } else if (baseKey === "seed") {
-      const seed = hd.participant?.seed;
+      const seed = hd.participant?.seed ?? (hd.driver as any)?.seed;
       return seed ? `(${seed})` : "--";
     } else if (baseKey === "rankHeat") {
       if (this.isEmptyDriver(hd)) return "";
@@ -1924,7 +1943,7 @@ export class DefaultRacedayComponent
       return rank ? `(${rank})` : "--";
     } else if (baseKey === "rankOverall") {
       if (this.isEmptyDriver(hd)) return "";
-      const rank = hd.participant?.rank;
+      const rank = hd.participant?.rank ?? (hd.driver as any)?.rank;
       return rank ? `(${rank})` : "--";
     } else if (baseKey === "segmentTime") {
       const parts = propertyName.split("_");
@@ -2075,25 +2094,16 @@ export class DefaultRacedayComponent
     return baseKey === "driver.name" || baseKey === "driver.nickname";
   }
 
-  isTeam(hd: DriverHeatData): boolean {
-    return !!hd?.participant?.team;
+  isTeam(hd: DriverHeatData | any): boolean {
+    return !!(hd?.participant?.team || hd?.driver?.team);
   }
 
-  getTeammates(hd: DriverHeatData): any[] {
-    console.log(
-      `getTeammates called for ${hd.driver?.name}. Team:`,
-      hd.participant?.team,
-    );
-    if (hd.participant && hd.participant.team) {
-      const team = hd.participant.team;
-      const teammates = this.allDrivers.filter((d) =>
+  getTeammates(hd: DriverHeatData | any): any[] {
+    const team = hd.participant?.team || hd.driver?.team;
+    if (team) {
+      return this.allDrivers.filter((d) =>
         team.driverIds.includes(d.entity_id || d.id),
       );
-      console.log(
-        `Found ${teammates.length} teammates in allDrivers:`,
-        teammates,
-      );
-      return teammates;
     }
     return [];
   }

@@ -5,10 +5,12 @@ import { Model } from "./model";
  * driver as it exists in the database.
  */
 export interface AudioConfig {
-  type: 'preset' | 'tts';
+  type: "preset" | "tts";
   url?: string;
   text?: string;
 }
+
+export const EMPTY_DRIVER_ID = "EMPTY_LANE";
 
 export class Driver implements Model {
   entity_id: string;
@@ -24,7 +26,7 @@ export class Driver implements Model {
     nickname: string,
     avatarUrl?: string,
     lapAudio?: AudioConfig,
-    bestLapAudio?: AudioConfig // TODO(aufderheide): Optional for now? Or ensure always set?
+    bestLapAudio?: AudioConfig, // TODO(aufderheide): Optional for now? Or ensure always set?
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -32,11 +34,32 @@ export class Driver implements Model {
     this.avatarUrl = avatarUrl;
 
     // Ensure we always have an object to avoid null checks everywhere
-    this.lapAudio = (lapAudio && lapAudio.type) ? lapAudio : { type: 'preset' };
-    this.bestLapAudio = (bestLapAudio && bestLapAudio.type) ? bestLapAudio : { type: 'preset' };
+    this.lapAudio = lapAudio && lapAudio.type ? lapAudio : { type: "preset" };
+    this.bestLapAudio =
+      bestLapAudio && bestLapAudio.type ? bestLapAudio : { type: "preset" };
   }
 
   get objectId(): string {
     return this.entity_id;
+  }
+
+  isEmpty(): boolean {
+    return Driver.isEmpty(this);
+  }
+
+  static isEmpty(driver: any): boolean {
+    if (!driver) return true;
+    const id =
+      driver.entity_id ||
+      driver.entityId ||
+      driver.id ||
+      driver.model?.entity_id ||
+      driver.model?.entityId;
+    if (id === EMPTY_DRIVER_ID) return true;
+    if (id !== undefined && id !== "") return false;
+
+    // TODO(aufderheide): Remove this.  Fix the f'ing mocks.
+    // For mocks/incomplete objects without an ID, fallback to checking if it has any name
+    return !driver.name && !driver.nickname && !driver.model?.name;
   }
 }

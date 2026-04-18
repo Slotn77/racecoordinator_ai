@@ -279,8 +279,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   getLocalizedName(participant: Participant): string {
     if (
-      participant.name === "Empty" &&
-      (!participant.entity_id || participant.entity_id === "")
+      (participant.name === "Empty" || participant.name === "Unknown") &&
+      (!participant.entity_id ||
+        participant.entity_id === "" ||
+        participant.entity_id === "empty")
     ) {
       return this.translationService.translate("RD_EMPTY_LANE");
     }
@@ -290,8 +292,12 @@ export class DefaultRacedaySetupComponent implements OnInit {
   getLocalizedNickname(participant: Participant): string {
     if (this.isDriver(participant)) {
       if (
-        (participant.nickname === "Empty" || participant.name === "Empty") &&
-        (!participant.entity_id || participant.entity_id === "")
+        (participant.nickname === "Empty" ||
+          participant.name === "Empty" ||
+          participant.name === "Unknown") &&
+        (!participant.entity_id ||
+          participant.entity_id === "" ||
+          participant.entity_id === "empty")
       ) {
         return this.translationService.translate("RD_EMPTY_LANE");
       }

@@ -386,4 +386,132 @@ public class HeatExecutionManagerTest {
     executionManager.processTicker(1.0f);
     assertTrue(driverData.getDriver().getFuelLevel() > 50.0);
   }
+
+  @Test
+  public void testOnLapAndOnSegmentRejectedOnEmptyLane() {
+    // Re-create the race with one real driver and one EMPTY_DRIVER explicitly
+    List<RaceParticipant> mixedParticipants = new ArrayList<>();
+    mixedParticipants.add(
+        new RaceParticipant(new Driver("Driver 1", "D1", "d1", new ObjectId()), "p1"));
+    mixedParticipants.add(new RaceParticipant(Driver.EMPTY_DRIVER));
+
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(race.getRaceModel())
+            .drivers(mixedParticipants)
+            .track(track) // 2 lanes
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(2);
+
+    DriverHeatData emptyDriverData = race.getCurrentHeat().getDrivers().get(1);
+    assertTrue(emptyDriverData.getDriver().getDriver().isEmpty());
+
+    // Try onLap
+    boolean lapResult = executionManager.onLap(1, 5.0, 1, false, true, false);
+    assertFalse("Lap on empty lane should be rejected", lapResult);
+    assertEquals(0, emptyDriverData.getLapCount());
+
+    // Try onSegment
+    executionManager.onSegment(1, 2.0, 1);
+    assertEquals(0, emptyDriverData.getSegments().size());
+  }
+
+  @Test
+  public void testEmptyLaneRefuelingSkipped() {
+    AnalogFuelOptions fuelOptions =
+        new AnalogFuelOptions(
+            true,
+            false,
+            false,
+            100.0,
+            AnalogFuelOptions.FuelUsageType.LINEAR,
+            4.0,
+            100.0,
+            10.0,
+            2.0,
+            5.0);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track1")
+            .withFuelOptions(fuelOptions)
+            .withEntityId("race1")
+            .build();
+
+    List<RaceParticipant> mixedParticipants = new ArrayList<>();
+    mixedParticipants.add(
+        new RaceParticipant(new Driver("Driver 1", "D1", "d1", new ObjectId()), "p1"));
+    mixedParticipants.add(new RaceParticipant(Driver.EMPTY_DRIVER));
+
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(mixedParticipants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(2);
+
+    DriverHeatData emptyDriverData = race.getCurrentHeat().getDrivers().get(1);
+    emptyDriverData.getDriver().setFuelLevel(50.0);
+
+    // Enter pit for the empty lane
+    CarData pitData = new CarData(1, 0, 0, 0, true, CarLocation.PitRow, CarLocation.PitRow, -1);
+    executionManager.handlePitDetection(pitData);
+
+    // Process ticker
+    executionManager.processTicker(1.0f);
+    executionManager.processTicker(1.0f);
+
+    // Should NOT be refueling because it's an empty lane
+    assertFalse("Empty lane should not be refueling", executionManager.getIsRefueling()[1]);
+    assertEquals(50.0, emptyDriverData.getDriver().getFuelLevel(), 0.001);
+  }
+
+  @Test
+  public void testRealDriverNamedEmpty() {
+    // Create a real driver whose name happens to be "Empty" but has a valid entity ID
+    Driver realDriverNamedEmpty = new Driver("Empty", "Speedy", "real_id_123", new ObjectId());
+    List<RaceParticipant> mixedParticipants = new ArrayList<>();
+    mixedParticipants.add(new RaceParticipant(realDriverNamedEmpty, "rp1"));
+    mixedParticipants.add(new RaceParticipant(Driver.EMPTY_DRIVER));
+
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(race.getRaceModel())
+            .drivers(mixedParticipants)
+            .track(track) // 2 lanes
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(2);
+
+    DriverHeatData realDriverData = race.getCurrentHeat().getDrivers().get(0);
+    DriverHeatData emptyDriverData = race.getCurrentHeat().getDrivers().get(1);
+
+    // Verify isEmpty() works as expected: false for the real driver named "Empty", true for the
+    // actual empty driver
+    assertFalse(
+        "Real driver named 'Empty' should NOT be considered empty",
+        realDriverData.getDriver().getDriver().isEmpty());
+    assertTrue(
+        "Actual empty driver should be considered empty",
+        emptyDriverData.getDriver().getDriver().isEmpty());
+
+    // Record laps for the real driver
+    executionManager.onLap(0, 1.0, 1, false, true, false); // Reaction
+    boolean lapResult = executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 1
+
+    assertTrue("Lap for real driver named 'Empty' should be accepted", lapResult);
+    assertEquals(1, realDriverData.getLapCount());
+
+    // Record lap for actual empty driver (should still be rejected)
+    boolean emptyLapResult = executionManager.onLap(1, 5.0, 1, false, true, false);
+    assertFalse("Lap for actual empty driver should be rejected", emptyLapResult);
+    assertEquals(0, emptyDriverData.getLapCount());
+  }
 }

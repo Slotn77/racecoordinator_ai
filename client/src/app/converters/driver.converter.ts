@@ -1,4 +1,4 @@
-import { Driver } from "src/app/models/driver";
+import { Driver, EMPTY_DRIVER_ID } from "src/app/models/driver";
 import { com } from "src/app/proto/message";
 
 import { ConverterCache } from "./converter_cache";
@@ -16,7 +16,7 @@ export class DriverConverter {
 
   static getEmptyDriver(): Driver {
     return new Driver(
-      "empty",
+      EMPTY_DRIVER_ID,
       "Empty",
       "",
       undefined,
@@ -38,13 +38,16 @@ export class DriverConverter {
     if (isReference) {
       const cached = this.cache.get(objectId);
       if (cached) return cached;
-      if (objectId === "empty") return this.getEmptyDriver();
+      if (objectId === EMPTY_DRIVER_ID) return this.getEmptyDriver();
     }
 
-    return this.cache.process(objectId, isReference, () => {
+    // TODO(aufderheide): Here's a name check validating empty lane.  This isn't the worst
+    // because it's looking for an empty string which is not a valid name, but it's not great.
+    const finalId = objectId || (proto.name ? "" : EMPTY_DRIVER_ID);
+    return this.cache.process(finalId, isReference, () => {
       return new Driver(
-        objectId || "empty",
-        proto.name || (objectId === "empty" ? "Empty" : "Unknown"),
+        finalId,
+        proto.name || (finalId === EMPTY_DRIVER_ID ? "Empty" : "Unknown"),
         proto.nickname || "",
         proto.avatarUrl || undefined,
         {

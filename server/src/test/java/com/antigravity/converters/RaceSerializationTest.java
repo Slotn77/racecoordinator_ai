@@ -89,7 +89,7 @@ public class RaceSerializationTest {
     // Verify empty driver fields
     assertEquals("Empty", emptyParticipant.getDriver().getName());
     assertEquals("Empty", emptyParticipant.getDriver().getNickname());
-    assertEquals("", emptyParticipant.getDriver().getModel().getEntityId());
+    assertEquals(Driver.EMPTY_DRIVER_ID, emptyParticipant.getDriver().getModel().getEntityId());
 
     // Verify heats also have the correct drivers
     assertTrue(proto.getHeatsCount() > 0);
