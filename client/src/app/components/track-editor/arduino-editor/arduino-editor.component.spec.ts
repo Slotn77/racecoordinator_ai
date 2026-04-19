@@ -202,6 +202,52 @@ describe("ArduinoEditorComponent", () => {
     expect(voltage2).toBeTruthy();
   });
 
+  it("should update ledBehaviors when lanes change", () => {
+    // Initial lanes: 2
+    expect(component.lanes.length).toBe(2);
+
+    const heatLeaderLanes = component.ledBehaviors.filter((b) =>
+      b.label.includes("AE_LED_BEHAVIOR_HEAT_LEADER_LANE"),
+    );
+    expect(heatLeaderLanes.length).toBe(2);
+
+    // Change lanes to 4
+    component.lanes = [
+      new Lane("l1", "#fff", "#ff0000", 10),
+      new Lane("l2", "#fff", "#00ff00", 10),
+      new Lane("l3", "#fff", "#0000ff", 10),
+      new Lane("l4", "#fff", "#ffff00", 10),
+    ];
+    fixture.detectChanges();
+
+    const updatedHeatLeaderLanes = component.ledBehaviors.filter((b) =>
+      b.label.includes("AE_LED_BEHAVIOR_HEAT_LEADER_LANE"),
+    );
+    expect(updatedHeatLeaderLanes.length).toBe(4);
+  });
+
+  it("should update ledLaneColorOverrides for existing ledStrings when lanes change", () => {
+    // Add an LED string
+    const rgbBehavior = (com.antigravity.PinBehavior as any)
+      .BEHAVIOR_LED_RGB_STRING;
+    component.setPinBehavior(true, 5, rgbBehavior.toString());
+    const ls = component.config!.ledStrings[0];
+    expect(ls.ledLaneColorOverrides.length).toBe(2);
+
+    // Change lanes to 4
+    component.lanes = [
+      new Lane("l1", "#fff", "#ff0000", 10),
+      new Lane("l2", "#fff", "#00ff00", 10),
+      new Lane("l3", "#fff", "#0000ff", 10),
+      new Lane("l4", "#fff", "#ffff00", 10),
+    ];
+    fixture.detectChanges();
+
+    expect(ls.ledLaneColorOverrides.length).toBe(4);
+    expect(ls.ledLaneColorOverrides[2]).toBe("#0000ff");
+    expect(ls.ledLaneColorOverrides[3]).toBe("#ffff00");
+  });
+
   it("should find lanes with voltage pins", () => {
     component.config!.analogIds[1] = VOLTAGE_BASE; // Lane 0
     component.config!.analogIds[2] = VOLTAGE_BASE + 1; // Lane 1
@@ -551,6 +597,50 @@ describe("ArduinoEditorComponent", () => {
 
       expect(component.config!.ledStrings.length).toBe(1);
       expect(component.config!.ledStrings[0].pin).toBe(6);
+    });
+
+    it("should reset lane-based LED behaviors to unused when a lane is deleted", () => {
+      // Setup 4 lanes
+      component.lanes = [
+        new Lane("l1", "#fff", "#ff0000", 10),
+        new Lane("l2", "#fff", "#00ff00", 10),
+        new Lane("l3", "#fff", "#0000ff", 10),
+        new Lane("l4", "#fff", "#ffff00", 10),
+      ];
+      fixture.detectChanges();
+
+      // Add an LED string with behavior for Lane 4 (index 3)
+      const pinIndex = 5;
+      const rgbBehavior = (com.antigravity.PinBehavior as any)
+        .BEHAVIOR_LED_RGB_STRING;
+      component.setPinBehavior(true, pinIndex, rgbBehavior.toString());
+      const ls = component.config!.ledStrings[0];
+
+      // Set first LED to Heat Leader Lane 4
+      const heatLeaderBase =
+        com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE;
+      ls.leds[0] = heatLeaderBase + 3;
+
+      // Set second LED to Fuel Level Lane 4
+      const fuelLevelBase =
+        com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE;
+      ls.leds[1] = fuelLevelBase + 3;
+
+      // Delete lane 4 (now only 3 lanes)
+      component.lanes = [
+        new Lane("l1", "#ff0000", "#000", 10),
+        new Lane("l2", "#00ff00", "#000", 10),
+        new Lane("l3", "#0000ff", "#000", 10),
+      ];
+      fixture.detectChanges();
+
+      // Verify behaviors are reset to UNUSED
+      expect(ls.leds[0]).toBe(
+        com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED,
+      );
+      expect(ls.leds[1]).toBe(
+        com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED,
+      );
     });
   });
 

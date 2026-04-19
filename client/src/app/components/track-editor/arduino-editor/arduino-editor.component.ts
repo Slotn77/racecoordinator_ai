@@ -42,8 +42,8 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   private _lanes: Lane[] = [];
   @Input() set lanes(value: Lane[]) {
-    this._lanes = value;
-    this.updatePinActions();
+    this._lanes = value || [];
+    this.refreshLanes();
   }
   get lanes(): Lane[] {
     return this._lanes;
@@ -1160,6 +1160,117 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       if (b.value === "" || b.value === "reserved") return 1;
       return a.label.localeCompare(b.label);
     });
+  }
+
+  private refreshLanes() {
+    this.updatePinActions();
+    this.updateLedBehaviors();
+
+    if (!this.config || !this.lanes) return;
+
+    const laneCount = this.lanes.length;
+    let changed = false;
+
+    // Validate/Update LED strings
+    if (this.config.ledStrings) {
+      this.config.ledStrings.forEach((ls) => {
+        // Truncate color overrides
+        if (ls.ledLaneColorOverrides.length > laneCount) {
+          ls.ledLaneColorOverrides = ls.ledLaneColorOverrides.slice(
+            0,
+            laneCount,
+          );
+          changed = true;
+        }
+
+        // Extend color overrides
+        while (ls.ledLaneColorOverrides.length < laneCount) {
+          const laneIdx = ls.ledLaneColorOverrides.length;
+          const lane = this.lanes[laneIdx];
+          ls.ledLaneColorOverrides.push(lane?.background_color || "#ffffff");
+          changed = true;
+        }
+
+        // Validate behaviors
+        if (ls.leds) {
+          ls.leds = ls.leds.map((behavior) => {
+            const laneIdx = this.getLaneIndexFromRgbBehavior(behavior);
+            if (laneIdx !== -1 && laneIdx >= laneCount) {
+              changed = true;
+              return com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED;
+            }
+            return behavior;
+          });
+        }
+      });
+    }
+
+    // Validate Pins
+    const validatePins = (ids: number[]) => {
+      if (!ids) return;
+      for (let i = 0; i < ids.length; i++) {
+        const laneIdx = this.getLaneIndexFromPinBehavior(ids[i]);
+        if (laneIdx !== -1 && laneIdx >= laneCount) {
+          ids[i] = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+          changed = true;
+        }
+      }
+    };
+
+    if (this.config.digitalIds) validatePins(this.config.digitalIds);
+    if (this.config.analogIds) validatePins(this.config.analogIds);
+
+    // Validate Voltage Configs
+    if (this.config.voltageConfigs) {
+      Object.keys(this.config.voltageConfigs).forEach((key) => {
+        const laneIdx = parseInt(key, 10);
+        if (laneIdx >= laneCount) {
+          delete this.config!.voltageConfigs![laneIdx];
+          changed = true;
+        }
+      });
+    }
+
+    if (changed) {
+      this.updateArduinoConfig();
+    }
+  }
+
+  private getLaneIndexFromRgbBehavior(behavior: number): number {
+    const bases = [
+      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE,
+      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE,
+      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE,
+      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE,
+      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE,
+    ];
+
+    for (const base of bases) {
+      if (behavior >= base && behavior < base + 1000) {
+        return behavior - base;
+      }
+    }
+    return -1;
+  }
+
+  private getLaneIndexFromPinBehavior(behavior: number): number {
+    const bases = [
+      com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE,
+      com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE,
+      com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE,
+      com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE,
+      com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_BASE,
+      com.antigravity.PinBehavior.BEHAVIOR_PIT_OUT_BASE,
+      com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE,
+      com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE,
+    ];
+
+    for (const base of bases) {
+      if (behavior >= base && behavior < base + 1000) {
+        return behavior - base;
+      }
+    }
+    return -1;
   }
 
   getVoltageLanes(): number[] {
