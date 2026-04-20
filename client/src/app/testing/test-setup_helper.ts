@@ -142,6 +142,11 @@ export class TestSetupHelper {
       });
     });
 
+    // Force load fonts only during tests to prevent flakiness without changing app code
+    await page.addStyleTag({
+      url: "https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&display=swap",
+    });
+
     // Handle skip intro
     if (options.skipIntro) {
       await page.addInitScript(() => {
@@ -369,7 +374,11 @@ export class TestSetupHelper {
     );
 
     // 3. Ensure fonts and layout have settled after text swap
-    await page.evaluate(() => document.fonts.ready);
+    await page.evaluate(async () => {
+      // Explicitly load Rajdhani to ensure it's used in screenshots
+      await document.fonts.load("16px Rajdhani").catch(() => {});
+      return document.fonts.ready;
+    });
 
     // 4. Wait for a paint cycle to ensure DOM updates are flushed
     await page.evaluate(
