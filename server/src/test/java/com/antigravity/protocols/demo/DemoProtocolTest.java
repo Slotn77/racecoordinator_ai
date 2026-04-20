@@ -300,4 +300,54 @@ public class DemoProtocolTest {
     scheduler.tick();
     assertEquals("Lap interfaceIndex should be 12", 12, lastLapIndex[0]);
   }
+
+  @Test
+  public void testResetEveryHeat() {
+    MockRandom random = new MockRandom();
+    // Heat 1:
+    // Reaction hit (target 100ms)
+    random.addNextInt(100);
+    // Regular lap hit (target 3000ms)
+    random.addNextInt(0);
+    // Setup for Heat 1's 3rd lap (consumed but not hit)
+    random.addNextInt(999);
+
+    // Heat 2 (after reset):
+    // Reaction hit (target 200ms)
+    random.addNextInt(200);
+    // Setup for Heat 2's 2nd lap
+    random.addNextInt(888);
+
+    TestableDemo resetDemo = new TestableDemo(1, scheduler, random, false);
+    MockProtocolListener resetListener = new MockProtocolListener();
+    resetDemo.setListener(resetListener);
+    resetDemo.startTimer();
+
+    // 1. First heat, first hit (Reaction)
+    resetDemo.advanceTime(150);
+    scheduler.tick();
+    assertEquals("First hit should be reaction", 1, resetListener.laps.size());
+    assertEquals(0.15, resetListener.laps.get(0), 0.001);
+    resetListener.laps.clear();
+
+    // 2. First heat, second hit (Regular Lap)
+    resetDemo.advanceTime(3100);
+    scheduler.tick();
+    assertEquals("Second hit should be regular lap", 1, resetListener.laps.size());
+    assertEquals(3.1, resetListener.laps.get(0), 0.001);
+    resetListener.laps.clear();
+
+    // Now if we start Heat 2 WITHOUT reset, the first hit would be a regular lap (3s+)
+    // But we will reset.
+    resetDemo.stopTimer();
+    scheduler.reset(); // Crucial to allow MockScheduler to run again
+    resetDemo.setRaceState(com.antigravity.proto.RaceState.NOT_STARTED, null, 0);
+    resetDemo.startTimer();
+
+    // 3. Second heat, first hit should be Reaction again (target 200ms)
+    resetDemo.advanceTime(250);
+    scheduler.tick();
+    assertEquals("After reset, first hit should be reaction again", 1, resetListener.laps.size());
+    assertEquals(0.25, resetListener.laps.get(0), 0.001);
+  }
 }

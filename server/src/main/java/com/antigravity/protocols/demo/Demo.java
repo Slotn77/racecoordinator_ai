@@ -90,6 +90,19 @@ public class Demo extends DefaultProtocol {
         }
       }
     }
+
+    void reset() {
+      currentLapElapsedTime = 0;
+      currentLapStartTime = 0;
+      isFirstLap = true;
+      isPitLap = false;
+      pitEntrySent = false;
+      pitExitSent = false;
+      for (int i = 0; i < segmentSent.length; i++) {
+        segmentSent[i] = false;
+      }
+      setNextTarget();
+    }
   }
 
   private final LaneState[] laneStates;
@@ -105,6 +118,18 @@ public class Demo extends DefaultProtocol {
     laneStates = new LaneState[numLanes];
     for (int i = 0; i < numLanes; i++) {
       laneStates[i] = new LaneState();
+    }
+  }
+
+  @Override
+  public void setRaceState(
+      com.antigravity.proto.RaceState state,
+      com.antigravity.proto.RaceFlag flag,
+      double countdown) {
+    if (state == com.antigravity.proto.RaceState.NOT_STARTED) {
+      for (LaneState laneState : laneStates) {
+        laneState.reset();
+      }
     }
   }
 
