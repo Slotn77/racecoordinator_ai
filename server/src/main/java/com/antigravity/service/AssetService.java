@@ -150,6 +150,9 @@ public class AssetService {
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("default_beep", "beep.wav", "Lap Beep"));
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("default_chimes", "chimes.wav", "Lap Chimes"));
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("default_driveby", "driveby.wav", "Lap Driveby"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_yellow_flag", "audio/english/woman/yellowflag_w.wav", "Yellow Flag"));
   }
 
   public AssetService(MongoDatabase database, String assetDir) {
@@ -592,6 +595,44 @@ public class AssetService {
 
     // Backfill default theme
     backfillDefaultTheme();
+
+    // Ensure all themes have the new audio slot
+    backfillThemeSlots();
+  }
+
+  /** Ensures all themes have the 'audio.yellowflag' slot in the audio_slots map. */
+  public void backfillThemeSlots() {
+    MongoCollection<Document> themes = database.getCollection("themes");
+    for (Document theme : themes.find()) {
+      Document slots = (Document) theme.get("slots");
+      Document audioSlots = (Document) theme.get("audio_slots");
+      if (audioSlots == null) {
+        audioSlots = new Document();
+      }
+
+      List<Bson> updates = new ArrayList<>();
+
+      // Migration: Move from slots to audio_slots if present
+      if (slots != null && slots.containsKey("audio.yellowflag")) {
+        String assetId = slots.getString("audio.yellowflag");
+        if (!audioSlots.containsKey("audio.yellowflag")) {
+          Document audioConfig = new Document("type", "preset").append("url", assetId);
+          updates.add(Updates.set("audio_slots.audio.yellowflag", audioConfig));
+        }
+        updates.add(Updates.unset("slots.audio.yellowflag"));
+      }
+
+      // Default backfill
+      if (!audioSlots.containsKey("audio.yellowflag")
+          && (slots == null || !slots.containsKey("audio.yellowflag"))) {
+        Document audioConfig = new Document("type", "preset").append("url", "default_yellow_flag");
+        updates.add(Updates.set("audio_slots.audio.yellowflag", audioConfig));
+      }
+
+      if (!updates.isEmpty()) {
+        themes.updateOne(Filters.eq("_id", theme.get("_id")), Updates.combine(updates));
+      }
+    }
   }
 
   /**
@@ -625,12 +666,18 @@ public class AssetService {
     // Fuel gauge image set
     slots.append("gauge.fuel", "default_fuel-gauge-builtin");
 
+    Document audioSlots = new Document();
+    // Audio
+    audioSlots.append(
+        "audio.yellowflag", new Document("type", "preset").append("url", "default_yellow_flag"));
+
     Document theme =
         new Document()
             .append("entity_id", themeId)
             .append("name", "RaceCoordinator AI (default)")
             .append("is_default", true)
-            .append("slots", slots);
+            .append("slots", slots)
+            .append("audio_slots", audioSlots);
 
     themes.insertOne(theme);
     System.out.println("Default theme 'RaceCoordinator AI (default)' created.");

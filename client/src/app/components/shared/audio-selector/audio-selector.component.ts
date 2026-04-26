@@ -23,10 +23,13 @@ export class AudioSelectorComponent {
   @Output() typeChange = new EventEmitter<"preset" | "tts">();
 
   @Input() url?: string;
+  @Input() assetId?: string;
   @Output() urlChange = new EventEmitter<string>();
 
   @Input() text?: string = "";
   @Output() textChange = new EventEmitter<string>();
+
+  @Output() assetSelected = new EventEmitter<any>();
 
   @Input() assets: any[] = [];
 
@@ -38,11 +41,32 @@ export class AudioSelectorComponent {
   showItemSelector = false;
 
   get selectedAssetName(): string {
-    if (!this.url)
+    const lookupValue = this.assetId || this.url;
+    if (!lookupValue)
       return this.translationService
         ? this.translationService.translate("AS_SELECT_SOUND")
         : "Select Sound...";
-    const asset = this.assets.find((a) => a.url === this.url);
+
+    const normalize = (u: string) => {
+      if (!u) return "";
+      // Extract the path after /api/ if it exists, otherwise return as is
+      const apiIndex = u.indexOf("/api/");
+      if (apiIndex !== -1) {
+        return u.substring(apiIndex);
+      }
+      return u;
+    };
+
+    const normalizedLookup = normalize(lookupValue);
+
+    const asset = this.assets.find((a) => {
+      if (a.model?.entityId === lookupValue || a.entity_id === lookupValue)
+        return true;
+      if (a.url === lookupValue) return true;
+      if (normalize(a.url) === normalizedLookup) return true;
+      return false;
+    });
+
     return asset
       ? asset.name
       : this.translationService
@@ -84,6 +108,7 @@ export class AudioSelectorComponent {
   onAssetSelected(asset: any) {
     if (asset && asset.url) {
       this.onUrlChange(asset.url);
+      this.assetSelected.emit(asset);
       if (this.type !== "preset") {
         this.onTypeChange("preset");
       }

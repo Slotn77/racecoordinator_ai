@@ -18,12 +18,14 @@ describe("ThemeService", () => {
       name: "Default",
       is_default: true,
       slots: {},
+      audio_slots: {},
     },
     {
       entity_id: "theme-1",
       name: "Theme 1",
       is_default: false,
       slots: { "flag.green": "asset-1" },
+      audio_slots: {},
     },
   ];
 

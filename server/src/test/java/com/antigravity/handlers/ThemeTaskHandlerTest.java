@@ -67,7 +67,7 @@ public class ThemeTaskHandlerTest {
   @SuppressWarnings("unchecked")
   public void testListThemes_Success() {
     List<Theme> themes = new ArrayList<>();
-    themes.add(new Theme("Theme 1", true, new HashMap<>(), "1", null));
+    themes.add(new Theme("Theme 1", true, new HashMap<>(), new HashMap<>(), "1", null));
 
     FindIterable<Theme> findIterable = mock(FindIterable.class);
     when(themeCollection.find()).thenReturn(findIterable);
@@ -86,7 +86,8 @@ public class ThemeTaskHandlerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testCreateTheme_Success() {
-    Theme themeRequest = new Theme("New Theme", false, new HashMap<>(), "new", null);
+    Theme themeRequest =
+        new Theme("New Theme", false, new HashMap<>(), new HashMap<>(), "new", null);
     org.mockito.Mockito.doReturn(themeRequest).when(handler).getBody(any(), eq(Theme.class));
 
     // No existing theme with same name
@@ -111,11 +112,13 @@ public class ThemeTaskHandlerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testCreateTheme_DuplicateName_ShouldFail() {
-    Theme themeRequest = new Theme("Existing Theme", false, new HashMap<>(), "new", null);
+    Theme themeRequest =
+        new Theme("Existing Theme", false, new HashMap<>(), new HashMap<>(), "new", null);
     org.mockito.Mockito.doReturn(themeRequest).when(handler).getBody(any(), eq(Theme.class));
 
     // Existing theme with same name found
-    Theme existing = new Theme("Existing Theme", false, new HashMap<>(), "1", null);
+    Theme existing =
+        new Theme("Existing Theme", false, new HashMap<>(), new HashMap<>(), "1", null);
     FindIterable<Theme> findIterable = mock(FindIterable.class);
     when(themeCollection.find(any(Bson.class))).thenReturn(findIterable);
     when(findIterable.first()).thenReturn(existing);
@@ -130,7 +133,7 @@ public class ThemeTaskHandlerTest {
   @SuppressWarnings("unchecked")
   public void testDeleteTheme_DefaultTheme_ShouldFail() {
     String id = "default_theme";
-    Theme theme = new Theme("Default", true, new HashMap<>(), id, null);
+    Theme theme = new Theme("Default", true, new HashMap<>(), new HashMap<>(), id, null);
 
     org.mockito.Mockito.doReturn(id).when(handler).getPathParam(any(), eq("id"));
 
@@ -147,7 +150,7 @@ public class ThemeTaskHandlerTest {
   @SuppressWarnings("unchecked")
   public void testDuplicateTheme_Success() {
     String sourceId = "source_1";
-    Theme source = new Theme("Original", false, new HashMap<>(), sourceId, null);
+    Theme source = new Theme("Original", false, new HashMap<>(), new HashMap<>(), sourceId, null);
 
     org.mockito.Mockito.doReturn(sourceId).when(handler).getPathParam(any(), eq("id"));
 
@@ -179,8 +182,8 @@ public class ThemeTaskHandlerTest {
   @SuppressWarnings("unchecked")
   public void testUpdateTheme_DefaultTheme_ShouldFail() {
     String id = "default_theme";
-    Theme defaultTheme = new Theme("Default", true, new HashMap<>(), id, null);
-    Theme updateRequest = new Theme("New Name", true, new HashMap<>(), id, null);
+    Theme defaultTheme = new Theme("Default", true, new HashMap<>(), new HashMap<>(), id, null);
+    Theme updateRequest = new Theme("New Name", true, new HashMap<>(), new HashMap<>(), id, null);
 
     org.mockito.Mockito.doReturn(id).when(handler).getPathParam(any(), eq("id"));
     org.mockito.Mockito.doReturn(updateRequest).when(handler).getBody(any(), eq(Theme.class));
@@ -201,13 +204,15 @@ public class ThemeTaskHandlerTest {
   @SuppressWarnings("unchecked")
   public void testUpdateTheme_DuplicateName_ShouldFail() {
     String id = "theme_2";
-    Theme updateRequest = new Theme("Existing Name", false, new HashMap<>(), id, null);
+    Theme updateRequest =
+        new Theme("Existing Name", false, new HashMap<>(), new HashMap<>(), id, null);
 
     org.mockito.Mockito.doReturn(id).when(handler).getPathParam(any(), eq("id"));
     org.mockito.Mockito.doReturn(updateRequest).when(handler).getBody(any(), eq(Theme.class));
 
     // Another theme with same name found
-    Theme existing = new Theme("Existing Name", false, new HashMap<>(), "theme_1", null);
+    Theme existing =
+        new Theme("Existing Name", false, new HashMap<>(), new HashMap<>(), "theme_1", null);
     FindIterable<Theme> findIterable = mock(FindIterable.class);
     when(themeCollection.find(any(Bson.class))).thenReturn(findIterable);
     when(findIterable.first()).thenReturn(existing);

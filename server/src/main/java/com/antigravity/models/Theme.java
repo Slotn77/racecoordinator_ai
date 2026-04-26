@@ -24,18 +24,21 @@ public class Theme extends Model {
   private final String name;
   private final boolean isDefault;
   private final Map<String, String> slots;
+  private final Map<String, AudioConfig> audioSlots;
 
   @BsonCreator
   public Theme(
       @BsonProperty("name") @JsonProperty("name") String name,
       @BsonProperty("is_default") @JsonProperty("is_default") boolean isDefault,
       @BsonProperty("slots") @JsonProperty("slots") Map<String, String> slots,
+      @BsonProperty("audio_slots") @JsonProperty("audio_slots") Map<String, AudioConfig> audioSlots,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @BsonProperty("_id") @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
     this.name = name;
     this.isDefault = isDefault;
     this.slots = slots != null ? slots : new HashMap<>();
+    this.audioSlots = audioSlots != null ? audioSlots : new HashMap<>();
   }
 
   public String getName() {
@@ -50,5 +53,11 @@ public class Theme extends Model {
 
   public Map<String, String> getSlots() {
     return slots;
+  }
+
+  @BsonProperty("audio_slots")
+  @JsonProperty("audio_slots")
+  public Map<String, AudioConfig> getAudioSlots() {
+    return audioSlots;
   }
 }

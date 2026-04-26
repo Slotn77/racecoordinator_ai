@@ -88,37 +88,4 @@ public class Driver extends Model {
   public boolean isEmpty() {
     return EMPTY_DRIVER_ID.equals(getEntityId());
   }
-
-  public static class AudioConfig {
-
-    private final String type;
-    private final String url;
-    private final String text;
-
-    @BsonCreator
-    public AudioConfig(
-        @BsonProperty("type") @JsonProperty("type") String type,
-        @BsonProperty("url") @JsonProperty("url") String url,
-        @BsonProperty("text") @JsonProperty("text") String text) {
-      this.type = type != null ? type : "preset";
-      this.url = url;
-      this.text = text;
-    }
-
-    public AudioConfig() {
-      this("preset", null, null);
-    }
-
-    public String getType() {
-      return type;
-    }
-
-    public String getUrl() {
-      return url;
-    }
-
-    public String getText() {
-      return text;
-    }
-  }
 }

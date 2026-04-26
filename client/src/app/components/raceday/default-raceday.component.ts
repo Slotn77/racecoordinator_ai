@@ -16,11 +16,12 @@ import { RaceConverter } from "src/app/converters/race.converter";
 import { TrackConverter } from "src/app/converters/track.converter";
 import { DataService } from "src/app/data.service";
 import { CanComponentDeactivate } from "src/app/guards/raceday.guard";
-import { Driver } from "src/app/models/driver";
+import { AudioConfig, Driver } from "src/app/models/driver";
 import { FinishMethod, HeatScoring } from "src/app/models/heat_scoring";
 import { Race } from "src/app/models/race";
 import { RaceParticipant } from "src/app/models/race_participant";
 import { ColumnVisibility, Settings } from "src/app/models/settings";
+import { THEME_SLOT_KEYS } from "src/app/models/theme";
 import { Track } from "src/app/models/track";
 import { com } from "src/app/proto/message";
 import { DriverHeatData } from "src/app/race/driver_heat_data";
@@ -621,15 +622,6 @@ export class DefaultRacedayComponent
           if (!this.isDestroyed) {
             this.cdr.detectChanges();
           }
-        }
-      }),
-    );
-
-    this.subscriptions.push(
-      this.raceConnectionService.raceState$.subscribe((state) => {
-        this.raceState = state;
-        if (!this.isDestroyed) {
-          this.cdr.detectChanges();
         }
       }),
     );
@@ -2340,7 +2332,13 @@ export class DefaultRacedayComponent
   }
 
   private handleRaceStateChange(state: com.antigravity.RaceState) {
-    console.log("RacedayComponent: State changed to:", state);
+    const previousState = this.raceState;
+    console.log(
+      "RacedayComponent: State changed from",
+      previousState,
+      "to:",
+      state,
+    );
     this.raceState = state;
 
     // Reset overlay if we enter a state that shouldn't show it
@@ -2352,6 +2350,38 @@ export class DefaultRacedayComponent
       state === com.antigravity.RaceState.PAUSED
     ) {
       this.showCountdownOverlay = false;
+    }
+
+    // Play yellow flag audio when transitioning from RACING to PAUSED
+    if (
+      state === com.antigravity.RaceState.PAUSED &&
+      previousState === com.antigravity.RaceState.RACING
+    ) {
+      const yellowFlagConfig = this.themeService.resolveAudioConfig(
+        THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG,
+      );
+      if (yellowFlagConfig) {
+        // Resolve URL if it's a preset
+        let playableUrl = yellowFlagConfig.url;
+        if (yellowFlagConfig.type === "preset" && playableUrl) {
+          const asset = (this.assets || []).find(
+            (a) =>
+              a.model?.entityId === playableUrl ||
+              a.entity_id === playableUrl ||
+              a._id === playableUrl,
+          );
+          if (asset) {
+            playableUrl = this.getFullUrl(asset.url);
+          }
+        }
+
+        playSound(
+          yellowFlagConfig.type as any,
+          playableUrl,
+          yellowFlagConfig.text,
+          this.dataService.serverUrl,
+        );
+      }
     }
 
     // Show overlay for STARTING or RESTARTING
@@ -2372,6 +2402,10 @@ export class DefaultRacedayComponent
           this.showCountdownOverlay = false;
         }
       }, 1000);
+    }
+
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
     }
   }
 

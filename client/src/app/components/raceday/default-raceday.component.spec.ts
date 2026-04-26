@@ -45,8 +45,10 @@ class MockSvgTextScalerDirective {
   @Input() scaleToFit: boolean = false;
 }
 import { of, Subject } from "rxjs";
+import { THEME_SLOT_KEYS } from "src/app/models/theme";
 import { com } from "src/app/proto/message";
 import { RaceConnectionService } from "src/app/services/race-connection.service";
+import * as audioUtils from "src/app/utils/audio";
 
 @Component({
   selector: "app-acknowledgement-modal",
@@ -155,7 +157,10 @@ describe("DefaultRacedayComponent", () => {
         },
         {
           provide: ThemeService,
-          useValue: jasmine.createSpyObj("ThemeService", ["resolveAssetId"]),
+          useValue: jasmine.createSpyObj("ThemeService", [
+            "resolveAssetId",
+            "resolveAudioConfig",
+          ]),
         },
         { provide: Router, useValue: mockRouter },
         ChangeDetectorRef,
@@ -1726,6 +1731,105 @@ describe("DefaultRacedayComponent", () => {
       component["onDrop"](event);
 
       expect(mockDataService.changeLane).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Yellow Flag Audio", () => {
+    let mockAudioInstance: any;
+    let mockSpeechSynthesis: any;
+    let originalAudio: any;
+    let originalSpeechSynthesis: any;
+    let mockThemeService: any;
+
+    beforeEach(() => {
+      // Save original implementations
+      originalAudio = window.Audio;
+      originalSpeechSynthesis = window.speechSynthesis;
+
+      // Mock Audio
+      mockAudioInstance = jasmine.createSpyObj("Audio", ["play"]);
+      mockAudioInstance.play.and.returnValue(Promise.resolve());
+      (window as any).Audio = jasmine
+        .createSpy("Audio")
+        .and.returnValue(mockAudioInstance);
+
+      // Mock SpeechSynthesis
+      mockSpeechSynthesis = jasmine.createSpyObj("SpeechSynthesis", [
+        "cancel",
+        "speak",
+      ]);
+      Object.defineProperty(window, "speechSynthesis", {
+        value: mockSpeechSynthesis,
+        writable: true,
+        configurable: true,
+      });
+
+      mockThemeService = TestBed.inject(ThemeService);
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "default_yellow_flag",
+      });
+      mockDataService.listAssets.and.returnValue(
+        of([
+          {
+            model: { entityId: "default_yellow_flag" },
+            url: "/api/assets/download/default_yellow_flag",
+          },
+        ]),
+      );
+      fixture.detectChanges();
+    });
+
+    afterEach(() => {
+      // Restore original implementations
+      window.Audio = originalAudio;
+      if (originalSpeechSynthesis) {
+        Object.defineProperty(window, "speechSynthesis", {
+          value: originalSpeechSynthesis,
+          writable: true,
+          configurable: true,
+        });
+      }
+    });
+
+    it("should play yellow flag audio when transitioning from RACING to PAUSED", () => {
+      // Set initial state
+      component["raceState"] = com.antigravity.RaceState.RACING;
+
+      // Trigger state change
+      raceStateSubject.next(com.antigravity.RaceState.PAUSED);
+
+      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG,
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}api/assets/download/default_yellow_flag`,
+      );
+      expect(mockAudioInstance.play).toHaveBeenCalled();
+    });
+
+    it("should NOT play yellow flag audio when transitioning from STARTING to PAUSED", () => {
+      // Set initial state
+      component["raceState"] = com.antigravity.RaceState.STARTING;
+
+      // Trigger state change
+      raceStateSubject.next(com.antigravity.RaceState.PAUSED);
+
+      expect(window.Audio).not.toHaveBeenCalled();
+    });
+
+    it("should play TTS yellow flag audio when configured", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "tts",
+        text: "Caution on track!",
+      });
+      component["raceState"] = com.antigravity.RaceState.RACING;
+
+      raceStateSubject.next(com.antigravity.RaceState.PAUSED);
+
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
+      const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
+      expect(callArgs[0].text).toBe("Caution on track!");
     });
   });
 });

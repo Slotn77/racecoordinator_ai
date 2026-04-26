@@ -1,6 +1,7 @@
 package com.antigravity.service;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.AudioConfig;
 import com.antigravity.models.Driver;
 import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.HeatRotationType;
@@ -89,14 +90,14 @@ public class DatabaseService {
 
     String lapSoundUrl = beepSound != null ? beepSound.getUrl() : null;
     String bestLapSoundUrl = drivebySound != null ? drivebySound.getUrl() : null;
-    Driver.AudioConfig lapAudio = new Driver.AudioConfig("preset", lapSoundUrl, null);
-    Driver.AudioConfig bestLapAudio = new Driver.AudioConfig("preset", bestLapSoundUrl, null);
+    AudioConfig lapAudio = new AudioConfig("preset", lapSoundUrl, null);
+    AudioConfig bestLapAudio = new AudioConfig("preset", bestLapSoundUrl, null);
 
     List<Driver> initialDrivers = new ArrayList<>();
     initialDrivers.add(
         createDriver(
             "Abby",
-            "Abs",
+            "Fart Goblin",
             helmetAssets,
             1,
             lapAudio,
@@ -175,8 +176,8 @@ public class DatabaseService {
       String nickname,
       List<AssetMessage> helmetAssets,
       int index,
-      Driver.AudioConfig lapAudio,
-      Driver.AudioConfig bestLapAudio,
+      AudioConfig lapAudio,
+      AudioConfig bestLapAudio,
       String sequenceId) {
     String avatarUrl = null;
     if (!helmetAssets.isEmpty()) {

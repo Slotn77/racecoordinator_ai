@@ -53,6 +53,10 @@ public class AssetServiceTest {
 
     // Default to return an empty FindIterable for any find() call
     FindIterable<Document> emptyIterable = mock(FindIterable.class);
+    MongoCursor<Document> emptyCursor = mock(MongoCursor.class);
+    when(emptyCursor.hasNext()).thenReturn(false);
+    when(emptyIterable.iterator()).thenReturn(emptyCursor);
+
     when(collection.find(any(Bson.class))).thenReturn(emptyIterable);
     when(collection.find()).thenReturn(emptyIterable);
 
@@ -374,5 +378,39 @@ public class AssetServiceTest {
 
     // Verify insertion of default theme
     verify(themesCollection, atLeastOnce()).insertOne(any(Document.class));
+  }
+
+  @Test
+  public void testBackfillThemeSlotsMigration() {
+    // Mock an existing theme with legacy audio.yellowflag in slots
+    Document legacyTheme =
+        new Document("_id", "theme_1")
+            .append("name", "Legacy Theme")
+            .append("is_default", false)
+            .append("slots", new Document("audio.yellowflag", "default_yellow_flag"));
+
+    FindIterable<Document> findIterable = mock(FindIterable.class);
+    MongoCursor<Document> cursor = mock(MongoCursor.class);
+    when(themesCollection.find()).thenReturn(findIterable);
+    when(findIterable.iterator()).thenReturn(cursor);
+    when(cursor.hasNext()).thenReturn(true, false);
+    when(cursor.next()).thenReturn(legacyTheme);
+
+    assetService.backfillDefaults();
+
+    // Verify update was called to move the slot
+    ArgumentCaptor<Bson> filterCaptor = ArgumentCaptor.forClass(Bson.class);
+    ArgumentCaptor<Bson> updateCaptor = ArgumentCaptor.forClass(Bson.class);
+    verify(themesCollection).updateOne(filterCaptor.capture(), updateCaptor.capture());
+
+    String updateStr = updateCaptor.getValue().toString();
+    assertTrue("Should use $set to add audio_slots", updateStr.contains("$set"));
+    assertTrue(
+        "Should include audio.yellowflag in audio_slots",
+        updateStr.contains("audio_slots.audio.yellowflag"));
+    assertTrue("Should include the asset ID", updateStr.contains("default_yellow_flag"));
+    assertTrue("Should include type preset", updateStr.contains("preset"));
+    assertTrue("Should use $unset to remove from slots", updateStr.contains("$unset"));
+    assertTrue("Should unset slots.audio.yellowflag", updateStr.contains("slots.audio.yellowflag"));
   }
 }

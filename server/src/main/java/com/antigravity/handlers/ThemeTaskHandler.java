@@ -122,7 +122,9 @@ public class ThemeTaskHandler {
           || theme.getEntityId().isEmpty()
           || "new".equals(theme.getEntityId())) {
         String nextId = getNextSequence("themes");
-        theme = new Theme(theme.getName(), false, theme.getSlots(), nextId, null);
+        theme =
+            new Theme(
+                theme.getName(), false, theme.getSlots(), theme.getAudioSlots(), nextId, null);
       }
 
       col.insertOne(theme);
@@ -167,7 +169,13 @@ public class ThemeTaskHandler {
       }
 
       theme =
-          new Theme(theme.getName(), current.isDefault(), theme.getSlots(), id, current.getId());
+          new Theme(
+              theme.getName(),
+              current.isDefault(),
+              theme.getSlots(),
+              theme.getAudioSlots(),
+              id,
+              current.getId());
 
       col.replaceOne(Filters.eq("entity_id", id), theme);
       setJson(ctx, theme);
@@ -238,7 +246,8 @@ public class ThemeTaskHandler {
       }
 
       String nextId = getNextSequence("themes");
-      Theme copy = new Theme(newName, false, source.getSlots(), nextId, null);
+      Theme copy =
+          new Theme(newName, false, source.getSlots(), source.getAudioSlots(), nextId, null);
       col.insertOne(copy);
       setStatus(ctx, 201);
       setJson(ctx, copy);

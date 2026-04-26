@@ -120,6 +120,20 @@ class MockReorderDialogComponent {
   @Output() cancel = new EventEmitter<void>();
 }
 
+@Component({ selector: "app-audio-selector", template: "", standalone: false })
+class MockAudioSelectorComponent {
+  @Input() label: string = "";
+  @Input() assets: any[] = [];
+  @Input() type: string = "preset";
+  @Input() url?: string;
+  @Input() text?: string;
+  @Input() readonly: boolean = false;
+  @Input() context?: any;
+  @Output() typeChange = new EventEmitter<string>();
+  @Output() urlChange = new EventEmitter<string>();
+  @Output() textChange = new EventEmitter<string>();
+}
+
 @Pipe({ name: "translate", standalone: false })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
@@ -232,6 +246,7 @@ describe("UIEditorComponent", () => {
         MockToolbarComponent,
         MockConfirmationModalComponent,
         MockTranslatePipe,
+        MockAudioSelectorComponent,
       ],
       imports: [FormsModule],
       providers: [

@@ -20,11 +20,19 @@ export class ItemSelectorComponent {
   @Input() backButtonLabel?: string;
 
   get filteredItems() {
-    if (!this.searchTerm) {
-      return this.items;
+    let results = this.items;
+
+    // Filter by type if itemType is specified
+    if (this.itemType) {
+      results = results.filter((item) => item.type === this.itemType);
     }
+
+    if (!this.searchTerm) {
+      return results;
+    }
+
     const lowerTerm = this.searchTerm.toLowerCase();
-    return this.items.filter(
+    return results.filter(
       (item) => item.name && item.name.toLowerCase().includes(lowerTerm),
     );
   }

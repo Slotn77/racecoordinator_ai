@@ -1,6 +1,7 @@
 import { Injectable } from "@angular/core";
 import { firstValueFrom } from "rxjs";
 import { DataService } from "src/app/data.service";
+import { AudioConfig } from "src/app/models/driver";
 import { Settings } from "src/app/models/settings";
 import { Theme } from "src/app/models/theme";
 import { SettingsService } from "src/app/services/settings.service";
@@ -106,6 +107,15 @@ export class ThemeService {
   resolveAssetId(slotKey: string): string | null {
     if (!this.activeTheme) return null;
     return this.activeTheme.slots[slotKey] || null;
+  }
+
+  /**
+   * Resolve an AudioConfig for a given theme audio slot key.
+   * Returns null if no theme is active or the slot is empty.
+   */
+  resolveAudioConfig(slotKey: string): AudioConfig | null {
+    if (!this.activeTheme) return null;
+    return this.activeTheme.audio_slots?.[slotKey] || null;
   }
 
   // --- Per-Race Theme Support ---

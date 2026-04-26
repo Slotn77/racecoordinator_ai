@@ -56,6 +56,7 @@ export function createRacedayMocks(overrides: any = {}) {
     "getInterfaceEvents",
     "getRaceState",
     "getDrivers",
+    "getThemes",
     "connectToInterfaceDataSocket",
     "disconnectFromInterfaceDataSocket",
     "listAssets",
@@ -65,9 +66,11 @@ export function createRacedayMocks(overrides: any = {}) {
     "getRecordData",
     "abortTimers",
     "changeLane",
+    "getAssetUrl",
   ]);
   mockDataService.listAssets.and.returnValue(of([]));
   mockDataService.getRaceFlag.and.returnValue(of(com.antigravity.RaceFlag.RED));
+  mockDataService.getThemes.and.returnValue(of([]));
   mockDataService.getDrivers.and.callFake(() =>
     of(
       JSON.parse(JSON.stringify(MOCK_DRIVERS)).map((d: any) => ({
@@ -84,6 +87,9 @@ export function createRacedayMocks(overrides: any = {}) {
   mockDataService.getSegments.and.returnValue(segmentSubject.asObservable());
   mockDataService.getRecordData.and.returnValue(
     recordDataSubject.asObservable(),
+  );
+  mockDataService.getAssetUrl.and.callFake(
+    (id: string) => `/api/assets/download/${id}`,
   );
   mockDataService.serverUrl = "http://localhost/";
 

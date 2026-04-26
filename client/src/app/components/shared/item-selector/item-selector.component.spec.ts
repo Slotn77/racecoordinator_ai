@@ -76,8 +76,16 @@ describe("ItemSelectorComponent", () => {
   it("should display items when visible", async () => {
     component.visible = true;
     component.items = [
-      { name: "Item 1", url: "assets/images/default_avatar.svg" },
-      { name: "Item 2", url: "assets/images/default_avatar.svg" },
+      {
+        name: "Item 1",
+        url: "assets/images/default_avatar.svg",
+        type: "image",
+      },
+      {
+        name: "Item 2",
+        url: "assets/images/default_avatar.svg",
+        type: "image",
+      },
     ];
     fixture.detectChanges();
 
@@ -85,16 +93,31 @@ describe("ItemSelectorComponent", () => {
     expect(await harness.getItemText(0)).toContain("Item 1");
   });
 
+  it("should filter items by itemType", () => {
+    component.items = [
+      { name: "Image 1", type: "image" },
+      { name: "Set 1", type: "image_set" },
+      { name: "Sound 1", type: "sound" },
+    ];
+    component.itemType = "image";
+    expect(component.filteredItems.length).toBe(1);
+    expect(component.filteredItems[0].name).toBe("Image 1");
+
+    component.itemType = "image_set";
+    expect(component.filteredItems.length).toBe(1);
+    expect(component.filteredItems[0].name).toBe("Set 1");
+  });
+
   it("should emit select event when item is clicked", () => {
     spyOn(component.select, "emit");
-    const item = { name: "Test Item", url: "test.png" };
+    const item = { name: "Test Item", url: "test.png", type: "image" };
     component.onSelect(item);
     expect(component.select.emit).toHaveBeenCalledWith(item);
   });
 
   it("should emit play event when onPlay is called", () => {
     spyOn(component.play, "emit");
-    const item = { name: "Test Sound", url: "test.mp3" };
+    const item = { name: "Test Sound", url: "test.mp3", type: "sound" };
     const event = new MouseEvent("click");
     component.onPlay(event, item);
     expect(component.play.emit).toHaveBeenCalledWith(item);

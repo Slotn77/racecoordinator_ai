@@ -261,6 +261,57 @@
           </div>
         </div>
       </div>
+
+      <!-- Nested Audio Settings -->
+      <div class="config-section sub-section">
+        <div class="section-header" (click)="toggleSection('audio')">
+          <span
+            class="expander-icon"
+            [class.collapsed]="!sectionsExpanded['audio']"
+            >▼</span
+          >
+          <h1>{{ "UE_HEADER_AUDIO" | translate }}</h1>
+        </div>
+        <div class="section-content" *ngIf="sectionsExpanded['audio']">
+          <div class="panel audio-panel">
+            <div class="panel-content audio-grid">
+              <app-audio-selector
+                [label]="'UE_LABEL_YELLOW_FLAG_AUDIO' | translate"
+                [assets]="soundAssets"
+                [type]="getAudioConfigForSlot('audio.yellowflag', theme).type"
+                (typeChange)="
+                  onAudioConfigChanged(
+                    theme,
+                    'audio.yellowflag',
+                    'type',
+                    $event
+                  )
+                "
+                [url]="getAudioUrl('audio.yellowflag', theme)"
+                [assetId]="getAudioConfigForSlot('audio.yellowflag', theme).url"
+                (urlChange)="
+                  onAudioConfigChanged(theme, 'audio.yellowflag', 'url', $event)
+                "
+                (assetSelected)="
+                  onAudioAssetSelected(theme, 'audio.yellowflag', $event)
+                "
+                [text]="getAudioConfigForSlot('audio.yellowflag', theme).text"
+                (textChange)="
+                  onAudioConfigChanged(
+                    theme,
+                    'audio.yellowflag',
+                    'text',
+                    $event
+                  )
+                "
+                [readonly]="theme.is_default"
+                [context]="ttsContext"
+              >
+              </app-audio-selector>
+            </div>
+          </div>
+        </div>
+      </div>
     </ng-template>
 
     <!-- Themes Section -->

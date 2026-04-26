@@ -1,3 +1,4 @@
+import { AudioConfig } from "./driver";
 import { Model } from "./model";
 
 /**
@@ -10,7 +11,8 @@ export interface Theme extends Model {
   entity_id: string;
   name: string;
   is_default: boolean;
-  slots: { [key: string]: string }; // slot key → asset entity ID
+  slots: { [key: string]: string }; // image slot key → asset entity ID
+  audio_slots: { [key: string]: AudioConfig }; // audio slot key → AudioConfig
 }
 
 /** All known theme slot keys for Phase 1 (images). */
@@ -30,4 +32,7 @@ export const THEME_SLOT_KEYS = {
 
   // Fuel gauge
   FUEL_GAUGE: "gauge.fuel",
+
+  // Audio (these keys map to audio_slots)
+  AUDIO_YELLOW_FLAG: "audio.yellowflag",
 } as const;

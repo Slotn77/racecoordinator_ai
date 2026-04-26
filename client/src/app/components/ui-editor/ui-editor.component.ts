@@ -6,14 +6,7 @@ import {
   OnInit,
 } from "@angular/core";
 import { Router } from "@angular/router";
-import {
-  catchError,
-  firstValueFrom,
-  forkJoin,
-  of,
-  Subscription,
-  throwError,
-} from "rxjs";
+import { forkJoin, of, Subscription } from "rxjs";
 import { AnchorPoint } from "src/app/components/raceday/column_definition";
 import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
 import {
@@ -22,12 +15,14 @@ import {
 } from "src/app/components/ui-editor/reorder-dialog/reorder-dialog.component";
 import { DataService } from "src/app/data.service";
 import { DirtyComponent } from "src/app/interfaces/dirty-component";
+import { AudioConfig } from "src/app/models/driver";
 import { Settings } from "src/app/models/settings";
 import { Theme } from "src/app/models/theme";
 import { FileSystemService } from "src/app/services/file-system.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { ThemeService } from "src/app/services/theme.service";
 import { TranslationService } from "src/app/services/translation.service";
+import { mockTTSContext } from "src/app/utils/audio";
 
 export interface UIEditorState {
   settings: Settings;
@@ -108,6 +103,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     flags: true,
     countdown: false,
     fuelGauge: false,
+    audio: false,
   };
 
   constructor(
@@ -195,8 +191,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }).subscribe({
       next: (result) => {
         // Include both images and image_sets
+        // Include images, image_sets, and sounds
         this.assets = result.assets.filter(
-          (a: any) => a.type === "image" || a.type === "image_set",
+          (a: any) =>
+            a.type === "image" || a.type === "image_set" || a.type === "sound",
         );
 
         // Dynamic columns for image sets
@@ -642,6 +640,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.themeService.isThemeActive();
   }
 
+  get soundAssets(): any[] {
+    return this.assets.filter((a) => a.type === "sound");
+  }
+
+  get ttsContext(): any {
+    return mockTTSContext();
+  }
+
   async loadThemes() {
     await this.themeService.refresh();
     this.editingState.themes = this.themeService.getThemes();
@@ -668,6 +674,20 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   getFuelGaugeUrl(theme?: Theme): string | undefined {
     return this.getUrlForAsset(this.getAssetForSlot("gauge.fuel", theme));
+  }
+
+  getAudioUrl(slot: string, theme: Theme): string | undefined {
+    const config = this.getAudioConfigForSlot(slot, theme);
+    if (config.type === "preset" && config.url) {
+      const asset = this.assets.find(
+        (a) =>
+          a.model?.entityId === config.url ||
+          a.entity_id === config.url ||
+          a.url === config.url,
+      );
+      return this.getUrlForAsset(asset);
+    }
+    return config.url;
   }
 
   private getUrlForAsset(asset: any): string | undefined {
@@ -739,6 +759,51 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     this.captureState();
     this.cdr.markForCheck();
+  }
+
+  getAudioConfigForSlot(slot: string, theme: Theme): AudioConfig {
+    if (!theme.audio_slots) theme.audio_slots = {};
+    const config = theme.audio_slots[slot];
+    if (config) return config;
+
+    // Fallback: If it's in the old slots map, convert it on the fly (though backfill should handle this)
+    const legacyAssetId = theme.slots?.[slot];
+    if (legacyAssetId) {
+      return { type: "preset", url: legacyAssetId };
+    }
+
+    return { type: "preset" };
+  }
+
+  onAudioConfigChanged(
+    theme: Theme,
+    slot: string,
+    field: "type" | "url" | "text",
+    value: any,
+  ) {
+    if (theme.is_default) return;
+    if (!theme.audio_slots) theme.audio_slots = {};
+
+    const current = this.getAudioConfigForSlot(slot, theme);
+    const updated = { ...current, [field]: value };
+
+    theme.audio_slots[slot] = updated;
+
+    this.captureState();
+    this.cdr.markForCheck();
+  }
+
+  onAudioAssetSelected(theme: Theme, slot: string, asset: any) {
+    if (theme.is_default) return;
+
+    const assetId =
+      asset?.model?.entityId ||
+      asset?.entity_id ||
+      asset?.entityId ||
+      asset?.id ||
+      null;
+
+    this.onAudioConfigChanged(theme, slot, "url", assetId);
   }
 
   async createNewTheme() {
