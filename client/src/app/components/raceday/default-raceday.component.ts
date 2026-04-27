@@ -78,6 +78,7 @@ export class DefaultRacedayComponent
   countdownText: string = "";
   countdownColor: string = "";
   countdownTotalLamps: number = 0;
+  private lastPlayedCountdownSecond: number = -1;
 
   // Static record values for now as requested
   // Record values
@@ -2357,36 +2358,13 @@ export class DefaultRacedayComponent
       state === com.antigravity.RaceState.PAUSED &&
       previousState === com.antigravity.RaceState.RACING
     ) {
-      const yellowFlagConfig = this.themeService.resolveAudioConfig(
-        THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG,
-      );
-      if (yellowFlagConfig) {
-        // Resolve URL if it's a preset
-        let playableUrl = yellowFlagConfig.url;
-        if (yellowFlagConfig.type === "preset" && playableUrl) {
-          const asset = (this.assets || []).find(
-            (a) =>
-              a.model?.entityId === playableUrl ||
-              a.entity_id === playableUrl ||
-              a._id === playableUrl,
-          );
-          if (asset) {
-            playableUrl = this.getFullUrl(asset.url);
-          }
-        }
-
-        playSound(
-          yellowFlagConfig.type as any,
-          playableUrl,
-          yellowFlagConfig.text,
-          this.dataService.serverUrl,
-        );
-      }
+      this.playThemedSound(THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
     }
 
     // Show overlay for STARTING or RESTARTING
     if (state === com.antigravity.RaceState.STARTING) {
       this.showCountdownOverlay = true;
+      this.lastPlayedCountdownSecond = -1;
       // Determine duration based on entry path
       const duration = this.race?.start_time || 5.0;
       this.countdownTotalLamps = Math.ceil(duration);
@@ -2396,6 +2374,7 @@ export class DefaultRacedayComponent
     // If RACING state came, set all lamps to green
     if (state === com.antigravity.RaceState.RACING) {
       this.setAllLampsGo();
+      this.playThemedSound(THEME_SLOT_KEYS.AUDIO_COUNTDOWN_GO);
       // Hide overlay after 1 second of green lamps
       setTimeout(() => {
         if (this.raceState === com.antigravity.RaceState.RACING) {
@@ -2440,6 +2419,49 @@ export class DefaultRacedayComponent
 
     this.countdownText = `${Math.ceil(currentTime)}`;
     this.countdownColor = "lime";
+
+    const currentSecond = Math.ceil(currentTime);
+    if (
+      currentSecond <= 5 &&
+      currentSecond >= 1 &&
+      currentSecond !== this.lastPlayedCountdownSecond
+    ) {
+      this.lastPlayedCountdownSecond = currentSecond;
+      const slotMap: { [key: number]: string } = {
+        5: THEME_SLOT_KEYS.AUDIO_COUNTDOWN_5,
+        4: THEME_SLOT_KEYS.AUDIO_COUNTDOWN_4,
+        3: THEME_SLOT_KEYS.AUDIO_COUNTDOWN_3,
+        2: THEME_SLOT_KEYS.AUDIO_COUNTDOWN_2,
+        1: THEME_SLOT_KEYS.AUDIO_COUNTDOWN_1,
+      };
+      this.playThemedSound(slotMap[currentSecond]);
+    }
+  }
+
+  private playThemedSound(slotKey: string) {
+    const config = this.themeService.resolveAudioConfig(slotKey);
+    if (config) {
+      // Resolve URL if it's a preset
+      let playableUrl = config.url;
+      if (config.type === "preset" && playableUrl) {
+        const asset = (this.assets || []).find(
+          (a) =>
+            a.model?.entityId === playableUrl ||
+            a.entity_id === playableUrl ||
+            a._id === playableUrl,
+        );
+        if (asset) {
+          playableUrl = this.getFullUrl(asset.url);
+        }
+      }
+
+      playSound(
+        config.type as any,
+        playableUrl,
+        config.text,
+        this.dataService.serverUrl,
+      );
+    }
   }
 
   private setAllLampsGo() {

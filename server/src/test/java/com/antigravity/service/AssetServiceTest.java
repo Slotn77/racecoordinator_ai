@@ -406,11 +406,40 @@ public class AssetServiceTest {
     String updateStr = updateCaptor.getValue().toString();
     assertTrue("Should use $set to add audio_slots", updateStr.contains("$set"));
     assertTrue(
-        "Should include audio.yellowflag in audio_slots",
-        updateStr.contains("audio_slots.audio.yellowflag"));
+        "Should include audio.yellowflag in audio_slots", updateStr.contains("audio.yellowflag"));
     assertTrue("Should include the asset ID", updateStr.contains("default_yellow_flag"));
     assertTrue("Should include type preset", updateStr.contains("preset"));
     assertTrue("Should use $unset to remove from slots", updateStr.contains("$unset"));
     assertTrue("Should unset slots.audio.yellowflag", updateStr.contains("slots.audio.yellowflag"));
+  }
+
+  @Test
+  public void testBackfillCountdownAudioSlots() {
+    // Mock an existing theme without countdown slots
+    Document theme =
+        new Document("_id", "theme_countdown")
+            .append("name", "Countdown Theme")
+            .append("is_default", false)
+            .append("audio_slots", new Document());
+
+    FindIterable<Document> findIterable = mock(FindIterable.class);
+    MongoCursor<Document> cursor = mock(MongoCursor.class);
+    when(themesCollection.find()).thenReturn(findIterable);
+    when(findIterable.iterator()).thenReturn(cursor);
+    when(cursor.hasNext()).thenReturn(true, false);
+    when(cursor.next()).thenReturn(theme);
+
+    assetService.backfillDefaults();
+
+    // Verify update was called to add countdown slots
+    ArgumentCaptor<Bson> filterCaptor = ArgumentCaptor.forClass(Bson.class);
+    ArgumentCaptor<Bson> updateCaptor = ArgumentCaptor.forClass(Bson.class);
+    verify(themesCollection).updateOne(filterCaptor.capture(), updateCaptor.capture());
+
+    String updateStr = updateCaptor.getValue().toString();
+    assertTrue("Should include audio.countdown.5", updateStr.contains("audio.countdown.5"));
+    assertTrue("Should include audio.countdown.go", updateStr.contains("audio.countdown.go"));
+    assertTrue("Should include default asset IDs", updateStr.contains("default_countdown_5"));
+    assertTrue("Should include default go asset ID", updateStr.contains("default_countdown_go"));
   }
 }

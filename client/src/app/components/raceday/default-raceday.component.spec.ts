@@ -1832,4 +1832,82 @@ describe("DefaultRacedayComponent", () => {
       expect(callArgs[0].text).toBe("Caution on track!");
     });
   });
+
+  describe("Countdown Audio", () => {
+    let mockAudioInstance: any;
+    let originalAudio: any;
+    let mockThemeService: any;
+
+    beforeEach(() => {
+      originalAudio = window.Audio;
+      mockAudioInstance = jasmine.createSpyObj("Audio", ["play"]);
+      mockAudioInstance.play.and.returnValue(Promise.resolve());
+      (window as any).Audio = jasmine
+        .createSpy("Audio")
+        .and.returnValue(mockAudioInstance);
+
+      mockThemeService = TestBed.inject(ThemeService);
+      mockDataService.listAssets.and.returnValue(
+        of([
+          {
+            model: { entityId: "default_countdown_5" },
+            url: "/api/assets/download/default_countdown_5",
+          },
+          {
+            model: { entityId: "default_countdown_go" },
+            url: "/api/assets/download/default_countdown_go",
+          },
+        ]),
+      );
+      fixture.detectChanges();
+    });
+
+    afterEach(() => {
+      window.Audio = originalAudio;
+    });
+
+    it("should play themed sound for countdown seconds", fakeAsync(() => {
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_COUNTDOWN_5) {
+          return { type: "preset", url: "default_countdown_5" };
+        }
+        return null;
+      });
+
+      component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
+      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      tick();
+
+      // At 5.0s, it should play '5' sound
+      raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
+      tick();
+
+      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN_5,
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}api/assets/download/default_countdown_5`,
+      );
+    }));
+
+    it("should play 'GO' sound when race starts", fakeAsync(() => {
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_COUNTDOWN_GO) {
+          return { type: "preset", url: "default_countdown_go" };
+        }
+        return null;
+      });
+
+      component["raceState"] = com.antigravity.RaceState.STARTING;
+      raceStateSubject.next(com.antigravity.RaceState.RACING);
+      tick();
+
+      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN_GO,
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}api/assets/download/default_countdown_go`,
+      );
+    }));
+  });
 });

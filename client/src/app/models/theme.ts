@@ -35,4 +35,10 @@ export const THEME_SLOT_KEYS = {
 
   // Audio (these keys map to audio_slots)
   AUDIO_YELLOW_FLAG: "audio.yellowflag",
+  AUDIO_COUNTDOWN_5: "audio.countdown.5",
+  AUDIO_COUNTDOWN_4: "audio.countdown.4",
+  AUDIO_COUNTDOWN_3: "audio.countdown.3",
+  AUDIO_COUNTDOWN_2: "audio.countdown.2",
+  AUDIO_COUNTDOWN_1: "audio.countdown.1",
+  AUDIO_COUNTDOWN_GO: "audio.countdown.go",
 } as const;

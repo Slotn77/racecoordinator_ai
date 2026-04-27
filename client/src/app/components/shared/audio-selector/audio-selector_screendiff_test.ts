@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { ItemSelectorHarnessE2e } from "src/app/components/shared/item-selector/testing/item-selector.harness.e2e";
+import { com } from "src/app/proto/message";
 import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
 import { AudioSelectorHarnessE2e } from "./testing/audio-selector.harness.e2e";
@@ -32,6 +33,28 @@ test.describe("Audio Selector Visuals", () => {
   });
 
   test("should display item selector with play icons", async ({ page }) => {
+    // Override asset mocks to provide many sounds to test grid layout
+    await page.route("**/api/assets/list", async (route) => {
+      const assets = Array.from({ length: 12 }).map((_, i) => ({
+        model: { entityId: `snd-${i}` },
+        name: `Test Sound ${i + 1}`,
+        type: "sound",
+        size: "50 KB",
+        url: `/api/assets/download?filename=snd${i}.mp3`,
+        filename: `snd${i}.mp3`,
+      }));
+
+      const response = com.antigravity.ListAssetsResponse.create({ assets });
+      const buffer =
+        com.antigravity.ListAssetsResponse.encode(response).finish();
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/octet-stream",
+        body: Buffer.from(buffer),
+      });
+    });
+
     // Navigate to Driver Editor which uses Audio Selector
     await TestSetupHelper.waitForLocalization(
       page,

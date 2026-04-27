@@ -310,6 +310,55 @@
               </app-audio-selector>
             </div>
           </div>
+
+          <!-- Nested Countdown Audio Settings -->
+          <div class="config-section sub-section">
+            <div
+              class="section-header"
+              (click)="toggleSection('countdown_audio')"
+            >
+              <span
+                class="expander-icon"
+                [class.collapsed]="!sectionsExpanded['countdown_audio']"
+                >▼</span
+              >
+              <h1>{{ "UE_HEADER_COUNTDOWN_AUDIO" | translate }}</h1>
+            </div>
+            <div
+              class="section-content"
+              *ngIf="sectionsExpanded['countdown_audio']"
+            >
+              <div class="panel audio-panel">
+                <div class="panel-content audio-grid">
+                  <ng-container *ngFor="let slot of countdownAudioSlots">
+                    <app-audio-selector
+                      [label]="slot.label | translate"
+                      [assets]="soundAssets"
+                      [type]="getAudioConfigForSlot(slot.key, theme).type"
+                      (typeChange)="
+                        onAudioConfigChanged(theme, slot.key, 'type', $event)
+                      "
+                      [url]="getAudioUrl(slot.key, theme)"
+                      [assetId]="getAudioConfigForSlot(slot.key, theme).url"
+                      (urlChange)="
+                        onAudioConfigChanged(theme, slot.key, 'url', $event)
+                      "
+                      (assetSelected)="
+                        onAudioAssetSelected(theme, slot.key, $event)
+                      "
+                      [text]="getAudioConfigForSlot(slot.key, theme).text"
+                      (textChange)="
+                        onAudioConfigChanged(theme, slot.key, 'text', $event)
+                      "
+                      [readonly]="theme.is_default"
+                      [context]="ttsContext"
+                    >
+                    </app-audio-selector>
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </ng-template>

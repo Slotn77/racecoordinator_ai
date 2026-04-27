@@ -22,7 +22,7 @@
     </div>
 
     <div class="modal-body">
-      <div class="item-grid">
+      <div class="item-grid" *ngIf="filteredItems.length > 0">
         <div
           class="item-card"
           *ngFor="let item of filteredItems"
@@ -49,6 +49,11 @@
           </div>
           <div class="item-name">{{ item.name }}</div>
         </div>
+      </div>
+
+      <div class="no-items" *ngIf="filteredItems.length === 0">
+        <div class="no-items-icon">🔍</div>
+        <div class="no-items-text">{{ "IS_MSG_NO_ITEMS" | translate }}</div>
       </div>
     </div>
   </div>

@@ -152,7 +152,25 @@ public class AssetService {
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("default_driveby", "driveby.wav", "Lap Driveby"));
     DEFAULT_AUDIO_ASSETS.add(
         new DefaultAsset(
-            "default_yellow_flag", "audio/english/woman/yellowflag_w.wav", "Yellow Flag"));
+            "default_yellow_flag", "audio/english/woman/w_yellowflag.wav", "Yellow Flag"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_countdown_go", "audio/english/woman/w_countdown_0.wav", "Countdown Go"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_countdown_1", "audio/english/woman/w_countdown_1.wav", "Countdown 1"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_countdown_2", "audio/english/woman/w_countdown_2.wav", "Countdown 2"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_countdown_3", "audio/english/woman/w_countdown_3.wav", "Countdown 3"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_countdown_4", "audio/english/woman/w_countdown_4.wav", "Countdown 4"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_countdown_5", "audio/english/woman/w_countdown_5.wav", "Countdown 5"));
   }
 
   public AssetService(MongoDatabase database, String assetDir) {
@@ -610,27 +628,62 @@ public class AssetService {
         audioSlots = new Document();
       }
 
-      List<Bson> updates = new ArrayList<>();
+      boolean audioSlotsChanged = false;
+      List<Bson> otherUpdates = new ArrayList<>();
 
       // Migration: Move from slots to audio_slots if present
       if (slots != null && slots.containsKey("audio.yellowflag")) {
         String assetId = slots.getString("audio.yellowflag");
         if (!audioSlots.containsKey("audio.yellowflag")) {
-          Document audioConfig = new Document("type", "preset").append("url", assetId);
-          updates.add(Updates.set("audio_slots.audio.yellowflag", audioConfig));
+          audioSlots.append(
+              "audio.yellowflag", new Document("type", "preset").append("url", assetId));
+          audioSlotsChanged = true;
         }
-        updates.add(Updates.unset("slots.audio.yellowflag"));
+        otherUpdates.add(Updates.unset("slots.audio.yellowflag"));
       }
 
       // Default backfill
+      String[] countdownKeys = {
+        "audio.countdown.5",
+        "audio.countdown.4",
+        "audio.countdown.3",
+        "audio.countdown.2",
+        "audio.countdown.1",
+        "audio.countdown.go"
+      };
+      String[] defaultCountdownAssets = {
+        "default_countdown_5",
+        "default_countdown_4",
+        "default_countdown_3",
+        "default_countdown_2",
+        "default_countdown_1",
+        "default_countdown_go"
+      };
+
       if (!audioSlots.containsKey("audio.yellowflag")
           && (slots == null || !slots.containsKey("audio.yellowflag"))) {
-        Document audioConfig = new Document("type", "preset").append("url", "default_yellow_flag");
-        updates.add(Updates.set("audio_slots.audio.yellowflag", audioConfig));
+        audioSlots.append(
+            "audio.yellowflag",
+            new Document("type", "preset").append("url", "default_yellow_flag"));
+        audioSlotsChanged = true;
       }
 
-      if (!updates.isEmpty()) {
-        themes.updateOne(Filters.eq("_id", theme.get("_id")), Updates.combine(updates));
+      for (int i = 0; i < countdownKeys.length; i++) {
+        String key = countdownKeys[i];
+        String defaultAsset = defaultCountdownAssets[i];
+        if (!audioSlots.containsKey(key)) {
+          audioSlots.append(key, new Document("type", "preset").append("url", defaultAsset));
+          audioSlotsChanged = true;
+        }
+      }
+
+      List<Bson> allUpdates = new ArrayList<>(otherUpdates);
+      if (audioSlotsChanged) {
+        allUpdates.add(Updates.set("audio_slots", audioSlots));
+      }
+
+      if (!allUpdates.isEmpty()) {
+        themes.updateOne(Filters.eq("_id", theme.get("_id")), Updates.combine(allUpdates));
       }
     }
   }
@@ -670,6 +723,18 @@ public class AssetService {
     // Audio
     audioSlots.append(
         "audio.yellowflag", new Document("type", "preset").append("url", "default_yellow_flag"));
+    audioSlots.append(
+        "audio.countdown.5", new Document("type", "preset").append("url", "default_countdown_5"));
+    audioSlots.append(
+        "audio.countdown.4", new Document("type", "preset").append("url", "default_countdown_4"));
+    audioSlots.append(
+        "audio.countdown.3", new Document("type", "preset").append("url", "default_countdown_3"));
+    audioSlots.append(
+        "audio.countdown.2", new Document("type", "preset").append("url", "default_countdown_2"));
+    audioSlots.append(
+        "audio.countdown.1", new Document("type", "preset").append("url", "default_countdown_1"));
+    audioSlots.append(
+        "audio.countdown.go", new Document("type", "preset").append("url", "default_countdown_go"));
 
     Document theme =
         new Document()

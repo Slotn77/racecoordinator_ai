@@ -104,7 +104,17 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     countdown: false,
     fuelGauge: false,
     audio: false,
+    countdown_audio: false,
   };
+
+  countdownAudioSlots = [
+    { key: "audio.countdown.5", label: "UE_LABEL_COUNTDOWN_5" },
+    { key: "audio.countdown.4", label: "UE_LABEL_COUNTDOWN_4" },
+    { key: "audio.countdown.3", label: "UE_LABEL_COUNTDOWN_3" },
+    { key: "audio.countdown.2", label: "UE_LABEL_COUNTDOWN_2" },
+    { key: "audio.countdown.1", label: "UE_LABEL_COUNTDOWN_1" },
+    { key: "audio.countdown.go", label: "UE_LABEL_COUNTDOWN_GO" },
+  ];
 
   constructor(
     private settingsService: SettingsService,
