@@ -310,6 +310,7 @@ public class App {
 
       System.out.println("Connected to MongoDB successfully.");
 
+      System.out.println("Starting database backfill loop...");
       // Backfill defaults for all databases
       for (String dbName : databaseContext.listDatabases()) {
         if (dbName.equals("admin") || dbName.equals("local") || dbName.equals("config")) {
@@ -334,6 +335,7 @@ public class App {
       final String staticFilePath = resolvedClientPath != null ? resolvedClientPath : "web";
       System.out.println("Serving static files from: " + staticFilePath);
 
+      System.out.println("Starting Javalin on port 7070...");
       app =
           Javalin.create(
                   config -> {
@@ -363,6 +365,7 @@ public class App {
                     config.jsonMapper(new JavalinJackson(mapper));
                   })
               .start(7070);
+      System.out.println("Javalin started successfully.");
 
       app.exception(
           Exception.class,

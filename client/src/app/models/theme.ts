@@ -34,26 +34,11 @@ export const THEME_SLOT_KEYS = {
   // Fuel gauge
   FUEL_GAUGE: "gauge.fuel",
 
+  // Audio Sets
+  AUDIO_COUNTDOWN: "audio.countdown",
+  AUDIO_SECONDS_LEFT: "audio.seconds_left",
+
   // Audio (these keys map to audio_slots)
   AUDIO_YELLOW_FLAG: "audio.yellowflag",
-  AUDIO_COUNTDOWN_5: "audio.countdown.5",
-  AUDIO_COUNTDOWN_4: "audio.countdown.4",
-  AUDIO_COUNTDOWN_3: "audio.countdown.3",
-  AUDIO_COUNTDOWN_2: "audio.countdown.2",
-  AUDIO_COUNTDOWN_1: "audio.countdown.1",
-  AUDIO_COUNTDOWN_GO: "audio.countdown.go",
-
-  // Seconds Left
-  AUDIO_SECONDS_LEFT_300: "audio.seconds_left.300",
-  AUDIO_SECONDS_LEFT_240: "audio.seconds_left.240",
-  AUDIO_SECONDS_LEFT_180: "audio.seconds_left.180",
-  AUDIO_SECONDS_LEFT_120: "audio.seconds_left.120",
-  AUDIO_SECONDS_LEFT_60: "audio.seconds_left.60",
-  AUDIO_SECONDS_LEFT_30: "audio.seconds_left.30",
-  AUDIO_SECONDS_LEFT_25: "audio.seconds_left.25",
-  AUDIO_SECONDS_LEFT_20: "audio.seconds_left.20",
-  AUDIO_SECONDS_LEFT_15: "audio.seconds_left.15",
-  AUDIO_SECONDS_LEFT_10: "audio.seconds_left.10",
-  AUDIO_SECONDS_LEFT_5: "audio.seconds_left.5",
   AUDIO_SECONDS_LEFT_HALFWAY: "audio.seconds_left.halfway",
 } as const;

@@ -128,6 +128,13 @@ describe("AssetManagerComponent", () => {
     component.setFilterType("image_set");
     expect(component.filterType).toBe("image_set");
     expect(component.filteredAssets.length).toBe(1);
+
+    component.setFilterType("audio_set");
+    expect(component.filterType).toBe("audio_set");
+    // Assuming MOCK_ASSETS has an audio_set or we add one
+    expect(
+      component.filteredAssets.every((a) => a.type === "audio_set"),
+    ).toBeTrue();
   });
 
   it("should exclude image_sets when filtering by image", () => {

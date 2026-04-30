@@ -20,7 +20,7 @@ import { mockTTSContext, playSound } from "src/app/utils/audio";
 export interface AssetView {
   id: string;
   name: string;
-  type: "image" | "sound" | "image_set";
+  type: "image" | "sound" | "image_set" | "audio_set";
   size: string;
   url: string;
   editMode?: boolean;
@@ -41,7 +41,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   assets: AssetView[] = [];
 
   // Filtering
-  filterType: "all" | "image" | "sound" | "image_set" = "all";
+  filterType: "all" | "image" | "sound" | "image_set" | "audio_set" = "all";
+
   filterName: string = "";
   isUploading: boolean = false;
   isLoading: boolean = true;
@@ -166,7 +167,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
               type:
                 a.type === "image" ||
                 a.type === "sound" ||
-                a.type === "image_set"
+                a.type === "image_set" ||
+                a.type === "audio_set"
                   ? (a.type as any)
                   : "image",
               size: a.size || "0 B",
@@ -296,7 +298,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     return this.assets.filter((a) => a.type === "sound").length;
   }
 
-  setFilterType(type: "all" | "image" | "sound" | "image_set") {
+  setFilterType(type: "all" | "image" | "sound" | "image_set" | "audio_set") {
     this.filterType = type;
   }
 

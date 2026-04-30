@@ -3,13 +3,23 @@
     <label>{{ label }}</label>
     <div class="toggle-group" *ngIf="!readonly">
       <span
+        *ngIf="mode === 'single'"
         [class.active]="type === 'preset'"
         (click)="onTypeChange('preset')"
         >{{ "AS_OPTION_PRESET" | translate }}</span
       >
-      <span [class.active]="type === 'tts'" (click)="onTypeChange('tts')">{{
-        "AS_OPTION_TTS" | translate
-      }}</span>
+      <span
+        *ngIf="mode === 'set'"
+        [class.active]="type === 'audio_set'"
+        (click)="onTypeChange('audio_set')"
+        >{{ "AS_OPTION_AUDIO_SET" | translate }}</span
+      >
+      <span
+        *ngIf="mode === 'single'"
+        [class.active]="type === 'tts'"
+        (click)="onTypeChange('tts')"
+        >{{ "AS_OPTION_TTS" | translate }}</span
+      >
       <span [class.active]="type === 'none'" (click)="onTypeChange('none')">{{
         "AS_OPTION_NONE" | translate
       }}</span>
@@ -17,7 +27,10 @@
   </div>
 
   <!-- Regular Editing Mode -->
-  <div class="audio-controls" *ngIf="!readonly && type === 'preset'">
+  <div
+    class="audio-controls"
+    *ngIf="!readonly && (type === 'preset' || type === 'audio_set')"
+  >
     <div
       class="dm-select trigger-div"
       (click)="openItemSelector()"
@@ -44,7 +57,11 @@
   <!-- Readonly Mode -->
   <div class="audio-controls readonly-controls" *ngIf="readonly">
     <div class="dm-select readonly-text">
-      {{ type === "preset" ? selectedAssetName : text || "---" }}
+      {{
+        type === "preset" || type === "audio_set"
+          ? selectedAssetName
+          : text || "---"
+      }}
     </div>
     <button class="btn-play" (click)="play()">
       ▶ {{ "AS_BTN_PLAY" | translate }}
@@ -55,7 +72,7 @@
     [visible]="showItemSelector"
     [title]="'AS_TITLE_SELECT_SOUND' | translate"
     [items]="assets"
-    [itemType]="'sound'"
+    [itemType]="mode === 'set' ? 'audio_set' : 'sound'"
     [backButtonRoute]="backButtonRoute"
     [backButtonQueryParams]="backButtonQueryParams"
     (select)="onAssetSelected($event)"

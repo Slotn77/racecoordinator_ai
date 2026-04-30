@@ -111,7 +111,6 @@ class MockConfirmationModalComponent {
   @Output() cancel = new EventEmitter<void>();
   @Output() confirm = new EventEmitter<void>();
 }
-
 @Component({ selector: "app-reorder-dialog", template: "", standalone: false })
 class MockReorderDialogComponent {
   @Input() visible: boolean = false;
@@ -129,6 +128,7 @@ class MockAudioSelectorComponent {
   @Input() text?: string;
   @Input() readonly: boolean = false;
   @Input() context?: any;
+  @Input() mode: "single" | "set" = "single";
   @Output() typeChange = new EventEmitter<string>();
   @Output() urlChange = new EventEmitter<string>();
   @Output() textChange = new EventEmitter<string>();

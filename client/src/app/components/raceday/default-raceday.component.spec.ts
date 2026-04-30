@@ -105,10 +105,33 @@ describe("DefaultRacedayComponent", () => {
   let interfaceAlertSubject: Subject<{ titleKey: string; messageKey: string }>;
   let raceTimeSubject: Subject<com.antigravity.IRaceTime>;
   let lapsSubject: Subject<com.antigravity.ILap>;
-  let raceStateSubject: Subject<com.antigravity.RaceState>;
   let standingsUpdateSubject: Subject<com.antigravity.IStandingsUpdate>;
+  let originalAudio: any;
+  let mockAudioInstance: any;
   let recordDataSubject: Subject<com.antigravity.IRecordData>;
   let participantsSubject: Subject<any[]>;
+
+  let raceStateSubject: Subject<com.antigravity.RaceState>;
+
+  beforeAll(() => {
+    originalAudio = (window as any).Audio;
+    mockAudioInstance = jasmine.createSpyObj("AudioInstance", [
+      "play",
+      "pause",
+      "load",
+    ]);
+    mockAudioInstance.play.and.returnValue(Promise.resolve());
+
+    (window as any).Audio = jasmine.createSpy("Audio").and.callFake(function (
+      this: any,
+    ) {
+      return mockAudioInstance;
+    });
+  });
+
+  afterAll(() => {
+    (window as any).Audio = originalAudio;
+  });
 
   beforeEach(async () => {
     const mocks = createRacedayMocks();
@@ -124,6 +147,9 @@ describe("DefaultRacedayComponent", () => {
     standingsUpdateSubject = mocks.standingsUpdateSubject;
     recordDataSubject = mocks.recordDataSubject;
     participantsSubject = mocks.participantsSubject;
+
+    (window.Audio as unknown as jasmine.Spy).calls.reset();
+    mockAudioInstance.play.calls.reset();
 
     mockSettings = createDefaultSettings({
       sortByStandings: true,
@@ -181,6 +207,9 @@ describe("DefaultRacedayComponent", () => {
   });
 
   afterEach(() => {
+    if (fixture) {
+      fixture.destroy();
+    }
     resetMocks();
   });
   // fixture.detectChanges(); // Removed to allow manual control in fakeAsync
@@ -1502,6 +1531,7 @@ describe("DefaultRacedayComponent", () => {
       raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
       raceStateSubject.next(com.antigravity.RaceState.STARTING);
       tick();
+      (window.Audio as any).calls.reset();
 
       expect(component["showCountdownOverlay"]).toBeTrue();
       expect(component["countdownTotalLamps"]).toBe(5);
@@ -1523,6 +1553,7 @@ describe("DefaultRacedayComponent", () => {
       tick();
       raceStateSubject.next(com.antigravity.RaceState.STARTING);
       tick();
+      (window.Audio as any).calls.reset();
 
       expect(component["countdownTotalLamps"]).toBe(3);
       expect(component["countdownLamps"].length).toBe(3);
@@ -1542,6 +1573,7 @@ describe("DefaultRacedayComponent", () => {
       tick();
       raceStateSubject.next(com.antigravity.RaceState.STARTING);
       tick();
+      (window.Audio as any).calls.reset();
 
       expect(component["isRestarting"]).toBeTrue();
       expect(component["countdownTotalLamps"]).toBe(2);
@@ -1565,6 +1597,7 @@ describe("DefaultRacedayComponent", () => {
       raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
       raceStateSubject.next(com.antigravity.RaceState.STARTING);
       tick();
+      (window.Audio as any).calls.reset();
 
       // At T=3.2s remaining, ceil(3.2) = 4. onCount = 5 - 4 + 1 = 2 lamps should be ON
       // Text should show "4" (countdown)
@@ -1589,6 +1622,7 @@ describe("DefaultRacedayComponent", () => {
       component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
       raceStateSubject.next(com.antigravity.RaceState.STARTING);
       tick();
+      (window.Audio as any).calls.reset();
 
       raceStateSubject.next(com.antigravity.RaceState.RACING);
       tick();
@@ -1605,6 +1639,7 @@ describe("DefaultRacedayComponent", () => {
     it("should hide immediately if state becomes PAUSED during countdown", fakeAsync(() => {
       raceStateSubject.next(com.antigravity.RaceState.STARTING);
       tick();
+      (window.Audio as any).calls.reset();
       expect(component["showCountdownOverlay"]).toBeTrue();
 
       raceStateSubject.next(com.antigravity.RaceState.PAUSED);
@@ -1785,23 +1820,13 @@ describe("DefaultRacedayComponent", () => {
   });
 
   describe("Yellow Flag Audio", () => {
-    let mockAudioInstance: any;
     let mockSpeechSynthesis: any;
-    let originalAudio: any;
     let originalSpeechSynthesis: any;
     let mockThemeService: any;
 
     beforeEach(() => {
       // Save original implementations
-      originalAudio = window.Audio;
       originalSpeechSynthesis = window.speechSynthesis;
-
-      // Mock Audio
-      mockAudioInstance = jasmine.createSpyObj("Audio", ["play"]);
-      mockAudioInstance.play.and.returnValue(Promise.resolve());
-      (window as any).Audio = jasmine
-        .createSpy("Audio")
-        .and.returnValue(mockAudioInstance);
 
       // Mock SpeechSynthesis
       mockSpeechSynthesis = jasmine.createSpyObj("SpeechSynthesis", [
@@ -1832,7 +1857,6 @@ describe("DefaultRacedayComponent", () => {
 
     afterEach(() => {
       // Restore original implementations
-      window.Audio = originalAudio;
       if (originalSpeechSynthesis) {
         Object.defineProperty(window, "speechSynthesis", {
           value: originalSpeechSynthesis,
@@ -1884,46 +1908,35 @@ describe("DefaultRacedayComponent", () => {
   });
 
   describe("Countdown Audio", () => {
-    let mockAudioInstance: any;
-    let originalAudio: any;
     let mockThemeService: any;
 
     beforeEach(() => {
-      originalAudio = window.Audio;
-      mockAudioInstance = jasmine.createSpyObj("Audio", ["play"]);
-      mockAudioInstance.play.and.returnValue(Promise.resolve());
-      (window as any).Audio = jasmine
-        .createSpy("Audio")
-        .and.returnValue(mockAudioInstance);
-
       mockThemeService = TestBed.inject(ThemeService);
       mockDataService.listAssets.and.returnValue(
         of([
           {
-            model: { entityId: "default_countdown_5" },
-            url: "/api/assets/download/default_countdown_5",
-          },
-          {
-            model: { entityId: "default_countdown_1" },
-            url: "/api/assets/download/default_countdown_1",
-          },
-          {
-            model: { entityId: "default_countdown_go" },
-            url: "/api/assets/download/default_countdown_go",
+            model: { entityId: "default_countdown_set" },
+            type: "audio_set",
+            audioEntries: [
+              { url: "/api/assets/download/5", timeSeconds: 5 },
+              { url: "/api/assets/download/4", timeSeconds: 4 },
+              { url: "/api/assets/download/3", timeSeconds: 3 },
+              { url: "/api/assets/download/1", timeSeconds: 1 },
+              { url: "/api/assets/download/go", timeSeconds: 0 },
+            ],
+            url: "/api/assets/download/default_countdown_set",
           },
         ]),
       );
       fixture.detectChanges();
     });
 
-    afterEach(() => {
-      window.Audio = originalAudio;
-    });
+    afterEach(() => {});
 
     it("should play themed sound for countdown seconds", fakeAsync(() => {
       mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
-        if (key === THEME_SLOT_KEYS.AUDIO_COUNTDOWN_5) {
-          return { type: "preset", url: "default_countdown_5" };
+        if (key === THEME_SLOT_KEYS.AUDIO_COUNTDOWN) {
+          return { type: "audio_set", url: "default_countdown_set" };
         }
         return null;
       });
@@ -1931,20 +1944,23 @@ describe("DefaultRacedayComponent", () => {
       component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
       raceStateSubject.next(com.antigravity.RaceState.STARTING);
       tick();
+      (window.Audio as any).calls.reset();
+      // Reset so next time update triggers a fresh play
+      component["lastPlayedCountdownSecond"] = -1;
 
-      // At 5.0s left, it should play '5' sound (even though 1 lamp is on)
-      raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
+      // At 4.0s left, it should play '4' sound
+      raceTimeSubject.next({ time: 4.0, autoStartRemaining: 4.0 });
       tick();
 
       expect(window.Audio).toHaveBeenCalledWith(
-        `${mockDataService.serverUrl}api/assets/download/default_countdown_5`,
+        `${mockDataService.serverUrl}api/assets/download/4`,
       );
     }));
 
     it("should not play audio for seconds higher than countdownTotalLamps", fakeAsync(() => {
       mockThemeService.resolveAudioConfig.and.returnValue({
-        type: "preset",
-        url: "default_countdown",
+        type: "audio_set",
+        url: "default_countdown_set",
       });
 
       const race = { ...MOCK_RACES[0], start_time: 3.0 } as any;
@@ -1952,27 +1968,30 @@ describe("DefaultRacedayComponent", () => {
       mockRaceService.getRace.and.returnValue(race);
       raceStateSubject.next(com.antigravity.RaceState.STARTING);
       tick();
+      (window.Audio as any).calls.reset();
+      // Reset so next time update triggers a fresh play
+      component["lastPlayedCountdownSecond"] = -1;
 
       // If server sends 5.0 but we only have 3 lamps, it should NOT play.
       raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
       tick();
 
-      expect(mockThemeService.resolveAudioConfig).not.toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_COUNTDOWN_5,
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}api/assets/download/5`,
       );
 
       // But it SHOULD play 3
       raceTimeSubject.next({ time: 3.0, autoStartRemaining: 3.0 });
       tick();
-      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_COUNTDOWN_3,
+      expect(window.Audio).toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}api/assets/download/3`,
       );
     }));
 
     it("should play 'GO' sound when race starts", fakeAsync(() => {
       mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
-        if (key === THEME_SLOT_KEYS.AUDIO_COUNTDOWN_GO) {
-          return { type: "preset", url: "default_countdown_go" };
+        if (key === THEME_SLOT_KEYS.AUDIO_COUNTDOWN) {
+          return { type: "audio_set", url: "default_countdown_set" };
         }
         return null;
       });
@@ -1981,18 +2000,15 @@ describe("DefaultRacedayComponent", () => {
       raceStateSubject.next(com.antigravity.RaceState.RACING);
       tick();
 
-      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_COUNTDOWN_GO,
-      );
       expect(window.Audio).toHaveBeenCalledWith(
-        `${mockDataService.serverUrl}api/assets/download/default_countdown_go`,
+        `${mockDataService.serverUrl}api/assets/download/go`,
       );
     }));
 
     it("should NOT play countdown audio based on race time when autoStartRemaining is 0 (abort scenario)", fakeAsync(() => {
       mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
-        if (key === THEME_SLOT_KEYS.AUDIO_COUNTDOWN_2) {
-          return { type: "preset", url: "default_countdown_2" };
+        if (key === THEME_SLOT_KEYS.AUDIO_COUNTDOWN) {
+          return { type: "audio_set", url: "default_countdown_set" };
         }
         return null;
       });
@@ -2000,39 +2016,23 @@ describe("DefaultRacedayComponent", () => {
       component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
       raceStateSubject.next(com.antigravity.RaceState.STARTING);
       tick();
+      (window.Audio as any).calls.reset();
 
       // Simulate abort: autoStartRemaining becomes 0, but race time is still > 0
-      // This is what happens when clearAutoTimers() is called on the server before the state change to PAUSED arrives.
-      raceTimeSubject.next({ time: 1.2, autoStartRemaining: 0 });
+      raceTimeSubject.next({ time: 3.0, autoStartRemaining: 0 });
       tick();
 
-      expect(mockThemeService.resolveAudioConfig).not.toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_COUNTDOWN_2,
-      );
+      expect(window.Audio).not.toHaveBeenCalled();
     }));
   });
 
   describe("Themed and Lap Audio - None Type Support", () => {
-    let mockAudioInstance: any;
     let mockSpeechSynthesis: any;
-    let originalAudio: any;
     let originalSpeechSynthesis: any;
     let mockThemeService: any;
 
     beforeEach(() => {
-      originalAudio = window.Audio;
       originalSpeechSynthesis = window.speechSynthesis;
-
-      mockAudioInstance = jasmine.createSpyObj("Audio", ["play"]);
-      mockAudioInstance.play.and.returnValue(Promise.resolve());
-      (window as any).Audio = jasmine
-        .createSpy("Audio")
-        .and.returnValue(mockAudioInstance);
-
-      mockSpeechSynthesis = jasmine.createSpyObj("SpeechSynthesis", [
-        "cancel",
-        "speak",
-      ]);
       Object.defineProperty(window, "speechSynthesis", {
         value: mockSpeechSynthesis,
         writable: true,
@@ -2040,10 +2040,22 @@ describe("DefaultRacedayComponent", () => {
       });
 
       mockThemeService = TestBed.inject(ThemeService);
+      mockDataService.listAssets.and.returnValue(
+        of([
+          {
+            model: { entityId: "default_seconds_left_set" },
+            type: "audio_set",
+            audioEntries: [
+              { url: "/api/assets/download/240", timeSeconds: 240 },
+              { url: "/api/assets/download/60", timeSeconds: 60 },
+            ],
+            url: "/api/assets/download/default_seconds_left_set",
+          },
+        ]),
+      );
     });
 
     afterEach(() => {
-      (window as any).Audio = originalAudio;
       Object.defineProperty(window, "speechSynthesis", {
         value: originalSpeechSynthesis,
         writable: true,
@@ -2054,7 +2066,7 @@ describe("DefaultRacedayComponent", () => {
     it("should NOT play audio when lap audio type is 'none'", () => {
       fixture.detectChanges();
       const mockHd = component["heat"]!.heatDrivers[0];
-      mockHd.driver.lapAudio = { type: "none", url: "test.mp3" };
+      mockHd.driver.lapAudio = { type: "none", url: "test" };
 
       lapsSubject.next({
         objectId: mockHd.objectId,
@@ -2069,7 +2081,7 @@ describe("DefaultRacedayComponent", () => {
     it("should NOT play audio when themed audio type is 'none'", () => {
       mockThemeService.resolveAudioConfig.and.returnValue({
         type: "none",
-        url: "default_countdown_1",
+        url: "default_countdown_set",
       });
 
       fixture.detectChanges();
@@ -2080,13 +2092,16 @@ describe("DefaultRacedayComponent", () => {
       raceTimeSubject.next({ time: 1.0, autoStartRemaining: 1.0 });
 
       expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_COUNTDOWN_1,
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
       );
       expect(window.Audio).not.toHaveBeenCalled();
     });
 
     it("should play themed audio at correct time thresholds for timed heats", () => {
       mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "default_seconds_left_set" };
+        }
         return { type: "preset", url: `url_${key}` };
       });
 
@@ -2110,8 +2125,8 @@ describe("DefaultRacedayComponent", () => {
 
       // Crossing 4 minutes (240s)
       raceTimeSubject.next({ time: 240.0 });
-      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_240,
+      expect(window.Audio).toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}api/assets/download/240`,
       );
 
       // Crossing halfway (150s for a 5 minute race)
@@ -2122,13 +2137,16 @@ describe("DefaultRacedayComponent", () => {
 
       // Crossing 1 minute (60s)
       raceTimeSubject.next({ time: 60.0 });
-      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_60,
+      expect(window.Audio).toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}api/assets/download/60`,
       );
     });
 
     it("should play halfway audio when a driver reaches halfway lap count in lap-based races", () => {
       mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "default_seconds_left_set" };
+        }
         return { type: "preset", url: `url_${key}` };
       });
 

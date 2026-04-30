@@ -14,8 +14,9 @@ export interface TTSContext {
   driver: TTSDriverData & TTSLapData;
 }
 
+/** Plays a sound based on the provided configuration. */
 export function playSound(
-  type: "preset" | "tts" | "none" | undefined,
+  type: "preset" | "tts" | "none" | "audio_set" | undefined,
   url: string | undefined,
   text: string | undefined,
   serverUrl: string,

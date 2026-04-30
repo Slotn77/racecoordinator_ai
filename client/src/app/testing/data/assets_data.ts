@@ -49,4 +49,20 @@ export const MOCK_ASSETS = [
     type: "image",
     url: "assets/images/start_green.png",
   },
+  {
+    id: "as1",
+    name: "Countdown Set",
+    type: "audio_set",
+    size: "120 KB",
+    url: "",
+    audioEntries: [
+      { url: "assets/sounds/5.mp3", timeSeconds: 5 },
+      { url: "assets/sounds/4.mp3", timeSeconds: 4 },
+      { url: "assets/sounds/3.mp3", timeSeconds: 3 },
+      { url: "assets/sounds/1.mp3", timeSeconds: 1 },
+      { url: "assets/sounds/go.mp3", timeSeconds: 0 },
+    ],
+    editMode: false,
+    selected: false,
+  },
 ];

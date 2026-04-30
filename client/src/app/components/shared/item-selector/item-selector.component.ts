@@ -13,7 +13,8 @@ export class ItemSelectorComponent {
   @Input() items: any[] = [];
   searchTerm: string = "";
 
-  @Input() itemType: "image" | "sound" | "image_set" = "image";
+  @Input() itemType: "image" | "sound" | "image_set" | "audio" | "audio_set" =
+    "image";
 
   @Input() backButtonRoute: string | null = null;
   @Input() backButtonQueryParams: any = {};
@@ -24,7 +25,13 @@ export class ItemSelectorComponent {
 
     // Filter by type if itemType is specified
     if (this.itemType) {
-      results = results.filter((item) => item.type === this.itemType);
+      if (this.itemType === "audio") {
+        results = results.filter(
+          (item) => item.type === "sound" || item.type === "audio_set",
+        );
+      } else {
+        results = results.filter((item) => item.type === this.itemType);
+      }
     }
 
     if (!this.searchTerm) {

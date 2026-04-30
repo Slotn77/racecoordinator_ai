@@ -17,16 +17,20 @@ import { mockTTSContext, playSound } from "src/app/utils/audio";
 })
 export class AudioSelectorComponent {
   @Input() label: string = "Audio";
-  @Input() type: "preset" | "tts" | "none" | undefined = "preset";
+  @Input() type: "preset" | "tts" | "none" | "audio_set" | undefined = "preset";
+  @Input() mode: "single" | "set" = "single";
   @Input() readonly: boolean = false;
 
-  @Output() typeChange = new EventEmitter<"preset" | "tts" | "none">();
+  @Output() typeChange = new EventEmitter<
+    "preset" | "tts" | "none" | "audio_set"
+  >();
 
   @Input() url?: string;
-  @Input() assetId?: string;
   @Output() urlChange = new EventEmitter<string>();
 
-  @Input() text?: string = "";
+  @Input() assetId?: string;
+
+  @Input() text?: string;
   @Output() textChange = new EventEmitter<string>();
 
   @Output() assetSelected = new EventEmitter<any>();
@@ -39,6 +43,13 @@ export class AudioSelectorComponent {
   @Input() context?: any;
 
   showItemSelector = false;
+
+  get filteredAssets(): any[] {
+    if (this.mode === "set") {
+      return this.assets.filter((a) => a.type === "audio_set");
+    }
+    return this.assets.filter((a) => a.type !== "audio_set");
+  }
 
   get selectedAssetName(): string {
     if (this.type === "none") {
@@ -67,7 +78,6 @@ export class AudioSelectorComponent {
     const asset = this.assets.find((a) => {
       if (a.model?.entityId === lookupValue || a.entity_id === lookupValue)
         return true;
-      if (a.url === lookupValue) return true;
       if (normalize(a.url) === normalizedLookup) return true;
       return false;
     });
@@ -85,7 +95,7 @@ export class AudioSelectorComponent {
     private translationService: TranslationService,
   ) {}
 
-  onTypeChange(newType: "preset" | "tts" | "none" | undefined) {
+  onTypeChange(newType: "preset" | "tts" | "none" | "audio_set" | undefined) {
     if (newType) {
       this.type = newType;
       this.typeChange.emit(this.type);
@@ -111,11 +121,20 @@ export class AudioSelectorComponent {
   }
 
   onAssetSelected(asset: any) {
-    if (asset && asset.url) {
-      this.onUrlChange(asset.url);
+    if (!asset) return;
+
+    // Prevent cross-mode selection
+    if (this.mode === "set" && asset.type !== "audio_set") return;
+    if (this.mode === "single" && asset.type === "audio_set") return;
+
+    const val =
+      asset?.model?.entityId || asset?.entity_id || asset?.url || asset?.id;
+    if (val) {
+      this.onUrlChange(val);
       this.assetSelected.emit(asset);
-      if (this.type !== "preset") {
-        this.onTypeChange("preset");
+      const targetType = asset.type === "audio_set" ? "audio_set" : "preset";
+      if (this.type !== targetType) {
+        this.onTypeChange(targetType);
       }
     }
     this.closeItemSelector();
@@ -123,14 +142,20 @@ export class AudioSelectorComponent {
 
   onPlayPreview(item: any) {
     const playContext = this.context || mockTTSContext();
-    playSound("preset", item.url, "", this.dataService.serverUrl, playContext);
+    playSound(
+      item.type === "audio_set" ? "audio_set" : "preset",
+      item.url || item.model?.entityId || item.entity_id,
+      "",
+      this.dataService.serverUrl,
+      playContext,
+    );
   }
 
   play() {
     if (this.type === "none") return;
     const playContext = this.context || mockTTSContext();
     playSound(
-      this.type as any,
+      this.type,
       this.url,
       this.text,
       this.dataService.serverUrl,
@@ -148,34 +173,14 @@ export class AudioSelectorComponent {
     event.preventDefault();
     event.stopPropagation();
 
-    const files = event.dataTransfer?.files;
-    if (files && files.length > 0) {
-      this.uploadAndSetAsset(files[0]);
+    const data = event.dataTransfer?.getData("application/json");
+    if (data) {
+      try {
+        const asset = JSON.parse(data);
+        this.onAssetSelected(asset);
+      } catch (e) {
+        console.error("Failed to parse dropped asset data", e);
+      }
     }
-  }
-
-  private uploadAndSetAsset(file: File) {
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      const bytes = new Uint8Array(e.target.result);
-      // Ensure we treat it as sound since this is an audio selector
-      const assetType = "sound";
-
-      this.dataService.uploadAsset(file.name, assetType, bytes).subscribe({
-        next: (asset) => {
-          if (asset.url) {
-            this.onUrlChange(asset.url);
-            // Switch to preset mode if not already
-            if (this.type !== "preset") {
-              this.onTypeChange("preset");
-            }
-          }
-        },
-        error: (err) => {
-          console.error("Audio upload failed", err);
-        },
-      });
-    };
-    reader.readAsArrayBuffer(file);
   }
 }

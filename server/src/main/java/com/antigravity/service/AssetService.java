@@ -1,8 +1,10 @@
 package com.antigravity.service;
 
 import com.antigravity.proto.AssetMessage;
+import com.antigravity.proto.AudioSetEntry;
 import com.antigravity.proto.ImageSetEntry;
 import com.antigravity.proto.Model;
+import com.antigravity.proto.SaveAudioSetEntry;
 import com.antigravity.proto.SaveImageSetEntry;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -18,7 +20,9 @@ import java.nio.file.Paths;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -144,9 +148,28 @@ public class AssetService {
         new FuelDefaultAsset("default_fuel_0", "fuel_0.png", "Fuel Gauge 0%", 0));
   }
 
+  private static final Set<String> EXCLUDED_AUDIO_IDS = new HashSet<>();
   private static final List<DefaultAsset> DEFAULT_AUDIO_ASSETS = new ArrayList<>();
 
   static {
+    EXCLUDED_AUDIO_IDS.add("default_countdown_5");
+    EXCLUDED_AUDIO_IDS.add("default_countdown_4");
+    EXCLUDED_AUDIO_IDS.add("default_countdown_3");
+    EXCLUDED_AUDIO_IDS.add("default_countdown_2");
+    EXCLUDED_AUDIO_IDS.add("default_countdown_1");
+    EXCLUDED_AUDIO_IDS.add("default_countdown_go");
+    EXCLUDED_AUDIO_IDS.add("default_seconds_left_300");
+    EXCLUDED_AUDIO_IDS.add("default_seconds_left_240");
+    EXCLUDED_AUDIO_IDS.add("default_seconds_left_180");
+    EXCLUDED_AUDIO_IDS.add("default_seconds_left_120");
+    EXCLUDED_AUDIO_IDS.add("default_seconds_left_60");
+    EXCLUDED_AUDIO_IDS.add("default_seconds_left_30");
+    EXCLUDED_AUDIO_IDS.add("default_seconds_left_25");
+    EXCLUDED_AUDIO_IDS.add("default_seconds_left_20");
+    EXCLUDED_AUDIO_IDS.add("default_seconds_left_15");
+    EXCLUDED_AUDIO_IDS.add("default_seconds_left_10");
+    EXCLUDED_AUDIO_IDS.add("default_seconds_left_5");
+
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("default_beep", "beep.wav", "Lap Beep"));
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("default_chimes", "chimes.wav", "Lap Chimes"));
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("default_driveby", "driveby.wav", "Lap Driveby"));
@@ -343,6 +366,19 @@ public class AssetService {
       }
     }
 
+    // Delete audio items in set if present
+    @SuppressWarnings("unchecked")
+    List<Document> audioList = (List<Document>) doc.get("audio_entries");
+    if (audioList != null) {
+      for (Document audioDoc : audioList) {
+        String url = audioDoc.getString("url");
+        if (url != null && url.startsWith("/assets/")) {
+          String setFilename = url.substring("/assets/".length());
+          deletePhysicalFile(setFilename);
+        }
+      }
+    }
+
     collection.deleteOne(Filters.eq("_id", id));
     return true;
   }
@@ -431,6 +467,74 @@ public class AssetService {
     return documentToAsset(doc);
   }
 
+  public AssetMessage saveAudioSet(String id, String name, List<SaveAudioSetEntry> entries)
+      throws IOException {
+    boolean isNew = (id == null || id.isEmpty());
+    if (isNew) {
+      id = UUID.randomUUID().toString();
+    }
+
+    List<Document> audioDocs = new ArrayList<>();
+    long totalSize = 0;
+
+    for (SaveAudioSetEntry entry : entries) {
+      String url = entry.getUrl();
+      String entryName = entry.getName();
+      float timeSeconds = entry.getTimeSeconds();
+      String sizeStr = "";
+
+      if (entry.getData() != null && !entry.getData().isEmpty()) {
+        // New sound data uploaded as part of the set
+        String entryId = UUID.randomUUID().toString();
+        String safeName = entryName.replaceAll("[^a-zA-Z0-9.-]", "_");
+        String filename = entryId + "_" + safeName;
+        Path path = Paths.get(assetDir, filename);
+
+        try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
+          fos.write(entry.getData().toByteArray());
+        }
+
+        url = "/assets/" + filename;
+        sizeStr = humanReadableByteCountBin(entry.getData().size());
+        totalSize += entry.getData().size();
+      } else if (url != null && !url.isEmpty()) {
+        // Existing sound reference
+        if (url.startsWith("/assets/")) {
+          String filename = url.substring("/assets/".length());
+          File file = new File(assetDir, filename);
+          if (file.exists()) {
+            totalSize += file.length();
+            sizeStr = humanReadableByteCountBin(file.length());
+          }
+        }
+      }
+
+      audioDocs.add(
+          new Document()
+              .append("url", url)
+              .append("time_seconds", timeSeconds)
+              .append("name", entryName)
+              .append("size", sizeStr));
+    }
+
+    Document doc =
+        new Document("_id", id)
+            .append("name", name)
+            .append("type", "audio_set")
+            .append("is_default", id.startsWith("default_"))
+            .append("size", humanReadableByteCountBin(totalSize))
+            .append("url", audioDocs.isEmpty() ? "" : audioDocs.get(0).getString("url"))
+            .append("audio_entries", audioDocs);
+
+    if (isNew) {
+      collection.insertOne(doc);
+    } else {
+      collection.replaceOne(Filters.eq("_id", id), doc);
+    }
+
+    return documentToAsset(doc);
+  }
+
   private AssetMessage documentToAsset(Document doc) {
     AssetMessage.Builder builder =
         AssetMessage.newBuilder()
@@ -450,6 +554,23 @@ public class AssetService {
                 .setPercentage(imageDoc.getInteger("percentage"))
                 .setName(imageDoc.getString("name"))
                 .setSize(imageDoc.getString("size"))
+                .build());
+      }
+    }
+
+    @SuppressWarnings("unchecked")
+    List<Document> audioList = (List<Document>) doc.get("audio_entries");
+    if (audioList != null) {
+      for (Document audioDoc : audioList) {
+        builder.addAudioEntries(
+            AudioSetEntry.newBuilder()
+                .setUrl(audioDoc.getString("url"))
+                .setTimeSeconds(
+                    audioDoc.get("time_seconds") instanceof Double
+                        ? ((Double) audioDoc.get("time_seconds")).floatValue()
+                        : (float) audioDoc.get("time_seconds"))
+                .setName(audioDoc.getString("name"))
+                .setSize(audioDoc.getString("size"))
                 .build());
       }
     }
@@ -574,7 +695,149 @@ public class AssetService {
       collection.insertOne(doc);
     }
 
+    List<AudioSetEntry> countdownAudio = new ArrayList<>();
+    long countdownTotalSize = 0;
+    String[] countdownKeys = {
+      "default_countdown_5",
+      "default_countdown_4",
+      "default_countdown_3",
+      "default_countdown_2",
+      "default_countdown_1",
+      "default_countdown_go"
+    };
+    float[] countdownTimes = {5.0f, 4.0f, 3.0f, 2.0f, 1.0f, 0.0f};
+
+    for (int i = 0; i < countdownKeys.length; i++) {
+      String assetId = countdownKeys[i];
+      float time = countdownTimes[i];
+      for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
+        if (asset.id.equals(assetId)) {
+          try {
+            byte[] data = readResource("/defaults/" + asset.filename);
+            String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
+            String internalFilename = asset.id + "_" + safeName;
+            Path path = Paths.get(assetDir, internalFilename);
+            try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
+              fos.write(data);
+            }
+            String url = "/assets/" + internalFilename;
+            String sizeStr = humanReadableByteCountBin(data.length);
+
+            countdownAudio.add(
+                AudioSetEntry.newBuilder()
+                    .setUrl(url)
+                    .setTimeSeconds(time)
+                    .setName(asset.displayName)
+                    .setSize(sizeStr)
+                    .build());
+            countdownTotalSize += data.length;
+          } catch (IOException e) {
+            System.err.println(
+                "Failed to restore default asset " + asset.filename + ": " + e.getMessage());
+          }
+          break;
+        }
+      }
+    }
+
+    if (!countdownAudio.isEmpty()) {
+      String id = "default_countdown-set";
+      List<Document> audioDocs = new ArrayList<>();
+      for (AudioSetEntry entry : countdownAudio) {
+        audioDocs.add(
+            new Document()
+                .append("url", entry.getUrl())
+                .append("time_seconds", entry.getTimeSeconds())
+                .append("name", entry.getName())
+                .append("size", entry.getSize()));
+      }
+      Document doc =
+          new Document("_id", id)
+              .append("name", "Countdown")
+              .append("type", "audio_set")
+              .append("is_default", true)
+              .append("size", humanReadableByteCountBin(countdownTotalSize))
+              .append("url", countdownAudio.get(0).getUrl())
+              .append("audio_entries", audioDocs);
+      collection.insertOne(doc);
+    }
+
+    List<AudioSetEntry> secondsLeftAudio = new ArrayList<>();
+    long secondsLeftTotalSize = 0;
+    String[] slKeysList = {
+      "default_seconds_left_300",
+      "default_seconds_left_240",
+      "default_seconds_left_180",
+      "default_seconds_left_120",
+      "default_seconds_left_60",
+      "default_seconds_left_30",
+      "default_seconds_left_25",
+      "default_seconds_left_20",
+      "default_seconds_left_15",
+      "default_seconds_left_10",
+      "default_seconds_left_5"
+    };
+    float[] slTimes = {
+      300.0f, 240.0f, 180.0f, 120.0f, 60.0f, 30.0f, 25.0f, 20.0f, 15.0f, 10.0f, 5.0f
+    };
+
+    for (int i = 0; i < slKeysList.length; i++) {
+      String assetId = slKeysList[i];
+      float time = slTimes[i];
+      for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
+        if (asset.id.equals(assetId)) {
+          try {
+            byte[] data = readResource("/defaults/" + asset.filename);
+            String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
+            String internalFilename = asset.id + "_" + safeName;
+            Path path = Paths.get(assetDir, internalFilename);
+            try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
+              fos.write(data);
+            }
+            String url = "/assets/" + internalFilename;
+            String sizeStr = humanReadableByteCountBin(data.length);
+
+            secondsLeftAudio.add(
+                AudioSetEntry.newBuilder()
+                    .setUrl(url)
+                    .setTimeSeconds(time)
+                    .setName(asset.displayName)
+                    .setSize(sizeStr)
+                    .build());
+            secondsLeftTotalSize += data.length;
+          } catch (IOException e) {
+            System.err.println(
+                "Failed to restore default asset " + asset.filename + ": " + e.getMessage());
+          }
+          break;
+        }
+      }
+    }
+
+    if (!secondsLeftAudio.isEmpty()) {
+      String id = "default_seconds-left-set";
+      List<Document> audioDocs = new ArrayList<>();
+      for (AudioSetEntry entry : secondsLeftAudio) {
+        audioDocs.add(
+            new Document()
+                .append("url", entry.getUrl())
+                .append("time_seconds", entry.getTimeSeconds())
+                .append("name", entry.getName())
+                .append("size", entry.getSize()));
+      }
+      Document doc =
+          new Document("_id", id)
+              .append("name", "Seconds Left")
+              .append("type", "audio_set")
+              .append("is_default", true)
+              .append("size", humanReadableByteCountBin(secondsLeftTotalSize))
+              .append("url", secondsLeftAudio.get(0).getUrl())
+              .append("audio_entries", audioDocs);
+      collection.insertOne(doc);
+    }
+
     for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
+      if (EXCLUDED_AUDIO_IDS.contains(asset.id)) continue;
       try {
         saveAsset(
             asset.id, asset.displayName, "sound", readResource("/defaults/" + asset.filename));
@@ -586,102 +849,259 @@ public class AssetService {
   }
 
   public void backfillDefaults() {
-    List<ImageSetEntry> fuelImages = new ArrayList<>();
-    long fuelTotalSize = 0;
+    try {
+      List<ImageSetEntry> fuelImages = new ArrayList<>();
+      long fuelTotalSize = 0;
 
-    for (DefaultAsset asset : DEFAULT_IMAGE_ASSETS) {
-      Document existing = collection.find(Filters.eq("_id", asset.id)).first();
-      if (existing != null) {
-        if (!asset.displayName.equals(existing.getString("name"))) {
-          collection.updateOne(Filters.eq("_id", asset.id), Updates.set("name", asset.displayName));
+      for (DefaultAsset asset : DEFAULT_IMAGE_ASSETS) {
+        Document existing = collection.find(Filters.eq("_id", asset.id)).first();
+        if (existing != null) {
+          if (!asset.displayName.equals(existing.getString("name"))) {
+            collection.updateOne(
+                Filters.eq("_id", asset.id), Updates.set("name", asset.displayName));
+          }
+          continue;
         }
-        continue;
-      }
-      try {
-        byte[] data = readResource("/defaults/" + asset.filename);
-        saveAsset(asset.id, asset.filename, "image", data);
-      } catch (IOException | NumberFormatException e) {
-        System.err.println(
-            "Failed to backfill default asset " + asset.filename + ": " + e.getMessage());
-      }
-    }
-
-    String fuelId = "default_fuel-gauge-builtin";
-    if (collection.find(Filters.eq("_id", fuelId)).first() == null) {
-      for (DefaultAsset asset : DEFAULT_FUEL_IMAGE_ASSETS) {
         try {
           byte[] data = readResource("/defaults/" + asset.filename);
-          // It's a fuel gauge, part of the set
-          String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
-          String internalFilename = asset.id + "_" + safeName;
-          Path path = Paths.get(assetDir, internalFilename);
-          try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
-            fos.write(data);
-          }
-          String url = "/assets/" + internalFilename;
-          String sizeStr = humanReadableByteCountBin(data.length);
-
-          fuelImages.add(
-              ImageSetEntry.newBuilder()
-                  .setUrl(url)
-                  .setPercentage(((FuelDefaultAsset) asset).percentage)
-                  .setName(asset.displayName)
-                  .setSize(sizeStr)
-                  .build());
-          fuelTotalSize += data.length;
+          saveAsset(asset.id, asset.filename, "image", data);
         } catch (IOException | NumberFormatException e) {
           System.err.println(
-              "Failed to backfill default fuel asset " + asset.filename + ": " + e.getMessage());
+              "Failed to backfill default asset " + asset.filename + ": " + e.getMessage());
         }
       }
 
-      // Save the Fuel Gauge image set
-      if (!fuelImages.isEmpty()) {
-        List<Document> imageDocs = new ArrayList<>();
-        for (ImageSetEntry entry : fuelImages) {
-          imageDocs.add(
-              new Document()
-                  .append("url", entry.getUrl())
-                  .append("percentage", entry.getPercentage())
-                  .append("name", entry.getName())
-                  .append("size", entry.getSize()));
+      String fuelId = "default_fuel-gauge-builtin";
+      if (collection.find(Filters.eq("_id", fuelId)).first() == null) {
+        for (DefaultAsset asset : DEFAULT_FUEL_IMAGE_ASSETS) {
+          try {
+            byte[] data = readResource("/defaults/" + asset.filename);
+            String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
+            String internalFilename = asset.id + "_" + safeName;
+            Path path = Paths.get(assetDir, internalFilename);
+            try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
+              fos.write(data);
+            }
+            String url = "/assets/" + internalFilename;
+            String sizeStr = humanReadableByteCountBin(data.length);
+
+            fuelImages.add(
+                ImageSetEntry.newBuilder()
+                    .setUrl(url)
+                    .setPercentage(((FuelDefaultAsset) asset).percentage)
+                    .setName(asset.displayName)
+                    .setSize(sizeStr)
+                    .build());
+            fuelTotalSize += data.length;
+          } catch (IOException | NumberFormatException e) {
+            System.err.println(
+                "Failed to backfill default asset " + asset.filename + ": " + e.getMessage());
+          }
         }
 
-        Document doc =
-            new Document("_id", fuelId)
-                .append("name", "Fuel Gauge")
-                .append("type", "image_set")
-                .append("is_default", true)
-                .append("size", humanReadableByteCountBin(fuelTotalSize))
-                .append("url", fuelImages.get(0).getUrl())
-                .append("images", imageDocs);
+        // Save the Fuel Gauge image set
+        if (!fuelImages.isEmpty()) {
+          List<Document> imageDocs = new ArrayList<>();
+          for (ImageSetEntry entry : fuelImages) {
+            imageDocs.add(
+                new Document()
+                    .append("url", entry.getUrl())
+                    .append("percentage", entry.getPercentage())
+                    .append("name", entry.getName())
+                    .append("size", entry.getSize()));
+          }
 
-        collection.insertOne(doc);
+          Document doc =
+              new Document("_id", fuelId)
+                  .append("name", "Fuel Gauge")
+                  .append("type", "image_set")
+                  .append("is_default", true)
+                  .append("size", humanReadableByteCountBin(fuelTotalSize))
+                  .append("url", fuelImages.get(0).getUrl())
+                  .append("images", imageDocs);
+
+          collection.insertOne(doc);
+        }
       }
+
+      String countdownSetId = "default_countdown-set";
+      if (collection.find(Filters.eq("_id", countdownSetId)).first() == null) {
+        List<AudioSetEntry> countdownAudio = new ArrayList<>();
+        long countdownTotalSize = 0;
+        String[] countdownKeys = {
+          "default_countdown_5",
+          "default_countdown_4",
+          "default_countdown_3",
+          "default_countdown_2",
+          "default_countdown_1",
+          "default_countdown_go"
+        };
+        float[] countdownTimes = {5.0f, 4.0f, 3.0f, 2.0f, 1.0f, 0.0f};
+
+        for (int i = 0; i < countdownKeys.length; i++) {
+          String assetId = countdownKeys[i];
+          float time = countdownTimes[i];
+          for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
+            if (asset.id.equals(assetId)) {
+              try {
+                byte[] data = readResource("/defaults/" + asset.filename);
+                String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
+                String internalFilename = asset.id + "_" + safeName;
+                Path path = Paths.get(assetDir, internalFilename);
+                try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
+                  fos.write(data);
+                }
+                String url = "/assets/" + internalFilename;
+                String sizeStr = humanReadableByteCountBin(data.length);
+
+                countdownAudio.add(
+                    AudioSetEntry.newBuilder()
+                        .setUrl(url)
+                        .setTimeSeconds(time)
+                        .setName(asset.displayName)
+                        .setSize(sizeStr)
+                        .build());
+                countdownTotalSize += data.length;
+              } catch (IOException e) {
+                System.err.println(
+                    "Failed to backfill default asset " + asset.filename + ": " + e.getMessage());
+              }
+              break;
+            }
+          }
+        }
+
+        if (!countdownAudio.isEmpty()) {
+          List<Document> audioDocs = new ArrayList<>();
+          for (AudioSetEntry entry : countdownAudio) {
+            audioDocs.add(
+                new Document()
+                    .append("url", entry.getUrl())
+                    .append("time_seconds", entry.getTimeSeconds())
+                    .append("name", entry.getName())
+                    .append("size", entry.getSize()));
+          }
+          Document doc =
+              new Document("_id", countdownSetId)
+                  .append("name", "Countdown")
+                  .append("type", "audio_set")
+                  .append("is_default", true)
+                  .append("size", humanReadableByteCountBin(countdownTotalSize))
+                  .append("url", countdownAudio.get(0).getUrl())
+                  .append("audio_entries", audioDocs);
+          collection.insertOne(doc);
+        }
+      }
+
+      String slSetId = "default_seconds-left-set";
+      if (collection.find(Filters.eq("_id", slSetId)).first() == null) {
+        List<AudioSetEntry> secondsLeftAudio = new ArrayList<>();
+        long secondsLeftTotalSize = 0;
+        String[] slKeysList = {
+          "default_seconds_left_300",
+          "default_seconds_left_240",
+          "default_seconds_left_180",
+          "default_seconds_left_120",
+          "default_seconds_left_60",
+          "default_seconds_left_30",
+          "default_seconds_left_25",
+          "default_seconds_left_20",
+          "default_seconds_left_15",
+          "default_seconds_left_10",
+          "default_seconds_left_5"
+        };
+        float[] slTimes = {
+          300.0f, 240.0f, 180.0f, 120.0f, 60.0f, 30.0f, 25.0f, 20.0f, 15.0f, 10.0f, 5.0f
+        };
+
+        for (int i = 0; i < slKeysList.length; i++) {
+          String assetId = slKeysList[i];
+          float time = slTimes[i];
+          for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
+            if (asset.id.equals(assetId)) {
+              try {
+                byte[] data = readResource("/defaults/" + asset.filename);
+                String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
+                String internalFilename = asset.id + "_" + safeName;
+                Path path = Paths.get(assetDir, internalFilename);
+                try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
+                  fos.write(data);
+                }
+                String url = "/assets/" + internalFilename;
+                String sizeStr = humanReadableByteCountBin(data.length);
+
+                secondsLeftAudio.add(
+                    AudioSetEntry.newBuilder()
+                        .setUrl(url)
+                        .setTimeSeconds(time)
+                        .setName(asset.displayName)
+                        .setSize(sizeStr)
+                        .build());
+                secondsLeftTotalSize += data.length;
+              } catch (IOException e) {
+                System.err.println(
+                    "Failed to backfill default asset " + asset.filename + ": " + e.getMessage());
+              }
+              break;
+            }
+          }
+        }
+
+        if (!secondsLeftAudio.isEmpty()) {
+          List<Document> audioDocs = new ArrayList<>();
+          for (AudioSetEntry entry : secondsLeftAudio) {
+            audioDocs.add(
+                new Document()
+                    .append("url", entry.getUrl())
+                    .append("time_seconds", entry.getTimeSeconds())
+                    .append("name", entry.getName())
+                    .append("size", entry.getSize()));
+          }
+          Document doc =
+              new Document("_id", slSetId)
+                  .append("name", "Seconds Left")
+                  .append("type", "audio_set")
+                  .append("is_default", true)
+                  .append("size", humanReadableByteCountBin(secondsLeftTotalSize))
+                  .append("url", secondsLeftAudio.get(0).getUrl())
+                  .append("audio_entries", audioDocs);
+          collection.insertOne(doc);
+        }
+      }
+
+      for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
+        if (EXCLUDED_AUDIO_IDS.contains(asset.id)) continue;
+        Document existing = collection.find(Filters.eq("_id", asset.id)).first();
+        if (existing != null) {
+          if (!asset.displayName.equals(existing.getString("name"))) {
+            collection.updateOne(
+                Filters.eq("_id", asset.id), Updates.set("name", asset.displayName));
+          }
+          continue;
+        }
+        try {
+          saveAsset(
+              asset.id, asset.displayName, "sound", readResource("/defaults/" + asset.filename));
+        } catch (IOException e) {
+          System.err.println(
+              "Failed to backfill default asset " + asset.filename + ": " + e.getMessage());
+        }
+      }
+
+      // Cleanup: Remove individual assets that are now in sets
+      for (String id : EXCLUDED_AUDIO_IDS) {
+        deleteAsset(id);
+      }
+
+      // Backfill default theme
+      backfillDefaultTheme();
+
+      // Ensure all themes have the new audio slot
+      backfillThemeSlots();
+    } catch (Exception e) {
+      System.err.println("Error in backfillDefaults: " + e.getMessage());
+      e.printStackTrace();
     }
-
-    for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
-      Document existing = collection.find(Filters.eq("_id", asset.id)).first();
-      if (existing != null) {
-        if (!asset.displayName.equals(existing.getString("name"))) {
-          collection.updateOne(Filters.eq("_id", asset.id), Updates.set("name", asset.displayName));
-        }
-        continue;
-      }
-      try {
-        saveAsset(
-            asset.id, asset.displayName, "sound", readResource("/defaults/" + asset.filename));
-      } catch (IOException e) {
-        System.err.println(
-            "Failed to backfill default asset " + asset.filename + ": " + e.getMessage());
-      }
-    }
-
-    // Backfill default theme
-    backfillDefaultTheme();
-
-    // Ensure all themes have the new audio slot
-    backfillThemeSlots();
   }
 
   /** Ensures all themes have the 'audio.yellowflag' slot in the audio_slots map. */
@@ -693,34 +1113,27 @@ public class AssetService {
       if (audioSlots == null) {
         audioSlots = new Document();
       }
-
-      List<Bson> allUpdates = new ArrayList<>();
-      boolean audioSlotsChanged = false;
-
       if (slots == null) {
         slots = new Document();
-        allUpdates.add(Updates.set("slots", slots));
       }
 
-      // 1. Repair corrupted slots (nested documents caused by incorrect dot-notation updates)
-      if (slots.get("flag") instanceof Document) {
-        Document flagDoc = (Document) slots.get("flag");
-        for (String subKey : flagDoc.keySet()) {
-          allUpdates.add(Updates.set("slots.flag." + subKey, flagDoc.get(subKey)));
-          slots.append("flag." + subKey, flagDoc.get(subKey));
+      boolean changed = false;
+
+      // 1. Repair and Flatten slots (remove nested Documents caused by dot-notation confusion)
+      Document newSlots = new Document();
+      for (String key : slots.keySet()) {
+        Object value = slots.get(key);
+        if (value instanceof Document) {
+          Document nested = (Document) value;
+          for (String subKey : nested.keySet()) {
+            newSlots.put(key + "." + subKey, nested.get(subKey).toString());
+          }
+          changed = true;
+        } else if (value != null) {
+          newSlots.put(key, value.toString());
         }
-        allUpdates.add(Updates.unset("slots.flag"));
-        slots.remove("flag");
       }
-      if (slots.get("audio") instanceof Document) {
-        Document audioDoc = (Document) slots.get("audio");
-        for (String subKey : audioDoc.keySet()) {
-          allUpdates.add(Updates.set("slots.audio." + subKey, audioDoc.get(subKey)));
-          slots.append("audio." + subKey, audioDoc.get(subKey));
-        }
-        allUpdates.add(Updates.unset("slots.audio"));
-        slots.remove("audio");
-      }
+      slots = newSlots;
 
       // 2. Migration: Move from slots to audio_slots if present
       if (slots.containsKey("audio.yellowflag")) {
@@ -730,29 +1143,15 @@ public class AssetService {
           if (!audioSlots.containsKey("audio.yellowflag")) {
             audioSlots.append(
                 "audio.yellowflag", new Document("type", "preset").append("url", assetId));
-            audioSlotsChanged = true;
+            changed = true;
           }
         }
-        allUpdates.add(Updates.unset("slots.audio.yellowflag"));
         slots.remove("audio.yellowflag");
+        changed = true;
       }
 
-      // 3. Backfill flag.yellowgreen image slot
-      if (!slots.containsKey("flag.yellowgreen")) {
-        allUpdates.add(Updates.set("slots.flag.yellowgreen", "default_flag_green_yellow"));
-        slots.append("flag.yellowgreen", "default_flag_green_yellow");
-      }
-
-      // 4. Default backfill for audio.yellowflag if still missing
-      if (!audioSlots.containsKey("audio.yellowflag")) {
-        audioSlots.append(
-            "audio.yellowflag",
-            new Document("type", "preset").append("url", "default_yellow_flag"));
-        audioSlotsChanged = true;
-      }
-
-      // 5. Countdown backfill
-      String[] countdownKeys = {
+      // 3. Migration: Replace countdown and seconds_left with audio sets
+      String[] oldCountdownKeys = {
         "audio.countdown.5",
         "audio.countdown.4",
         "audio.countdown.3",
@@ -760,78 +1159,86 @@ public class AssetService {
         "audio.countdown.1",
         "audio.countdown.go"
       };
-      String[] defaultCountdownAssets = {
-        "default_countdown_5",
-        "default_countdown_4",
-        "default_countdown_3",
-        "default_countdown_2",
-        "default_countdown_1",
-        "default_countdown_go"
-      };
-
-      for (int i = 0; i < countdownKeys.length; i++) {
-        String key = countdownKeys[i];
-        String defaultAsset = defaultCountdownAssets[i];
-        if (!audioSlots.containsKey(key)) {
-          audioSlots.append(key, new Document("type", "preset").append("url", defaultAsset));
-          audioSlotsChanged = true;
+      boolean hadOldCountdown = false;
+      for (String k : oldCountdownKeys) {
+        if (slots.containsKey(k)) {
+          slots.remove(k);
+          hadOldCountdown = true;
         }
       }
+      if (hadOldCountdown || !audioSlots.containsKey("audio.countdown")) {
+        audioSlots.put(
+            "audio.countdown",
+            new Document("type", "audio_set").append("url", "default_countdown-set"));
+        changed = true;
+      }
 
-      // 7. Seconds Left backfill
-      String[] slKeys = {
+      String[] oldSlKeys = {
         "audio.seconds_left.300",
-        "audio.seconds_left.240",
-        "audio.seconds_left.180",
-        "audio.seconds_left.120",
-        "audio.seconds_left.60",
-        "audio.seconds_left.30",
-        "audio.seconds_left.25",
-        "audio.seconds_left.20",
-        "audio.seconds_left.15",
-        "audio.seconds_left.10",
-        "audio.seconds_left.5",
-        "audio.seconds_left.halfway"
+        "audio.seconds_left_240",
+        "audio.seconds_left_180",
+        "audio.seconds_left_120",
+        "audio.seconds_left_60",
+        "audio.seconds_left_30",
+        "audio.seconds_left_25",
+        "audio.seconds_left_20",
+        "audio.seconds_left_15",
+        "audio.seconds_left_10",
+        "audio.seconds_left_5"
       };
-      String[] defaultSlAssets = {
-        "default_seconds_left_300",
-        "default_seconds_left_240",
-        "default_seconds_left_180",
-        "default_seconds_left_120",
-        "default_seconds_left_60",
-        "default_seconds_left_30",
-        "default_seconds_left_25",
-        "default_seconds_left_20",
-        "default_seconds_left_15",
-        "default_seconds_left_10",
-        "default_seconds_left_5",
-        "default_heat_half"
-      };
-
-      for (int i = 0; i < slKeys.length; i++) {
-        String key = slKeys[i];
-        String defaultAsset = defaultSlAssets[i];
-        if (!audioSlots.containsKey(key)) {
-          audioSlots.append(key, new Document("type", "preset").append("url", defaultAsset));
-          audioSlotsChanged = true;
+      boolean hadOldSl = false;
+      for (String k : oldSlKeys) {
+        if (slots.containsKey(k)) {
+          slots.remove(k);
+          hadOldSl = true;
         }
       }
+      if (hadOldSl || !audioSlots.containsKey("audio.seconds_left")) {
+        audioSlots.put(
+            "audio.seconds_left",
+            new Document("type", "audio_set").append("url", "default_seconds-left-set"));
+        changed = true;
+      }
 
-      // 8. Migration: Rename audio.heat.halfway to audio.seconds_left.halfway
+      // 4. Migration: Rename audio.heat.halfway to audio.seconds_left.halfway
       if (audioSlots.containsKey("audio.heat.halfway")) {
         Object val = audioSlots.get("audio.heat.halfway");
         audioSlots.append("audio.seconds_left.halfway", val);
         audioSlots.remove("audio.heat.halfway");
-        audioSlotsChanged = true;
+        changed = true;
       }
 
-      // 6. Save updates if anything changed
-      if (audioSlotsChanged) {
-        allUpdates.add(Updates.set("audio_slots", audioSlots));
+      // 5. Cleanup individual audio assets that might be lingering in slots
+      String[] legacyIdsToRemove = {
+        "audio.countdown.5",
+        "audio.countdown.4",
+        "audio.countdown.3",
+        "audio.countdown.2",
+        "audio.countdown.1",
+        "audio.countdown.go",
+        "audio.seconds_left_300",
+        "audio.seconds_left_240",
+        "audio.seconds_left_180",
+        "audio.seconds_left_120",
+        "audio.seconds_left_60",
+        "audio.seconds_left_30",
+        "audio.seconds_left_25",
+        "audio.seconds_left_20",
+        "audio.seconds_left_15",
+        "audio.seconds_left_10",
+        "audio.seconds_left_5"
+      };
+      for (String lid : legacyIdsToRemove) {
+        if (slots.containsKey(lid)) {
+          slots.remove(lid);
+          changed = true;
+        }
       }
 
-      if (!allUpdates.isEmpty()) {
-        themes.updateOne(Filters.eq("_id", theme.get("_id")), Updates.combine(allUpdates));
+      if (changed) {
+        themes.updateOne(
+            Filters.eq("_id", theme.get("_id")),
+            Updates.combine(Updates.set("slots", slots), Updates.set("audio_slots", audioSlots)));
       }
     }
   }
@@ -865,61 +1272,20 @@ public class AssetService {
     slots.append("lamp.red.on", "default_start_red_on");
     slots.append("lamp.red.dim", "default_start_red_dim");
     slots.append("lamp.green", "default_start_green");
-    // Fuel gauge image set
-    slots.append("gauge.fuel", "default_fuel-gauge-builtin");
 
     Document audioSlots = new Document();
     // Audio
     audioSlots.append(
         "audio.yellowflag", new Document("type", "preset").append("url", "default_yellow_flag"));
     audioSlots.append(
-        "audio.countdown.5", new Document("type", "preset").append("url", "default_countdown_5"));
-    audioSlots.append(
-        "audio.countdown.4", new Document("type", "preset").append("url", "default_countdown_4"));
-    audioSlots.append(
-        "audio.countdown.3", new Document("type", "preset").append("url", "default_countdown_3"));
-    audioSlots.append(
-        "audio.countdown.2", new Document("type", "preset").append("url", "default_countdown_2"));
-    audioSlots.append(
-        "audio.countdown.1", new Document("type", "preset").append("url", "default_countdown_1"));
-    audioSlots.append(
-        "audio.countdown.go", new Document("type", "preset").append("url", "default_countdown_go"));
-    audioSlots.append(
         "audio.seconds_left.halfway",
         new Document("type", "preset").append("url", "default_heat_half"));
     audioSlots.append(
-        "audio.seconds_left.300",
-        new Document("type", "preset").append("url", "default_seconds_left_300"));
+        "audio.countdown",
+        new Document("type", "audio_set").append("url", "default_countdown-set"));
     audioSlots.append(
-        "audio.seconds_left.240",
-        new Document("type", "preset").append("url", "default_seconds_left_240"));
-    audioSlots.append(
-        "audio.seconds_left.180",
-        new Document("type", "preset").append("url", "default_seconds_left_180"));
-    audioSlots.append(
-        "audio.seconds_left.120",
-        new Document("type", "preset").append("url", "default_seconds_left_120"));
-    audioSlots.append(
-        "audio.seconds_left.60",
-        new Document("type", "preset").append("url", "default_seconds_left_60"));
-    audioSlots.append(
-        "audio.seconds_left.30",
-        new Document("type", "preset").append("url", "default_seconds_left_30"));
-    audioSlots.append(
-        "audio.seconds_left.25",
-        new Document("type", "preset").append("url", "default_seconds_left_25"));
-    audioSlots.append(
-        "audio.seconds_left.20",
-        new Document("type", "preset").append("url", "default_seconds_left_20"));
-    audioSlots.append(
-        "audio.seconds_left.15",
-        new Document("type", "preset").append("url", "default_seconds_left_15"));
-    audioSlots.append(
-        "audio.seconds_left.10",
-        new Document("type", "preset").append("url", "default_seconds_left_10"));
-    audioSlots.append(
-        "audio.seconds_left.5",
-        new Document("type", "preset").append("url", "default_seconds_left_5"));
+        "audio.seconds_left",
+        new Document("type", "audio_set").append("url", "default_seconds-left-set"));
 
     Document theme =
         new Document()

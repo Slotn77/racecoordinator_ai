@@ -1,29 +1,49 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { AudioSelectorHarnessBase } from './audio-selector.harness.base';
+import { AudioSelectorHarnessBase } from "./audio-selector.harness.base";
 
-export class AudioSelectorHarness extends ComponentHarness implements AudioSelectorHarnessBase {
+export class AudioSelectorHarness
+  extends ComponentHarness
+  implements AudioSelectorHarnessBase
+{
   static hostSelector = AudioSelectorHarnessBase.hostSelector;
 
-  protected getLabelElement = this.locatorForOptional(AudioSelectorHarnessBase.selectors.label);
-  protected getToggleSpans = this.locatorForAll(AudioSelectorHarnessBase.selectors.toggleSpans);
-  protected getSelectWrapper = this.locatorForOptional(AudioSelectorHarnessBase.selectors.selectWrapper);
-  protected getSelectedSoundNameElement = this.locatorForOptional(AudioSelectorHarnessBase.selectors.selectedSoundName);
-  protected getTtsInput = this.locatorForOptional(AudioSelectorHarnessBase.selectors.ttsInput);
-  protected getPlayButton = this.locatorForOptional(AudioSelectorHarnessBase.selectors.playButton);
+  protected getLabelElement = this.locatorForOptional(
+    AudioSelectorHarnessBase.selectors.label,
+  );
+  protected getToggleSpans = this.locatorForAll(
+    AudioSelectorHarnessBase.selectors.toggleSpans,
+  );
+  protected getSelectWrapper = this.locatorForOptional(
+    AudioSelectorHarnessBase.selectors.selectWrapper,
+  );
+  protected getSelectedSoundNameElement = this.locatorForOptional(
+    AudioSelectorHarnessBase.selectors.selectedSoundName,
+  );
+  protected getTtsInput = this.locatorForOptional(
+    AudioSelectorHarnessBase.selectors.ttsInput,
+  );
+  protected getPlayButton = this.locatorForOptional(
+    AudioSelectorHarnessBase.selectors.playButton,
+  );
 
   async getLabel(): Promise<string> {
     const el = await this.getLabelElement();
-    return el ? await el.text() : '';
+    return el ? await el.text() : "";
   }
 
-  async getAudioType(): Promise<'preset' | 'tts'> {
+  async getAudioType(): Promise<"preset" | "tts" | "none" | "audio_set"> {
     const spans = await this.getToggleSpans();
-    if (spans.length >= 2) {
-      const presetActive = await spans[0].hasClass('active');
-      return presetActive ? 'preset' : 'tts';
+    for (const span of spans) {
+      if (await span.hasClass("active")) {
+        const text = (await span.text()).toLowerCase();
+        if (text.includes("set")) return "audio_set";
+        if (text.includes("tts")) return "tts";
+        if (text.includes("none")) return "none";
+        return "preset";
+      }
     }
-    return 'preset';
+    return "preset";
   }
 
   async clickPresetType(): Promise<void> {
@@ -35,8 +55,34 @@ export class AudioSelectorHarness extends ComponentHarness implements AudioSelec
 
   async clickTtsType(): Promise<void> {
     const spans = await this.getToggleSpans();
-    if (spans.length >= 2) {
-      await spans[1].click();
+    for (const span of spans) {
+      const text = await span.text();
+      if (text.includes("TTS")) {
+        await span.click();
+        return;
+      }
+    }
+  }
+
+  async clickAudioSetType(): Promise<void> {
+    const spans = await this.getToggleSpans();
+    for (const span of spans) {
+      const text = await span.text();
+      if (text.includes("Set")) {
+        await span.click();
+        return;
+      }
+    }
+  }
+
+  async clickNoneType(): Promise<void> {
+    const spans = await this.getToggleSpans();
+    for (const span of spans) {
+      const text = await span.text();
+      if (text.includes("None")) {
+        await span.click();
+        return;
+      }
     }
   }
 
@@ -47,20 +93,20 @@ export class AudioSelectorHarness extends ComponentHarness implements AudioSelec
 
   async getSelectedSoundName(): Promise<string> {
     const el = await this.getSelectedSoundNameElement();
-    const text = el ? await el.text() : '';
+    const text = el ? await el.text() : "";
     return text.trim();
   }
 
   async getTtsText(): Promise<string> {
     const input = await this.getTtsInput();
-    return input ? await input.getProperty('value') : '';
+    return input ? await input.getProperty("value") : "";
   }
 
   async setTtsText(text: string): Promise<void> {
     const input = await this.getTtsInput();
     if (input) {
       await input.setInputValue(text);
-      await input.dispatchEvent('input');
+      await input.dispatchEvent("input");
     }
   }
 

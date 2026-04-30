@@ -104,33 +104,28 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     countdown: false,
     fuelGauge: false,
     audio: false,
-    countdown_audio: false,
-    seconds_left_audio: false,
   };
 
-  countdownAudioSlots = [
-    { key: "audio.countdown.5", label: "UE_LABEL_COUNTDOWN_5" },
-    { key: "audio.countdown.4", label: "UE_LABEL_COUNTDOWN_4" },
-    { key: "audio.countdown.3", label: "UE_LABEL_COUNTDOWN_3" },
-    { key: "audio.countdown.2", label: "UE_LABEL_COUNTDOWN_2" },
-    { key: "audio.countdown.1", label: "UE_LABEL_COUNTDOWN_1" },
-    { key: "audio.countdown.go", label: "UE_LABEL_COUNTDOWN_GO" },
-  ];
-  secondsLeftAudioSlots = [
-    { key: "audio.seconds_left.300", label: "UE_LABEL_SECONDS_LEFT_300" },
-    { key: "audio.seconds_left.240", label: "UE_LABEL_SECONDS_LEFT_240" },
-    { key: "audio.seconds_left.180", label: "UE_LABEL_SECONDS_LEFT_180" },
-    { key: "audio.seconds_left.120", label: "UE_LABEL_SECONDS_LEFT_120" },
-    { key: "audio.seconds_left.60", label: "UE_LABEL_SECONDS_LEFT_60" },
-    { key: "audio.seconds_left.30", label: "UE_LABEL_SECONDS_LEFT_30" },
-    { key: "audio.seconds_left.25", label: "UE_LABEL_SECONDS_LEFT_25" },
-    { key: "audio.seconds_left.20", label: "UE_LABEL_SECONDS_LEFT_20" },
-    { key: "audio.seconds_left.15", label: "UE_LABEL_SECONDS_LEFT_15" },
-    { key: "audio.seconds_left.10", label: "UE_LABEL_SECONDS_LEFT_10" },
-    { key: "audio.seconds_left.5", label: "UE_LABEL_SECONDS_LEFT_5" },
+  mainAudioSlots: {
+    key: string;
+    label: string;
+    mode: "single" | "set";
+  }[] = [
+    {
+      key: "audio.yellowflag",
+      label: "UE_LABEL_YELLOW_FLAG_AUDIO",
+      mode: "single",
+    },
+    { key: "audio.countdown", label: "UE_LABEL_COUNTDOWN_AUDIO", mode: "set" },
+    {
+      key: "audio.seconds_left",
+      label: "UE_LABEL_SECONDS_LEFT_AUDIO",
+      mode: "set",
+    },
     {
       key: "audio.seconds_left.halfway",
       label: "UE_LABEL_SECONDS_LEFT_HALFWAY",
+      mode: "single",
     },
   ];
 
@@ -222,7 +217,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         // Include images, image_sets, and sounds
         this.assets = result.assets.filter(
           (a: any) =>
-            a.type === "image" || a.type === "image_set" || a.type === "sound",
+            a.type === "image" ||
+            a.type === "image_set" ||
+            a.type === "sound" ||
+            a.type === "audio_set",
         );
 
         // Dynamic columns for image sets
@@ -670,7 +668,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   get soundAssets(): any[] {
-    return this.assets.filter((a) => a.type === "sound");
+    return this.assets.filter(
+      (a) => a.type === "sound" || a.type === "audio_set",
+    );
   }
 
   get ttsContext(): any {

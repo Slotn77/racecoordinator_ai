@@ -33,3 +33,9 @@ message SaveImageSetResponse {
   AssetMessage asset = 3;
 }
 
+message SaveAudioSetResponse {
+  bool success = 1;
+  string message = 2;
+  AssetMessage asset = 3;
+}
+

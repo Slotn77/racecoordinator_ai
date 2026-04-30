@@ -7,6 +7,8 @@ import com.antigravity.proto.DeleteAssetResponse;
 import com.antigravity.proto.ListAssetsResponse;
 import com.antigravity.proto.RenameAssetRequest;
 import com.antigravity.proto.RenameAssetResponse;
+import com.antigravity.proto.SaveAudioSetRequest;
+import com.antigravity.proto.SaveAudioSetResponse;
 import com.antigravity.proto.SaveImageSetRequest;
 import com.antigravity.proto.SaveImageSetResponse;
 import com.antigravity.proto.UploadAssetRequest;
@@ -33,6 +35,7 @@ public class AssetTaskHandler {
     app.post("/api/assets/delete", this::deleteAsset);
     app.post("/api/assets/rename", this::renameAsset);
     app.post("/api/assets/save-image-set", this::saveImageSet);
+    app.post("/api/assets/save-audio-set", this::saveAudioSet);
     app.get("/api/assets/download/{id}", this::downloadAsset);
     app.get("/assets/{filename}", this::serveAsset);
   }
@@ -72,6 +75,10 @@ public class AssetTaskHandler {
 
   String getPathParam(Context ctx, String key) {
     return ctx.pathParam(key);
+  }
+
+  byte[] getBodyBytes(Context ctx) {
+    return ctx.bodyAsBytes();
   }
 
   public void downloadAsset(Context ctx) {
@@ -171,7 +178,7 @@ public class AssetTaskHandler {
 
   private void uploadAsset(Context ctx) {
     try {
-      UploadAssetRequest request = UploadAssetRequest.parseFrom(ctx.bodyAsBytes());
+      UploadAssetRequest request = UploadAssetRequest.parseFrom(getBodyBytes(ctx));
       AssetService service = getAssetService();
       AssetMessage asset =
           service.saveAsset(request.getName(), request.getType(), request.getData().toByteArray());
@@ -196,9 +203,9 @@ public class AssetTaskHandler {
     }
   }
 
-  private void deleteAsset(Context ctx) {
+  public void deleteAsset(Context ctx) {
     try {
-      DeleteAssetRequest request = DeleteAssetRequest.parseFrom(ctx.bodyAsBytes());
+      DeleteAssetRequest request = DeleteAssetRequest.parseFrom(getBodyBytes(ctx));
       AssetService service = getAssetService();
       boolean success = service.deleteAsset(request.getId());
 
@@ -223,7 +230,7 @@ public class AssetTaskHandler {
 
   private void renameAsset(Context ctx) {
     try {
-      RenameAssetRequest request = RenameAssetRequest.parseFrom(ctx.bodyAsBytes());
+      RenameAssetRequest request = RenameAssetRequest.parseFrom(getBodyBytes(ctx));
       AssetService service = getAssetService();
       boolean success = service.renameAsset(request.getId(), request.getNewName());
 
@@ -246,9 +253,9 @@ public class AssetTaskHandler {
     }
   }
 
-  private void saveImageSet(Context ctx) {
+  public void saveImageSet(Context ctx) {
     try {
-      SaveImageSetRequest request = SaveImageSetRequest.parseFrom(ctx.bodyAsBytes());
+      SaveImageSetRequest request = SaveImageSetRequest.parseFrom(getBodyBytes(ctx));
       AssetService service = getAssetService();
       AssetMessage asset =
           service.saveImageSet(request.getId(), request.getName(), request.getEntriesList());
@@ -267,6 +274,33 @@ public class AssetTaskHandler {
           SaveImageSetResponse.newBuilder()
               .setSuccess(false)
               .setMessage("Error saving image set: " + e.getMessage())
+              .build();
+      setContentType(ctx, "application/octet-stream");
+      setResult(ctx, response.toByteArray());
+    }
+  }
+
+  public void saveAudioSet(Context ctx) {
+    try {
+      SaveAudioSetRequest request = SaveAudioSetRequest.parseFrom(getBodyBytes(ctx));
+      AssetService service = getAssetService();
+      AssetMessage asset =
+          service.saveAudioSet(request.getId(), request.getName(), request.getEntriesList());
+
+      SaveAudioSetResponse response =
+          SaveAudioSetResponse.newBuilder()
+              .setSuccess(true)
+              .setMessage("Audio set saved successfully")
+              .setAsset(asset)
+              .build();
+      setContentType(ctx, "application/octet-stream");
+      setResult(ctx, response.toByteArray());
+    } catch (Exception e) {
+      e.printStackTrace();
+      SaveAudioSetResponse response =
+          SaveAudioSetResponse.newBuilder()
+              .setSuccess(false)
+              .setMessage("Error saving audio set: " + e.getMessage())
               .build();
       setContentType(ctx, "application/octet-stream");
       setResult(ctx, response.toByteArray());

@@ -1,26 +1,32 @@
 export abstract class AudioSelectorHarnessBase {
-  static readonly hostSelector = 'app-audio-selector';
+  static readonly hostSelector = "app-audio-selector";
 
   static readonly selectors = {
-    label: '.audio-header label',
-    toggleSpans: '.toggle-group span',
-    selectWrapper: '.dm-select.trigger-div',
-    selectedSoundName: '.dm-select',
-    ttsInput: 'input.dm-input',
-    playButton: '.btn-play'
+    label: ".audio-header label",
+    toggleSpans: ".toggle-group span",
+    selectWrapper: ".dm-select.trigger-div",
+    selectedSoundName: ".dm-select",
+    ttsInput: "input.dm-input",
+    playButton: ".btn-play",
   };
 
   /** Gets the label text */
   abstract getLabel(): Promise<string>;
 
-  /** Gets the currently selected audio type ('preset' or 'tts') */
-  abstract getAudioType(): Promise<'preset' | 'tts'>;
+  /** Gets the currently selected audio type */
+  abstract getAudioType(): Promise<"preset" | "tts" | "none" | "audio_set">;
 
   /** Clicks the preset type toggle */
   abstract clickPresetType(): Promise<void>;
 
+  /** Clicks the audio set type toggle */
+  abstract clickAudioSetType(): Promise<void>;
+
   /** Clicks the TTS type toggle */
   abstract clickTtsType(): Promise<void>;
+
+  /** Clicks the none type toggle */
+  abstract clickNoneType(): Promise<void>;
 
   /** Clicks the select wrapper to open the item selector */
   abstract clickSelectSound(): Promise<void>;

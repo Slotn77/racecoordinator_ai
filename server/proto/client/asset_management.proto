@@ -39,3 +39,16 @@ message SaveImageSetEntry {
   bytes data = 4;  // Used if uploading a new image as part of the set
 }
 
+message SaveAudioSetRequest {
+  string id = 1; // Optional, for editing existing sets
+  string name = 2;
+  repeated SaveAudioSetEntry entries = 3;
+}
+
+message SaveAudioSetEntry {
+  string name = 1;
+  float time_seconds = 2;
+  string url = 3;   // Used if referencing an already uploaded sound
+  bytes data = 4;  // Used if uploading a new sound as part of the set
+}
+

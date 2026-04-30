@@ -112,6 +112,35 @@ describe("AudioSelectorComponent", () => {
     expect(component.showItemSelector).toBeFalse();
   });
 
+  it("should handle audio_set asset selection", () => {
+    spyOn(component.urlChange, "emit");
+    spyOn(component.typeChange, "emit");
+
+    component.mode = "set";
+    component.onAssetSelected({ id: "set-123", type: "audio_set" });
+
+    expect(component.url).toBe("set-123");
+    expect(component.urlChange.emit).toHaveBeenCalledWith("set-123");
+    expect(component.type).toBe("audio_set");
+    expect(component.typeChange.emit).toHaveBeenCalledWith("audio_set");
+  });
+
+  it("should filter assets based on mode", () => {
+    const allAssets = [
+      { type: "sound", name: "Single" },
+      { type: "audio_set", name: "Set" },
+    ];
+    component.assets = allAssets;
+
+    component.mode = "single";
+    expect(component.filteredAssets.length).toBe(1);
+    expect(component.filteredAssets[0].type).toBe("sound");
+
+    component.mode = "set";
+    expect(component.filteredAssets.length).toBe(1);
+    expect(component.filteredAssets[0].type).toBe("audio_set");
+  });
+
   it("should play preset audio", () => {
     component.type = "preset";
     component.url = "test.mp3";

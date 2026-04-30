@@ -2428,7 +2428,7 @@ export class DefaultRacedayComponent
     if (state === com.antigravity.RaceState.RACING) {
       this.isRestarting = false;
       this.setAllLampsGo();
-      this.playThemedSound(THEME_SLOT_KEYS.AUDIO_COUNTDOWN_GO);
+      this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 0);
       // Hide overlay after 1 second of green lamps
       setTimeout(() => {
         if (this.raceState === com.antigravity.RaceState.RACING) {
@@ -2485,14 +2485,35 @@ export class DefaultRacedayComponent
       currentSecond !== this.lastPlayedCountdownSecond
     ) {
       this.lastPlayedCountdownSecond = currentSecond;
-      const slotMap: { [key: number]: string } = {
-        5: THEME_SLOT_KEYS.AUDIO_COUNTDOWN_5,
-        4: THEME_SLOT_KEYS.AUDIO_COUNTDOWN_4,
-        3: THEME_SLOT_KEYS.AUDIO_COUNTDOWN_3,
-        2: THEME_SLOT_KEYS.AUDIO_COUNTDOWN_2,
-        1: THEME_SLOT_KEYS.AUDIO_COUNTDOWN_1,
-      };
-      this.playThemedSound(slotMap[currentSecond]);
+      this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, currentSecond);
+    }
+  }
+
+  private playAudioFromSet(slotKey: string, timeSeconds: number) {
+    const config = this.themeService.resolveAudioConfig(slotKey);
+    if (!config || config.type !== "audio_set") return;
+
+    const assetId = config.url;
+    if (!assetId) return;
+
+    const asset = (this.assets || []).find(
+      (a) =>
+        a.model?.entityId === assetId ||
+        a.entity_id === assetId ||
+        a._id === assetId,
+    );
+    if (!asset || asset.type !== "audio_set") return;
+
+    const entry = asset.audioEntries?.find(
+      (e: any) => Math.abs(e.timeSeconds - timeSeconds) < 0.1,
+    );
+    if (entry && entry.url) {
+      playSound(
+        "preset",
+        this.getFullUrl(entry.url),
+        undefined,
+        this.dataService.serverUrl,
+      );
     }
   }
 
@@ -2524,9 +2545,7 @@ export class DefaultRacedayComponent
         // Rule: Don't play if it's the start time of the heat
         if (Math.abs(threshold - totalDuration) < 0.1) continue;
 
-        const slotKey =
-          `AUDIO_SECONDS_LEFT_${threshold}` as keyof typeof THEME_SLOT_KEYS;
-        this.playThemedSound(THEME_SLOT_KEYS[slotKey]);
+        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT, threshold);
         this.playedSecondsLeft.add(threshold);
       }
     }

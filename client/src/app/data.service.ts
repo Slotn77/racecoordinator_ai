@@ -771,6 +771,46 @@ export class DataService {
       );
   }
 
+  saveAudioSet(
+    name: string,
+    entries: com.antigravity.ISaveAudioSetEntry[],
+    id?: string,
+  ): Observable<com.antigravity.IAssetMessage> {
+    const request = com.antigravity.SaveAudioSetRequest.create({
+      id,
+      name,
+      entries,
+    });
+    const buffer = com.antigravity.SaveAudioSetRequest.encode(request).finish();
+    const headers = new HttpHeaders().set(
+      "Content-Type",
+      "application/octet-stream",
+    );
+
+    return this.http
+      .post(
+        `${this.baseUrl}/api/assets/save-audio-set`,
+        new Blob([buffer as any]),
+        {
+          headers,
+          responseType: "arraybuffer",
+        },
+      )
+      .pipe(
+        map((response) => {
+          const saveResponse = com.antigravity.SaveAudioSetResponse.decode(
+            new Uint8Array(response as any),
+          );
+          if (!saveResponse.success) {
+            throw new Error(
+              saveResponse.message ?? "Unknown error saving audio set",
+            );
+          }
+          return saveResponse.asset!;
+        }),
+      );
+  }
+
   deleteAsset(id: string): Observable<boolean> {
     const request = com.antigravity.DeleteAssetRequest.create({ id });
     const buffer = com.antigravity.DeleteAssetRequest.encode(request).finish();

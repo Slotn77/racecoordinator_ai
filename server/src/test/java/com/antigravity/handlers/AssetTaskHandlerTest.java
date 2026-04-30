@@ -51,6 +51,7 @@ public class AssetTaskHandlerTest {
     org.mockito.Mockito.doNothing().when(handler).setStream(any(), any());
     org.mockito.Mockito.doNothing().when(handler).setContentType(any(), anyString());
     org.mockito.Mockito.doReturn("dummy").when(handler).getPathParam(any(), anyString());
+    org.mockito.Mockito.doReturn(new byte[0]).when(handler).getBodyBytes(any());
   }
 
   @Test
@@ -85,5 +86,22 @@ public class AssetTaskHandlerTest {
     verify(handler, org.mockito.Mockito.never()).setStatus(eq(ctx), eq(404));
     // Verify it tried to set the stream (meaning file was found)
     verify(handler).setStream(eq(ctx), any());
+  }
+
+  @Test
+  public void testSaveAudioSet() throws Exception {
+    com.antigravity.proto.SaveAudioSetRequest request =
+        com.antigravity.proto.SaveAudioSetRequest.newBuilder().setName("My Audio Set").build();
+    org.mockito.Mockito.doReturn(request.toByteArray()).when(handler).getBodyBytes(any());
+
+    AssetService assetService = handler.getAssetService();
+    when(assetService.saveAudioSet(any(), anyString(), any()))
+        .thenReturn(AssetMessage.newBuilder().build());
+
+    handler.saveAudioSet(ctx);
+
+    verify(assetService).saveAudioSet(any(), eq("My Audio Set"), any());
+    verify(handler).setContentType(eq(ctx), eq("application/octet-stream"));
+    verify(handler).setResult(eq(ctx), any(byte[].class));
   }
 }

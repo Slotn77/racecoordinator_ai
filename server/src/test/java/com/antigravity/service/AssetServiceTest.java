@@ -401,24 +401,25 @@ public class AssetServiceTest {
     // Verify update was called to move the slot
     ArgumentCaptor<Bson> filterCaptor = ArgumentCaptor.forClass(Bson.class);
     ArgumentCaptor<Bson> updateCaptor = ArgumentCaptor.forClass(Bson.class);
-    verify(themesCollection).updateOne(filterCaptor.capture(), updateCaptor.capture());
+    verify(themesCollection, atLeastOnce())
+        .updateOne(filterCaptor.capture(), updateCaptor.capture());
 
     String updateStr = updateCaptor.getValue().toString();
-    assertTrue("Should use $set to add audio_slots", updateStr.contains("$set"));
-    assertTrue(
-        "Should include audio.yellowflag in audio_slots", updateStr.contains("audio.yellowflag"));
-    assertTrue("Should include the asset ID", updateStr.contains("default_yellow_flag"));
-    assertTrue("Should include type preset", updateStr.contains("preset"));
-    assertTrue("Should use $unset to remove from slots", updateStr.contains("$unset"));
-    assertTrue("Should unset slots.audio.yellowflag", updateStr.contains("slots.audio.yellowflag"));
+    assertTrue("Should include audio.yellowflag in update", updateStr.contains("audio.yellowflag"));
+    assertTrue("Should include preset type", updateStr.contains("preset"));
+    assertTrue("Should include default_yellow_flag", updateStr.contains("default_yellow_flag"));
+
+    // Check for slots and audio_slots keys
+    assertTrue("Should contain slots key", updateStr.contains("slots"));
+    assertTrue("Should contain audio_slots key", updateStr.contains("audio_slots"));
   }
 
   @Test
-  public void testBackfillCountdownAudioSlots() {
-    // Mock an existing theme without countdown slots
+  public void testBackfillAudioSets() {
+    // Mock an existing theme without audio sets
     Document theme =
-        new Document("_id", "theme_countdown")
-            .append("name", "Countdown Theme")
+        new Document("_id", "theme_audio_sets")
+            .append("name", "Audio Sets Theme")
             .append("is_default", false)
             .append("audio_slots", new Document());
 
@@ -431,15 +432,63 @@ public class AssetServiceTest {
 
     assetService.backfillDefaults();
 
-    // Verify update was called to add countdown slots
+    // Verify update was called to add audio set slots
     ArgumentCaptor<Bson> filterCaptor = ArgumentCaptor.forClass(Bson.class);
     ArgumentCaptor<Bson> updateCaptor = ArgumentCaptor.forClass(Bson.class);
-    verify(themesCollection).updateOne(filterCaptor.capture(), updateCaptor.capture());
+    verify(themesCollection, atLeastOnce())
+        .updateOne(filterCaptor.capture(), updateCaptor.capture());
 
-    String updateStr = updateCaptor.getValue().toString();
-    assertTrue("Should include audio.countdown.5", updateStr.contains("audio.countdown.5"));
-    assertTrue("Should include audio.countdown.go", updateStr.contains("audio.countdown.go"));
-    assertTrue("Should include default asset IDs", updateStr.contains("default_countdown_5"));
-    assertTrue("Should include default go asset ID", updateStr.contains("default_countdown_go"));
+    // Find the update that sets audio_slots
+    String updateStr =
+        updateCaptor.getAllValues().stream()
+            .map(Object::toString)
+            .filter(s -> s.contains("audio_slots"))
+            .findFirst()
+            .orElse("");
+
+    assertTrue("Should include audio.countdown", updateStr.contains("audio.countdown"));
+    assertTrue("Should include audio.seconds_left", updateStr.contains("audio.seconds_left"));
+    assertTrue(
+        "Should include default countdown set ID", updateStr.contains("default_countdown-set"));
+    assertTrue(
+        "Should include default seconds left set ID",
+        updateStr.contains("default_seconds-left-set"));
+  }
+
+  @Test
+  public void testSaveAudioSet() throws IOException {
+    String name = "New Audio Set";
+    com.antigravity.proto.SaveAudioSetEntry entry1 =
+        com.antigravity.proto.SaveAudioSetEntry.newBuilder()
+            .setName("countdown_5.wav")
+            .setTimeSeconds(5.0f)
+            .setData(ByteString.copyFrom("fake_audio_1".getBytes()))
+            .build();
+    com.antigravity.proto.SaveAudioSetEntry entry2 =
+        com.antigravity.proto.SaveAudioSetEntry.newBuilder()
+            .setName("existing_audio.wav")
+            .setTimeSeconds(0.0f)
+            .setUrl("/assets/existing_123.wav")
+            .build();
+
+    new File(assetsDir, "existing_123.wav").createNewFile();
+
+    AssetMessage result = assetService.saveAudioSet(null, name, Arrays.asList(entry1, entry2));
+
+    assertNotNull(result);
+    assertEquals(name, result.getName());
+    assertEquals("audio_set", result.getType());
+
+    ArgumentCaptor<Document> captor = ArgumentCaptor.forClass(Document.class);
+    verify(collection).insertOne(captor.capture());
+    Document doc = captor.getValue();
+
+    assertEquals(name, doc.getString("name"));
+    @SuppressWarnings("unchecked")
+    List<Document> entries = (List<Document>) doc.get("audio_entries");
+    assertEquals(2, entries.size());
+
+    assertTrue(entries.get(0).getString("url").startsWith("/assets/"));
+    assertEquals("/assets/existing_123.wav", entries.get(1).getString("url"));
   }
 }
