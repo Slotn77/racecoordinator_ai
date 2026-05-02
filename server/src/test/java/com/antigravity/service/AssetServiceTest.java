@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -540,5 +541,43 @@ public class AssetServiceTest {
     assertTrue(
         "Should include default_fuel-gauge-builtin",
         updateStr.contains("default_fuel-gauge-builtin"));
+  }
+
+  @Test
+  public void testBackfillThemeSlots_HandlesNestedDocumentPaths() {
+    // Mock an existing theme with corrupted nested slots
+    // e.g. slots: { "flag": { "green": "id1", "red": "id2" } }
+    Document corruptedTheme =
+        new Document("_id", "theme_corrupted")
+            .append("name", "Corrupted Theme")
+            .append("is_default", false)
+            .append(
+                "slots", new Document("flag", new Document("green", "id1").append("red", "id2")));
+
+    FindIterable<Document> findIterable = mock(FindIterable.class);
+    MongoCursor<Document> cursor = mock(MongoCursor.class);
+    when(themesCollection.find()).thenReturn(findIterable);
+    when(findIterable.iterator()).thenReturn(cursor);
+    when(cursor.hasNext()).thenReturn(true, false);
+    when(cursor.next()).thenReturn(corruptedTheme);
+
+    assetService.backfillThemeSlots();
+
+    // Verify update was called TWICE for this theme
+    ArgumentCaptor<Bson> updateCaptor = ArgumentCaptor.forClass(Bson.class);
+    verify(themesCollection, times(2)).updateOne(any(Bson.class), updateCaptor.capture());
+
+    List<Bson> updates = updateCaptor.getAllValues();
+
+    // First update should be an $unset of "slots.flag"
+    String firstUpdate = updates.get(0).toString();
+    assertTrue("First update should be an unset", firstUpdate.contains("$unset"));
+    assertTrue("Should unset slots.flag", firstUpdate.contains("slots.flag"));
+
+    // Second update should be a $set of "slots" with flattened keys
+    String secondUpdate = updates.get(1).toString();
+    assertTrue("Second update should be a set", secondUpdate.contains("$set"));
+    assertTrue("Should set slots.flag.green", secondUpdate.contains("flag.green"));
+    assertTrue("Should set slots.flag.red", secondUpdate.contains("flag.red"));
   }
 }

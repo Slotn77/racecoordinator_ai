@@ -1126,6 +1126,7 @@ public class AssetService {
       boolean changed = false;
 
       // 1. Repair and Flatten slots (remove nested Documents caused by dot-notation confusion)
+      List<Bson> toUnset = new ArrayList<>();
       Document newSlots = new Document();
       for (String key : slots.keySet()) {
         Object value = slots.get(key);
@@ -1134,12 +1135,19 @@ public class AssetService {
           for (String subKey : nested.keySet()) {
             newSlots.put(key + "." + subKey, nested.get(subKey).toString());
           }
+          toUnset.add(Updates.unset("slots." + key));
           changed = true;
         } else if (value != null) {
           newSlots.put(key, value.toString());
         }
       }
       slots = newSlots;
+
+      // To avoid Error 40 (path conflict), we must unset nested documents before setting sub-paths
+      // if they are in the same parent path. Splitting into two updates ensures no conflict.
+      if (!toUnset.isEmpty()) {
+        themes.updateOne(Filters.eq("_id", theme.get("_id")), Updates.combine(toUnset));
+      }
 
       // 2. Migration: Move from slots to audio_slots if present
       if (slots.containsKey("audio.yellowflag")) {
