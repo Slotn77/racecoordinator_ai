@@ -133,7 +133,7 @@ public class DatabaseService {
     initialDrivers.add(
         createDriver(
             "Dave",
-            "Olden McGroin",
+            "Bad Cheese",
             helmetAssets,
             5,
             lapAudio,
