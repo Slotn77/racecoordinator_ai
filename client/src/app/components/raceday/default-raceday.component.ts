@@ -314,6 +314,8 @@ export class DefaultRacedayComponent
   exitCancelText = "RD_CONFIRM_EXIT_BTN_STAY";
 
   // Acknowledgement Modal State (kept for interface errors)
+  activeMenu: string | null = null;
+  ackModalMessageParams: Record<string, any> = {};
   showAckModal = false;
   ackModalTitle = "";
   ackModalMessage = "";
@@ -465,7 +467,10 @@ export class DefaultRacedayComponent
 
             const driver = driverData.driver;
             const isBestLap = lap.lapTime === lap.bestLapTime;
-            const ttsContext = createTTSContext(driver, driverData);
+            const ttsContext = createTTSContext(
+              driver as any,
+              driverData as any,
+            );
 
             // Halfway logic for lap-based races
             const scoring = this.race?.heat_scoring;
@@ -1281,8 +1286,6 @@ export class DefaultRacedayComponent
     this.isMenuOpen = false;
   }
 
-  activeMenu: string | null = null;
-
   @HostListener("window:unload", ["$event"])
   onUnload(_event: any) {
     if (this.leaderBoardWindow) {
@@ -1826,7 +1829,7 @@ export class DefaultRacedayComponent
           "middle",
           0,
           anchor,
-          renderer,
+          renderer as any,
           layout,
         );
       }
@@ -1841,7 +1844,7 @@ export class DefaultRacedayComponent
           "start",
           30,
           anchor,
-          renderer,
+          renderer as any,
           finalLayout,
         );
       }
@@ -1854,7 +1857,7 @@ export class DefaultRacedayComponent
         "middle",
         0,
         anchor,
-        renderer,
+        renderer as any,
         finalLayout,
       );
     });

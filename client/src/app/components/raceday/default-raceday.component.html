@@ -460,20 +460,23 @@
                               >
                                 @for (tm of getTeammates(hd); track tm) {
                                   <option
-                                    [value]="tm.entity_id || tm.id"
+                                    [value]="$any(tm).entity_id || $any(tm).id"
                                     [selected]="
-                                      (tm.entity_id || tm.id) ===
+                                      ($any(tm).entity_id || $any(tm).id) ===
                                       (hd.actualDriver?.entity_id ||
-                                        hd.driver.entity_id)
+                                        $any(hd.driver).entity_id)
                                     "
                                   >
                                     {{
                                       entry.property === "driver.nickname"
-                                        ? tm.nickname || tm.name
-                                        : tm.name
+                                        ? $any(tm).nickname || $any(tm).name
+                                        : $any(tm).name
                                     }}
                                     {{
-                                      getDriverStats(hd, tm.entity_id || tm.id)
+                                      getDriverStats(
+                                        hd,
+                                        $any(tm).entity_id || $any(tm).id
+                                      )
                                     }}
                                   </option>
                                 }

@@ -10,7 +10,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
         <div class="modal-content">
           <h2 class="modal-title">{{ title() | translate }}</h2>
           <p class="modal-message">
-            {{ message() | translate: messageParams() }}
+            {{ message() | translate: $any(messageParams() || {}) }}
           </p>
           <div class="modal-actions">
             <button class="btn-confirm" (click)="onAcknowledge()">

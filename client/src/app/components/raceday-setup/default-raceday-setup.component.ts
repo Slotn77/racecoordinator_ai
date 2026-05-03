@@ -145,13 +145,13 @@ export class DefaultRacedaySetupComponent implements OnInit {
       races: this.dataService.getRaces(),
     }).subscribe({
       next: (result) => {
-        const drivers = result.drivers.map(
-          (d) =>
+        const drivers = (result.drivers as any).map(
+          (d: any) =>
             new Driver(
               d.entity_id,
-              d.name,
+              d.name || "",
               d.nickname || "",
-              d.avatarUrl,
+              d.avatarUrl || undefined,
               {
                 type:
                   d.lapAudio?.type ||
@@ -168,7 +168,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
               },
             ),
         );
-        const teams = result.teams.map(
+        const teams = (result.teams as any).map(
           (t: any) =>
             new Team(
               t.entity_id || t.entityId || "",
@@ -180,7 +180,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
         const races = result.races;
 
         // --- Race Setup ---
-        this.races = races.sort((a, b) => a.name.localeCompare(b.name));
+        (this as any).races = races.sort((a: any, b: any) =>
+          (a.name || "").localeCompare(b.name || ""),
+        );
 
         const localSettings = this.settingsService.getSettings();
         this.updateQuickStartRaces(localSettings.recentRaceIds);

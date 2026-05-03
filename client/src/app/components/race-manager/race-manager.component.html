@@ -32,14 +32,16 @@
           @for (race of filteredRaces; track race; let i = $index) {
             <div
               class="list-item"
-              [attr.data-id]="race.entity_id"
-              [class.selected]="race.entity_id === selectedRace?.entity_id"
+              [attr.data-id]="$any(race).entity_id"
+              [class.selected]="
+                $any(race).entity_id === $any(selectedRace)?.entity_id
+              "
               (click)="selectRace(race)"
               [class.odd]="i % 2 !== 0"
             >
               <div class="item-name">{{ race.name }}</div>
               <div class="item-nickname">
-                {{ race.track?.name || ("GEN_NA" | translate) }}
+                {{ $any(race).track?.name || ("GEN_NA" | translate) }}
               </div>
             </div>
           }
@@ -70,7 +72,9 @@
                       >{{ "RM_LABEL_HEAT_RANKING" | translate }}:</span
                     >
                     <span class="summary-value">{{
-                      formatEnumDisplay(selectedRace.heat_scoring?.heat_ranking)
+                      formatEnumDisplay(
+                        $any(selectedRace).heat_scoring?.heat_ranking
+                      )
                     }}</span>
                   </div>
                   <div class="summary-item">
@@ -79,7 +83,7 @@
                     >
                     <span class="summary-value">{{
                       formatEnumDisplay(
-                        selectedRace.heat_scoring?.finish_method
+                        $any(selectedRace).heat_scoring?.finish_method
                       )
                     }}</span>
                   </div>
@@ -88,8 +92,8 @@
                       >{{ "RM_LABEL_FUEL_RACE" | translate }}:</span
                     >
                     <span class="summary-value">{{
-                      selectedRace.fuel_options?.enabled ||
-                      selectedRace.digital_fuel_options?.enabled
+                      $any(selectedRace).fuel_options?.enabled ||
+                      $any(selectedRace).digital_fuel_options?.enabled
                         ? ("GEN_YES" | translate)
                         : ("GEN_NO" | translate)
                     }}</span>
@@ -101,7 +105,7 @@
                     >
                     <span class="summary-value">{{
                       formatEnumDisplay(
-                        selectedRace.overall_scoring?.ranking_method
+                        $any(selectedRace).overall_scoring?.ranking_method
                       )
                     }}</span>
                   </div>
@@ -110,7 +114,7 @@
                       >{{ "RM_LABEL_FINISH_VALUE" | translate }}:</span
                     >
                     <span class="summary-value">{{
-                      selectedRace.heat_scoring?.finish_value
+                      $any(selectedRace).heat_scoring?.finish_value
                     }}</span>
                   </div>
                 </div>
@@ -129,7 +133,9 @@
                 >
                 <h1>
                   {{ "RM_HEADER_HEAT_LIST" | translate }} ({{
-                    getHeatRotationTypeDisplay(selectedRace.heat_rotation_type)
+                    getHeatRotationTypeDisplay(
+                      $any(selectedRace).heat_rotation_type
+                    )
                   }})
                 </h1>
               </div>

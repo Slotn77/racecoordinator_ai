@@ -71,9 +71,10 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
       filtered = this.races.filter(
         (r) =>
           (r.name && r.name.toLowerCase().includes(query)) ||
-          (r.track?.name && r.track.name.toLowerCase().includes(query)) ||
-          (r.heat_rotation_type &&
-            this.getHeatRotationTypeDisplay(r.heat_rotation_type)
+          ((r as any).track?.name &&
+            (r as any).track.name.toLowerCase().includes(query)) ||
+          ((r as any).heat_rotation_type &&
+            this.getHeatRotationTypeDisplay((r as any).heat_rotation_type)
               .toLowerCase()
               .includes(query)),
       );
@@ -145,7 +146,9 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
 
         const selectedId = this.route.snapshot.queryParamMap.get("id");
         if (selectedId) {
-          const found = this.races.find((r) => r.entity_id === selectedId);
+          const found = this.races.find(
+            (r) => (r as any).entity_id === selectedId,
+          );
           if (found) {
             this.selectRace(found);
           } else if (this.races.length > 0 && !this.selectedRace) {
@@ -183,8 +186,8 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     this.generatedHeats = [];
 
     // Load new heats for the selected race
-    if (this.driverCount > 0 && race.entity_id) {
-      this.loadHeats(race.entity_id);
+    if (this.driverCount > 0 && (race as any).entity_id) {
+      this.loadHeats((race as any).entity_id);
     }
 
     // Scroll into view
@@ -227,7 +230,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     if (!this.selectedRace) return;
     this.router.navigate(["/race-editor"], {
       queryParams: {
-        id: this.selectedRace.entity_id,
+        id: (this.selectedRace as any).entity_id,
         driverCount: this.driverCount,
       },
     });
@@ -244,7 +247,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     if (!this.editingRace) return;
     this.showDeleteConfirmation = false;
     this.isSaving = true;
-    this.dataService.deleteRace(this.editingRace.entity_id).subscribe({
+    this.dataService.deleteRace((this.editingRace as any).entity_id).subscribe({
       next: () => {
         this.selectedRace = undefined;
         this.editingRace = undefined;
@@ -263,7 +266,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
   }
 
   trackByRace(index: number, race: any): string {
-    return race.entity_id;
+    return (race as any).entity_id || "";
   }
 
   onSearchChange() {
@@ -309,7 +312,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     };
 
     if (this.tracks && this.tracks.length === 1) {
-      newRace.track_entity_id = this.tracks[0].entity_id;
+      (newRace as any).track_entity_id = (this.tracks[0] as any).entity_id;
     }
 
     this.dataService.createRace(newRace).subscribe({
@@ -319,7 +322,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
         // Navigate to Race Editor
         this.router.navigate(["/race-editor"], {
           queryParams: {
-            id: createdRace.entity_id,
+            id: (createdRace as any).entity_id,
             driverCount: this.driverCount,
           },
         });
