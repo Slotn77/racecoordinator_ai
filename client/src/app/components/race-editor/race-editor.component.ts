@@ -48,7 +48,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   driverCount: number = 10;
   generatedHeats: any[] = [];
 
-  heatRotationTypes = ["RoundRobin", "Bracket", "Swiss"];
+  heatRotationTypes = ["RoundRobin", "Bracket", "Swiss", "CustomRoundRobin"];
   raceScoringTypes = ["Points", "Time"];
 
   private static readonly EMPTY_LABELS: string[] = [];
@@ -70,6 +70,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   isConfigValid(): boolean {
     return (
       !this.isNameInvalid &&
+      !this.isRotationInvalid &&
       !!this.editingRace?.track_entity_id &&
       !!this.editingRace?.heat_rotation_type
     );
@@ -136,6 +137,31 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   get isNameInvalid(): boolean {
     if (this.isLoading || !this.editingRace) return false;
     return !this.editingRace.name?.trim() || this.isNameDuplicate();
+  }
+
+  get isRotationInvalid(): boolean {
+    if (
+      !this.editingRace ||
+      this.editingRace.heat_rotation_type !== "CustomRoundRobin"
+    )
+      return false;
+    const seq = this.editingRace.custom_rotation_sequence;
+    if (!seq || seq.length === 0) return true;
+
+    const track = this.tracks.find(
+      (t) => t.entity_id === this.editingRace.track_entity_id,
+    );
+    const numLanes = track?.lanes?.length || 0;
+
+    const uniqueLanes = new Set<number>();
+    for (const lane of seq) {
+      if (lane < 0 || (numLanes > 0 && lane > numLanes)) return true;
+      if (lane > 0) {
+        if (uniqueLanes.has(lane)) return true;
+        uniqueLanes.add(lane);
+      }
+    }
+    return false;
   }
 
   constructor(
@@ -244,6 +270,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
             start_delay: race.start_delay ?? 0.0,
             restart_delay: race.restart_delay ?? 0.0,
             solo_lane_index: race.solo_lane_index ?? 0,
+            custom_rotation_sequence: race.custom_rotation_sequence || [],
           };
           if (!this.editingRace.fuel_options) {
             this.editingRace.fuel_options = {
@@ -378,6 +405,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       start_delay: 0.0,
       restart_delay: 0.0,
       solo_lane_index: 0,
+      custom_rotation_sequence: [],
       team_options: {
         heat_lap_limit: 0,
         heat_time_limit: 0,
@@ -403,6 +431,20 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
   onInputBlur() {
     this.undoManager.onInputBlur();
+  }
+
+  get customRotationSequenceString(): string {
+    return (this.editingRace?.custom_rotation_sequence || []).join(", ");
+  }
+
+  set customRotationSequenceString(value: string) {
+    if (!this.editingRace) return;
+    this.editingRace.custom_rotation_sequence = value
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s !== "")
+      .map((s) => parseInt(s, 10))
+      .filter((n) => !isNaN(n));
   }
 
   captureState() {
@@ -525,6 +567,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         this.editingRace.heat_rotation_type,
         this.driverCount,
         this.editingRace.solo_lane_index,
+        this.editingRace.custom_rotation_sequence,
       )
       .subscribe({
         next: (response) => {
@@ -544,6 +587,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   private autoSaveRace() {
     if (!this.editingRace) return;
     if (!this.editingRace.name?.trim() || this.isNameDuplicate()) return;
+    if (this.isRotationInvalid) return;
     if (this.isSaving) return;
     this.updateRace(true);
   }
@@ -736,8 +780,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    // And the name must not be a duplicate
-    return !this.isNameDuplicate();
+    // And the name must not be a duplicate and rotation must be valid
+    return !this.isNameDuplicate() && !this.isRotationInvalid;
   }
 
   getUpdateTooltip(): string {
@@ -746,6 +790,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     }
     if (this.isNameDuplicate()) {
       return "RE_TOOLTIP_NAME_EXISTS";
+    }
+    if (this.isRotationInvalid) {
+      return "RE_TOOLTIP_INVALID_ROTATION";
     }
     return "";
   }
@@ -1322,6 +1369,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       start_delay: race.start_delay,
       restart_delay: race.restart_delay,
       solo_lane_index: race.solo_lane_index,
+      custom_rotation_sequence: race.custom_rotation_sequence,
       team_options: race.team_options
         ? {
             heat_lap_limit: race.team_options.heat_lap_limit,

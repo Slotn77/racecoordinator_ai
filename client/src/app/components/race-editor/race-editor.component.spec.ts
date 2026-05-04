@@ -185,6 +185,7 @@ describe("RaceEditorComponent", () => {
       "RoundRobin",
       10,
       0,
+      jasmine.any(Array),
     );
     expect(component.generatedHeats.length).toBeGreaterThan(0);
   }));
@@ -202,6 +203,7 @@ describe("RaceEditorComponent", () => {
       "RoundRobin",
       10,
       0,
+      jasmine.any(Array),
     );
 
     component.driverCount = 12;
@@ -213,6 +215,7 @@ describe("RaceEditorComponent", () => {
       "RoundRobin",
       12,
       0,
+      jasmine.any(Array),
     );
   }));
 
@@ -1014,6 +1017,7 @@ describe("RaceEditorComponent", () => {
         "SingleHeatSolo",
         4,
         2,
+        undefined,
       );
     }));
   });

@@ -3,14 +3,15 @@ package com.antigravity.race;
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HeatBuilder {
+  private static final Logger logger = LoggerFactory.getLogger(HeatBuilder.class);
 
   public static List<Heat> buildHeats(Race race, List<RaceParticipant> drivers) {
     int numLanes = race.getTrack().getLanes().size();
@@ -45,6 +46,13 @@ public class HeatBuilder {
             numLanes,
             race.getRaceModel().getHeatScoring(),
             race.getRaceModel().getSoloLaneIndex());
+      case CustomRoundRobin:
+        return getRoundRobinHeats(
+            drivers,
+            numLanes,
+            race.getRaceModel().getCustomRotationSequence(),
+            false,
+            race.getRaceModel().getHeatScoring());
       default:
         throw new IllegalArgumentException("Unknown HeatRotationType: " + rotationType);
     }
@@ -86,6 +94,16 @@ public class HeatBuilder {
       List<Integer> rotationSequence,
       boolean friendly,
       HeatScoring scoring) {
+    if (rotationSequence != null) {
+      Set<Integer> uniqueLanes = new HashSet<>();
+      for (Integer lane : rotationSequence) {
+        if (lane > 0 && !uniqueLanes.add(lane)) {
+          throw new IllegalArgumentException(
+              "Lane number " + lane + " appears more than once in rotationSequence");
+        }
+      }
+    }
+
     List<Heat> heatList = new ArrayList<>();
 
     int numHeats;
@@ -128,25 +146,19 @@ public class HeatBuilder {
                 // Rotate drivers based on heat number
                 int driverIdx = h % participant.getTeamDrivers().size();
                 Driver assignedDriver = participant.getTeamDrivers().get(driverIdx);
-                logToFile(
-                    "HeatBuilder: Heat "
-                        + h
-                        + ", Team "
-                        + participant.getTeam().getName()
-                        + " -> Assigning driver: "
-                        + assignedDriver.getName()
-                        + " (Index: "
-                        + driverIdx
-                        + ")");
+                logger.debug(
+                    "HeatBuilder: Heat {}, Team {} -> Assigning driver: {} (Index: {})",
+                    h,
+                    participant.getTeam().getName(),
+                    assignedDriver.getName(),
+                    driverIdx);
                 data.setActualDriver(assignedDriver);
               } else {
                 if (participant.getTeam() != null) {
-                  logToFile(
-                      "HeatBuilder: Heat "
-                          + h
-                          + ", Team "
-                          + participant.getTeam().getName()
-                          + " -> No team drivers found!");
+                  logger.warn(
+                      "HeatBuilder: Heat {}, Team {} -> No team drivers found!",
+                      h,
+                      participant.getTeam().getName());
                 }
               }
               heatDrivers.set(lane, data);
@@ -236,19 +248,5 @@ public class HeatBuilder {
       heatList.add(new Heat(h + 1, heatDrivers, scoring));
     }
     return heatList;
-  }
-
-  private static void logToFile(String message) {
-    try {
-      String tmpDir = System.getProperty("java.io.tmpdir");
-      Path logPath = Paths.get(tmpDir, "race_debug.log");
-      Files.write(
-          logPath,
-          (message + "\n").getBytes(),
-          StandardOpenOption.CREATE,
-          StandardOpenOption.APPEND);
-    } catch (Exception e) {
-      // Ignore
-    }
   }
 }

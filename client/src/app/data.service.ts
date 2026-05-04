@@ -194,6 +194,7 @@ export class DataService {
     rotationType: string,
     driverCount: number,
     soloLaneIndex: number = 0,
+    customRotationSequence: number[] = [],
   ): Observable<any> {
     return this.http.post<any>(
       `http://${this.serverIp}:${this.serverPort}/api/heats/preview`,
@@ -202,6 +203,7 @@ export class DataService {
         rotationType,
         driverCount,
         soloLaneIndex,
+        customRotationSequence,
       },
     );
   }

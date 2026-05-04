@@ -127,6 +127,38 @@ test.describe("Race Editor Visuals", () => {
     });
   });
 
+  test("should display validation error for invalid custom rotation", async ({
+    page,
+  }) => {
+    // Navigate to Race Editor
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+
+    // Select Custom Round Robin
+    await page.selectOption(".editor-section select", "CustomRoundRobin");
+
+    // Enter an invalid sequence (e.g. duplicate lane 1)
+    const customSeqInput = page
+      .locator('.editor-section input[type="text"]')
+      .last();
+    await customSeqInput.fill("1, 1, 2, 3");
+    await page.keyboard.press("Tab"); // Trigger blur/commit
+
+    await page.waitForTimeout(200);
+
+    // Disable animations
+    await TestSetupHelper.disableAnimations(page);
+
+    // Screenshot the editor area showing invalid highlights
+    await expect(page).toHaveScreenshot("race-editor-invalid-rotation.png", {
+      timeout: 15000,
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
   test("should show error modal on duplication failure", async ({ page }) => {
     // Navigate to Race Editor
     await TestSetupHelper.waitForLocalization(

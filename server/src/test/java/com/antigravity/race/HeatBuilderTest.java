@@ -491,6 +491,115 @@ public class HeatBuilderTest {
     assertEquals(4, countDrivers(heats.get(0)));
   }
 
+  @Test
+  public void testCustomRoundRobin() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.CustomRoundRobin);
+    List<Integer> customSequence = Arrays.asList(4, 3, 2, 1); // Reverse rotation
+    when(raceModel.getCustomRotationSequence()).thenReturn(customSequence);
+
+    List<RaceParticipant> participants = new ArrayList<>();
+    for (int i = 1; i <= 4; i++) {
+      participants.add(
+          new RaceParticipant(
+              new Driver(
+                  "D" + i,
+                  "d" + i,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  String.valueOf(i),
+                  null)));
+    }
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+
+    assertEquals(4, heats.size());
+
+    // Heat 1 (index 0): (0+0)%4 = 0 -> sequence[0]=4 -> Lane 4
+    // Driver 1 should be in Lane 4 (index 3)
+    assertEquals("1", heats.get(0).getDrivers().get(3).getActualDriver().getEntityId());
+
+    // Heat 2 (index 1): (1+0)%4 = 1 -> sequence[1]=3 -> Lane 3
+    // Driver 1 should be in Lane 3 (index 2)
+    assertEquals("1", heats.get(1).getDrivers().get(2).getActualDriver().getEntityId());
+
+    // Heat 3 (index 2): (2+0)%4 = 2 -> sequence[2]=2 -> Lane 2
+    // Driver 1 should be in Lane 2 (index 1)
+    assertEquals("1", heats.get(2).getDrivers().get(1).getActualDriver().getEntityId());
+
+    // Heat 4 (index 3): (3+0)%4 = 3 -> sequence[3]=1 -> Lane 1
+    // Driver 1 should be in Lane 1 (index 0)
+    assertEquals("1", heats.get(3).getDrivers().get(0).getActualDriver().getEntityId());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCustomRoundRobin_DuplicateLanes() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.CustomRoundRobin);
+    List<Integer> customSequence = Arrays.asList(1, 2, 2, 4); // Duplicate lane 2
+    when(raceModel.getCustomRotationSequence()).thenReturn(customSequence);
+
+    List<RaceParticipant> participants = new ArrayList<>();
+    participants.add(
+        new RaceParticipant(
+            new Driver(
+                "D1", "d1", null, null, null, null, null, null, null, null, null, "1", null)));
+
+    HeatBuilder.buildHeats(race, participants);
+  }
+
+  @Test
+  public void testCustomRoundRobin_MultipleZeros() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.CustomRoundRobin);
+    List<Integer> customSequence =
+        Arrays.asList(1, 0, 2, 0); // Zeros (sit-outs) allowed multiple times
+    when(raceModel.getCustomRotationSequence()).thenReturn(customSequence);
+
+    List<RaceParticipant> participants = new ArrayList<>();
+    participants.add(
+        new RaceParticipant(
+            new Driver(
+                "D1", "d1", null, null, null, null, null, null, null, null, null, "1", null)));
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    assertEquals(4, heats.size());
+
+    // Heat 1: Lane 1
+    assertEquals("1", heats.get(0).getDrivers().get(0).getActualDriver().getEntityId());
+    // Heat 2: Sit out (Lane 0)
+    assertEquals(0, countDrivers(heats.get(1)));
+    // Heat 3: Lane 2
+    assertEquals("1", heats.get(2).getDrivers().get(1).getActualDriver().getEntityId());
+    // Heat 4: Sit out
+    assertEquals(0, countDrivers(heats.get(3)));
+  }
+
+  @Test
+  public void testCustomRoundRobin_OutOfBoundsLanes() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.CustomRoundRobin);
+    List<Integer> customSequence = Arrays.asList(1, 99); // 99 is out of bounds for 4-lane track
+    when(raceModel.getCustomRotationSequence()).thenReturn(customSequence);
+
+    List<RaceParticipant> participants = new ArrayList<>();
+    participants.add(
+        new RaceParticipant(
+            new Driver(
+                "D1", "d1", null, null, null, null, null, null, null, null, null, "1", null)));
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    assertEquals(2, heats.size());
+
+    // Heat 1: Lane 1
+    assertEquals("1", heats.get(0).getDrivers().get(0).getActualDriver().getEntityId());
+    // Heat 2: Lane 99 -> skipped
+    assertEquals(0, countDrivers(heats.get(1)));
+  }
+
   private int countDrivers(Heat heat) {
     int count = 0;
     for (DriverHeatData dhd : heat.getDrivers()) {

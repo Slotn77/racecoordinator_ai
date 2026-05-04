@@ -89,13 +89,12 @@
                   </div>
                   <div class="summary-item">
                     <span class="summary-label"
-                      >{{ "RM_LABEL_FUEL_RACE" | translate }}:</span
+                      >{{ "RM_LABEL_HEAT_ROTATION" | translate }}:</span
                     >
                     <span class="summary-value">{{
-                      $any(selectedRace).fuel_options?.enabled ||
-                      $any(selectedRace).digital_fuel_options?.enabled
-                        ? ("GEN_YES" | translate)
-                        : ("GEN_NO" | translate)
+                      getHeatRotationTypeDisplay(
+                        $any(selectedRace).heat_rotation_type
+                      )
                     }}</span>
                   </div>
                   <!-- Row 2 -->
@@ -115,6 +114,17 @@
                     >
                     <span class="summary-value">{{
                       $any(selectedRace).heat_scoring?.finish_value
+                    }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_FUEL_RACE" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      $any(selectedRace).fuel_options?.enabled ||
+                      $any(selectedRace).digital_fuel_options?.enabled
+                        ? ("GEN_YES" | translate)
+                        : ("GEN_NO" | translate)
                     }}</span>
                   </div>
                 </div>

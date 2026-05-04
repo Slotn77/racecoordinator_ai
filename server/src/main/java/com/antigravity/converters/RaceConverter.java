@@ -142,6 +142,9 @@ public class RaceConverter {
             com.antigravity.proto.HeatRotationType.valueOf(rotationName)); // fqn-collision
       }
       builder.setSoloLaneIndex(race.getSoloLaneIndex());
+      if (race.getCustomRotationSequence() != null) {
+        builder.addAllCustomRotationSequence(race.getCustomRotationSequence());
+      }
       return builder.build();
     }
   }

@@ -34,8 +34,10 @@ import io.javalin.http.UploadedFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -546,10 +548,11 @@ public class DatabaseTaskHandler {
     try {
       Race race = bodyAsClassWithId(ctx.body(), Race.class);
       try {
+        validateRace(race);
         Race created = createRace(race);
         ctx.status(201).json(created);
       } catch (IllegalArgumentException e) {
-        ctx.status(409).result(e.getMessage());
+        ctx.status(400).result(e.getMessage());
       }
     } catch (Exception e) {
       logger.error("Error creating race", e);
@@ -591,6 +594,7 @@ public class DatabaseTaskHandler {
               .withStartDelay(race.getStartDelay())
               .withRestartDelay(race.getRestartDelay())
               .withSoloLaneIndex(race.getSoloLaneIndex())
+              .withCustomRotationSequence(race.getCustomRotationSequence())
               .withEntityId(nextId)
               .build();
     }
@@ -603,13 +607,14 @@ public class DatabaseTaskHandler {
       String id = ctx.pathParam("id");
       Race race = bodyAsClassWithId(ctx.body(), Race.class);
       try {
+        validateRace(race);
         Race updated = updateRace(id, race);
         ctx.json(updated);
       } catch (IllegalArgumentException e) {
         if ("Race not found".equals(e.getMessage())) {
           ctx.status(404).result(e.getMessage());
         } else {
-          ctx.status(409).result(e.getMessage());
+          ctx.status(400).result(e.getMessage());
         }
       }
     } catch (Exception e) {
@@ -650,6 +655,7 @@ public class DatabaseTaskHandler {
             .withStartDelay(race.getStartDelay())
             .withRestartDelay(race.getRestartDelay())
             .withSoloLaneIndex(race.getSoloLaneIndex())
+            .withCustomRotationSequence(race.getCustomRotationSequence())
             .withEntityId(id)
             .withId(race.getId())
             .build();
@@ -835,6 +841,7 @@ public class DatabaseTaskHandler {
     String rotationType = (String) body.get("rotationType");
     Number soloLaneIndexNum = (Number) body.get("soloLaneIndex");
     int soloLaneIndex = soloLaneIndexNum != null ? soloLaneIndexNum.intValue() : 0;
+    List<Integer> customRotationSequence = (List<Integer>) body.get("customRotationSequence");
 
     if (driverCount <= 0) {
       ctx.status(400).result("driverCount must be greater than 0");
@@ -862,6 +869,30 @@ public class DatabaseTaskHandler {
     HeatRotationType rotationTypeEnum;
     try {
       rotationTypeEnum = HeatRotationType.valueOf(rotationType);
+      if (rotationTypeEnum == HeatRotationType.CustomRoundRobin) {
+        if (customRotationSequence == null || customRotationSequence.isEmpty()) {
+          ctx.status(400).result("Custom rotation sequence is required");
+          return;
+        }
+        int numLanes = track.getLanes().size();
+        Set<Integer> uniqueLanes = new HashSet<>();
+        for (Integer lane : customRotationSequence) {
+          if (lane < 0) {
+            ctx.status(400).result("Lane numbers must be greater than or equal to 0");
+            return;
+          }
+          if (lane > numLanes) {
+            ctx.status(400)
+                .result("Lane number " + lane + " exceeds track lane count (" + numLanes + ")");
+            return;
+          }
+          if (lane > 0 && !uniqueLanes.add(lane)) {
+            ctx.status(400)
+                .result("Lane number " + lane + " appears more than once in rotation sequence");
+            return;
+          }
+        }
+      }
     } catch (IllegalArgumentException e) {
       ctx.status(400).result("Invalid rotation type: " + rotationType);
       return;
@@ -889,6 +920,7 @@ public class DatabaseTaskHandler {
             .withAutoAdvanceWarmupTime(0.0)
             .withAutoStartWarmupTime(0.0)
             .withSoloLaneIndex(soloLaneIndex)
+            .withCustomRotationSequence(customRotationSequence)
             .build();
 
     // Create mock RaceParticipant list
@@ -1051,6 +1083,33 @@ public class DatabaseTaskHandler {
     } catch (Exception e) {
       e.printStackTrace();
       ctx.status(500).result("Error fetching global statistics: " + e.getMessage());
+    }
+  }
+
+  private void validateRace(Race race) {
+    if (race.getHeatRotationType() == HeatRotationType.CustomRoundRobin) {
+      List<Integer> seq = race.getCustomRotationSequence();
+      if (seq == null || seq.isEmpty()) {
+        throw new IllegalArgumentException("Custom rotation sequence is required");
+      }
+      Track track =
+          getTrackCollection().find(Filters.eq("entity_id", race.getTrackEntityId())).first();
+      int numLanes = track != null ? track.getLanes().size() : Integer.MAX_VALUE;
+
+      Set<Integer> uniqueLanes = new HashSet<>();
+      for (Integer lane : seq) {
+        if (lane < 0) {
+          throw new IllegalArgumentException("Lane numbers must be greater than or equal to 0");
+        }
+        if (lane > numLanes) {
+          throw new IllegalArgumentException(
+              "Lane number " + lane + " exceeds track lane count (" + numLanes + ")");
+        }
+        if (lane > 0 && !uniqueLanes.add(lane)) {
+          throw new IllegalArgumentException(
+              "Lane number " + lane + " appears more than once in rotation sequence");
+        }
+      }
     }
   }
 }

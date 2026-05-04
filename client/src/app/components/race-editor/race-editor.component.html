@@ -48,7 +48,7 @@
             data-form-type="other"
           />
         </div>
-        <div class="editor-section">
+        <div class="editor-section" [class.invalid]="isRotationInvalid">
           <label>{{ "RM_LABEL_HEAT_ROTATION" | translate }}</label>
           <select
             [(ngModel)]="editingRace.heat_rotation_type"
@@ -69,8 +69,25 @@
             <option value="SingleHeatSolo">
               {{ "RE_ROTATION_SINGLE_HEAT_SOLO" | translate }}
             </option>
+            <option value="CustomRoundRobin">
+              {{ "RE_ROTATION_CUSTOM_ROUND_ROBIN" | translate }}
+            </option>
           </select>
         </div>
+        @if (editingRace.heat_rotation_type === "CustomRoundRobin") {
+          <div class="editor-section" [class.invalid]="isRotationInvalid">
+            <label>{{ "RE_CUSTOM_SEQUENCE_LABEL" | translate }}</label>
+            <input
+              type="text"
+              [(ngModel)]="customRotationSequenceString"
+              (ngModelChange)="onInputChange(); loadHeats()"
+              placeholder="{{ 'RE_CUSTOM_SEQUENCE_HINT' | translate }}"
+              autocomplete="off"
+              data-lpignore="true"
+              data-form-type="other"
+            />
+          </div>
+        }
         <div class="heat-list-section">
           <div class="heat-list-header">
             <h3>{{ "RE_HEAT_LIST_HEADER" | translate }}</h3>

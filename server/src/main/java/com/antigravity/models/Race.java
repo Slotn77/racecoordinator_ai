@@ -2,6 +2,8 @@ package com.antigravity.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.List;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
@@ -83,6 +85,10 @@ public class Race extends Model {
   @JsonProperty("solo_lane_index")
   private final int soloLaneIndex;
 
+  @BsonProperty("custom_rotation_sequence")
+  @JsonProperty("custom_rotation_sequence")
+  private final List<Integer> customRotationSequence;
+
   @BsonCreator
   @JsonCreator
   public Race(
@@ -111,6 +117,8 @@ public class Race extends Model {
       @BsonProperty("start_delay") @JsonProperty("start_delay") Double startDelay,
       @BsonProperty("restart_delay") @JsonProperty("restart_delay") Double restartDelay,
       @BsonProperty("solo_lane_index") @JsonProperty("solo_lane_index") Integer soloLaneIndex,
+      @BsonProperty("custom_rotation_sequence") @JsonProperty("custom_rotation_sequence")
+          List<Integer> customRotationSequence,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -137,6 +145,8 @@ public class Race extends Model {
     this.startDelay = startDelay != null ? startDelay : 0.0;
     this.restartDelay = restartDelay != null ? restartDelay : 0.0;
     this.soloLaneIndex = soloLaneIndex != null ? soloLaneIndex : 0;
+    this.customRotationSequence =
+        customRotationSequence != null ? customRotationSequence : new ArrayList<>();
   }
 
   public static class Builder {
@@ -160,6 +170,7 @@ public class Race extends Model {
     private double startDelay = 0.0;
     private double restartDelay = 0.0;
     private int soloLaneIndex = 0;
+    private List<Integer> customRotationSequence = new ArrayList<>();
     private String entityId;
     private ObjectId id;
 
@@ -258,6 +269,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withCustomRotationSequence(List<Integer> customRotationSequence) {
+      this.customRotationSequence = customRotationSequence;
+      return this;
+    }
+
     public Builder withEntityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -290,6 +306,7 @@ public class Race extends Model {
           startDelay,
           restartDelay,
           soloLaneIndex,
+          customRotationSequence,
           entityId,
           id);
     }
@@ -369,5 +386,9 @@ public class Race extends Model {
 
   public int getSoloLaneIndex() {
     return soloLaneIndex;
+  }
+
+  public List<Integer> getCustomRotationSequence() {
+    return customRotationSequence;
   }
 }
