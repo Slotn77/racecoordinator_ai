@@ -79,6 +79,11 @@
   margin-top: 5px;
 }
 
+.help-menu-container .menu-dropdown {
+  left: auto;
+  right: 0;
+}
+
 .menu-dropdown-item {
   padding: 10px 15px;
   color: #fff;

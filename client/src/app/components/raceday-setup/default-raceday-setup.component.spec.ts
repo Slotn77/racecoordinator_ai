@@ -468,16 +468,6 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.getLanguageDisplayName("en")).toBe("English (en)");
   });
 
-  it("should start help guide with translated strings", () => {
-    component.startHelp();
-    expect(mockTranslationService.translate).toHaveBeenCalledWith(
-      "RDS_HELP_WELCOME_TITLE",
-    );
-    expect(mockHelpService.startGuide).toHaveBeenCalled();
-    const guideSteps = mockHelpService.startGuide.calls.mostRecent().args[0];
-    expect(guideSteps[0].title).toBe("RDS_HELP_WELCOME_TITLE");
-  });
-
   it("should not toggle selection on single click in available list", async () => {
     spyOn(component, "toggleParticipantSelection");
     await harness.clickDriverItem();
@@ -613,12 +603,16 @@ describe("DefaultRacedaySetupComponent", () => {
         { entity_id: "d5", name: "Driver 20" } as any,
       ];
 
-      const sorted = participants.sort((a, b) => 
-        (component as any).naturalSortParticipants(a, b)
+      const sorted = participants.sort((a, b) =>
+        (component as any).naturalSortParticipants(a, b),
       );
 
-      expect(sorted.map(p => p.name)).toEqual([
-        "Alice", "Driver 1", "Driver 2", "Driver 10", "Driver 20"
+      expect(sorted.map((p) => p.name)).toEqual([
+        "Alice",
+        "Driver 1",
+        "Driver 2",
+        "Driver 10",
+        "Driver 20",
       ]);
     });
 
@@ -630,12 +624,15 @@ describe("DefaultRacedaySetupComponent", () => {
         { entity_id: "t4", name: "Alpha Team" } as any,
       ];
 
-      const sorted = teams.sort((a, b) => 
-        (component as any).naturalSortParticipants(a, b)
+      const sorted = teams.sort((a, b) =>
+        (component as any).naturalSortParticipants(a, b),
       );
 
-      expect(sorted.map(p => p.name)).toEqual([
-        "Alpha Team", "Team 1", "Team 2", "Team 10"
+      expect(sorted.map((p) => p.name)).toEqual([
+        "Alpha Team",
+        "Team 1",
+        "Team 2",
+        "Team 10",
       ]);
     });
 
@@ -647,12 +644,15 @@ describe("DefaultRacedaySetupComponent", () => {
         { entity_id: "d2", name: "Driver 10" } as any,
       ];
 
-      const sorted = participants.sort((a, b) => 
-        (component as any).naturalSortParticipants(a, b)
+      const sorted = participants.sort((a, b) =>
+        (component as any).naturalSortParticipants(a, b),
       );
 
-      expect(sorted.map(p => p.name)).toEqual([
-        "Driver 1", "Driver 10", "Team 2", "Team 10"
+      expect(sorted.map((p) => p.name)).toEqual([
+        "Driver 1",
+        "Driver 10",
+        "Team 2",
+        "Team 10",
       ]);
     });
 
@@ -665,7 +665,7 @@ describe("DefaultRacedaySetupComponent", () => {
         { entity_id: "d4", name: "Alice", nickname: "Alice" },
         { entity_id: "d5", name: "Driver 20", nickname: "Driver 20" },
       ];
-      
+
       mockDataService.getDrivers.and.returnValue(of(mockDrivers));
       mockDataService.getTeams.and.returnValue(of([]));
       mockDataService.getRaces.and.returnValue(of([]));
@@ -676,8 +676,12 @@ describe("DefaultRacedaySetupComponent", () => {
       fixture.detectChanges();
 
       // Verify unselected participants are naturally sorted
-      expect(component.unselectedParticipants.map(p => p.name)).toEqual([
-        "Alice", "Driver 1", "Driver 2", "Driver 10", "Driver 20"
+      expect(component.unselectedParticipants.map((p) => p.name)).toEqual([
+        "Alice",
+        "Driver 1",
+        "Driver 2",
+        "Driver 10",
+        "Driver 20",
       ]);
     }));
 
@@ -697,8 +701,9 @@ describe("DefaultRacedaySetupComponent", () => {
       fixture.detectChanges();
 
       // Verify unselected participants remain naturally sorted
-      expect(component.unselectedParticipants.map(p => p.name)).toEqual([
-        "Driver 10", "Driver 2"
+      expect(component.unselectedParticipants.map((p) => p.name)).toEqual([
+        "Driver 10",
+        "Driver 2",
       ]);
 
       // Unselect the participant (moving back to unselected)
@@ -707,8 +712,10 @@ describe("DefaultRacedaySetupComponent", () => {
       fixture.detectChanges();
 
       // Verify unselected participants are naturally sorted again
-      expect(component.unselectedParticipants.map(p => p.name)).toEqual([
-        "Driver 1", "Driver 2", "Driver 10"
+      expect(component.unselectedParticipants.map((p) => p.name)).toEqual([
+        "Driver 1",
+        "Driver 2",
+        "Driver 10",
       ]);
     }));
 
@@ -727,8 +734,10 @@ describe("DefaultRacedaySetupComponent", () => {
       fixture.detectChanges();
 
       // Verify unselected participants are naturally sorted
-      expect(component.unselectedParticipants.map(p => p.name)).toEqual([
-        "Driver 1", "Driver 2", "Driver 10"
+      expect(component.unselectedParticipants.map((p) => p.name)).toEqual([
+        "Driver 1",
+        "Driver 2",
+        "Driver 10",
       ]);
       expect(component.selectedParticipants.length).toBe(0);
     }));
@@ -741,14 +750,12 @@ describe("DefaultRacedaySetupComponent", () => {
         { entity_id: "d4", name: null } as any,
       ];
 
-      const sorted = participants.sort((a, b) => 
-        (component as any).naturalSortParticipants(a, b)
+      const sorted = participants.sort((a, b) =>
+        (component as any).naturalSortParticipants(a, b),
       );
 
       // Empty/undefined/null names should come first, then alphabetically
-      expect(sorted.map(p => p.name || "")).toEqual([
-        "", "", "", "Driver 1"
-      ]);
+      expect(sorted.map((p) => p.name || "")).toEqual(["", "", "", "Driver 1"]);
     });
 
     it("should handle complex alphanumeric names naturally", () => {
@@ -759,12 +766,15 @@ describe("DefaultRacedaySetupComponent", () => {
         { entity_id: "d4", name: "Driver v1.2.3" } as any,
       ];
 
-      const sorted = participants.sort((a, b) => 
-        (component as any).naturalSortParticipants(a, b)
+      const sorted = participants.sort((a, b) =>
+        (component as any).naturalSortParticipants(a, b),
       );
 
-      expect(sorted.map(p => p.name)).toEqual([
-        "Driver v1.2.2", "Driver v1.2.3", "Driver v1.2.10", "Driver v1.10.1"
+      expect(sorted.map((p) => p.name)).toEqual([
+        "Driver v1.2.2",
+        "Driver v1.2.3",
+        "Driver v1.2.10",
+        "Driver v1.10.1",
       ]);
     });
 
@@ -779,15 +789,15 @@ describe("DefaultRacedaySetupComponent", () => {
 
       // Apply search filter
       component.driverSearchQuery = "Driver";
-      expect(component.filteredUnselectedParticipants.map(p => p.name)).toEqual([
-        "Driver 1", "Driver 2", "Driver 10"
-      ]);
+      expect(
+        component.filteredUnselectedParticipants.map((p) => p.name),
+      ).toEqual(["Driver 1", "Driver 2", "Driver 10"]);
 
       // Clear search filter
       component.driverSearchQuery = "";
-      expect(component.filteredUnselectedParticipants.map(p => p.name)).toEqual([
-        "Alice", "Driver 1", "Driver 2", "Driver 10"
-      ]);
+      expect(
+        component.filteredUnselectedParticipants.map((p) => p.name),
+      ).toEqual(["Alice", "Driver 1", "Driver 2", "Driver 10"]);
     });
   });
 });

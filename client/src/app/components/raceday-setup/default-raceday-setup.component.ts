@@ -1052,11 +1052,6 @@ export class DefaultRacedaySetupComponent implements OnInit {
       },
     ];
   }
-
-  startHelp() {
-    this.helpService.startGuide(this.getHelpSteps());
-  }
-
   loadSavedRaces() {
     this.isFileDropdownOpen = false;
     this.dataService.getSavedRaces().subscribe({

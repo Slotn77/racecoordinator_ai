@@ -156,10 +156,6 @@
           <!-- Help Dropdown -->
           @if (item.label === "RDS_MENU_HELP" && isHelpDropdownOpen) {
             <div class="menu-dropdown">
-              <div class="menu-dropdown-item" (click)="startHelp()">
-                {{ "RDS_MENU_TUTORIAL" | translate }}
-              </div>
-              <hr class="menu-dropdown-divider" />
               <div class="menu-dropdown-item" (click)="openAbout()">
                 {{ "RDS_HEADER_ABOUT" | translate }}
               </div>
