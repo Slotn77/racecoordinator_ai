@@ -258,6 +258,7 @@
   "DBM_SUCCESS_IMPORT": "Database importato come '{{name}}'",
   "DBM_SUCCESS_RESET": "Database ripristinato alle impostazioni di fabbrica",
   "DBM_TITLE": "Gestore database",
+  "RDS_MENU_DATABASES": "Database",
   "DE_BTN_BACK": "INDIETRO",
   "DE_BTN_MORE": "Altro...",
   "DE_BTN_REDO": "Ripeti",

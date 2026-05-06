@@ -258,6 +258,7 @@
   "DBM_SUCCESS_IMPORT": "Datenbank als '{{name}}' importiert",
   "DBM_SUCCESS_RESET": "Datenbank \"{{name}}\" auf Werkseinstellungen zurückgesetzt",
   "DBM_TITLE": "Datenbank-Manager",
+  "RDS_MENU_DATABASES": "Datenbanken",
   "DE_BTN_BACK": "ZURÜCK",
   "DE_BTN_MORE": "Mehr...",
   "DE_BTN_REDO": "Wiederholen",

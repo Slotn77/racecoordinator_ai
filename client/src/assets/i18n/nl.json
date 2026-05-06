@@ -258,6 +258,7 @@
   "DBM_SUCCESS_IMPORT": "Database geïmporteerd als '{{name}}'",
   "DBM_SUCCESS_RESET": "Database \"{{name}}\" gereset naar fabrieksinstellingen",
   "DBM_TITLE": "Databasebeheerder",
+  "RDS_MENU_DATABASES": "Databases",
   "DE_BTN_BACK": "TERUG",
   "DE_BTN_MORE": "Meer...",
   "DE_BTN_REDO": "Opnieuw",

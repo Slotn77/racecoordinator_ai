@@ -258,6 +258,7 @@
   "DBM_SUCCESS_IMPORT": "Banco de dados importado como '{{name}}'",
   "DBM_SUCCESS_RESET": "Banco de dados restaurado aos padrões de fábrica",
   "DBM_TITLE": "Gerenciador de bancos de dados",
+  "RDS_MENU_DATABASES": "Bancos de dados",
   "DE_BTN_BACK": "VOLTAR",
   "DE_BTN_MORE": "Mais...",
   "DE_BTN_REDO": "Refazer",

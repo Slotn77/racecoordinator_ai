@@ -258,6 +258,7 @@
   "DBM_SUCCESS_IMPORT": "Database imported as '{{name}}'",
   "DBM_SUCCESS_RESET": "Reset database \"{{name}}\" to factory defaults",
   "DBM_TITLE": "Database Manager",
+  "RDS_MENU_DATABASES": "Databases",
   "DE_BTN_BACK": "BACK",
   "DE_BTN_MORE": "More...",
   "DE_BTN_REDO": "Redo",

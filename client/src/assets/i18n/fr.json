@@ -258,6 +258,7 @@
   "DBM_SUCCESS_IMPORT": "Base de données importada sous le nom '{{name}}'",
   "DBM_SUCCESS_RESET": "Base de données réinitialisée aux paramètres d'usine",
   "DBM_TITLE": "Gestionnaire de bases de données",
+  "RDS_MENU_DATABASES": "Bases de données",
   "DE_BTN_BACK": "RETOUR",
   "DE_BTN_MORE": "Plus...",
   "DE_BTN_REDO": "Rétablir",
