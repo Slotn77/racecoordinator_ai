@@ -1,18 +1,22 @@
 export abstract class DatabaseManagerHarnessBase {
-  static readonly hostSelector = 'app-database-manager';
+  static readonly hostSelector = "app-database-manager";
 
   static readonly selectors = {
-    listItem: '.list-item',
-    itemName: '.item-name',
-    detailHeader: '.detail-header h2',
-    modalBackdrop: '.modal-backdrop',
-    modalTitle: '.modal-title',
-    input: 'input',
-    btnConfirm: '.btn-confirm',
-    errorMsg: '.error-msg',
-    createBtn: 'button:has-text("CREATE")',
-    importBtn: 'button:has-text("IMPORT")',
-    useBtn: 'button:has-text("USE")'
+    listItem: ".list-item",
+    itemName: ".item-name",
+    detailHeader: ".detail-header h2",
+    modalBackdrop: ".modal-backdrop",
+    modalTitle: ".modal-title",
+    input: "input",
+    btnConfirm: ".btn-confirm",
+    errorMsg: ".error-msg",
+    createBtn: "#add-item-btn",
+    importBtn: "#import-btn",
+    exportBtn: "#export-btn",
+    copyBtn: "#copy-item-btn",
+    resetBtn: "#reset-btn",
+    deleteBtn: "#delete-track-btn",
+    useBtn: ".activate-btn",
   };
 
   abstract getDatabaseCount(): Promise<number>;
@@ -21,6 +25,10 @@ export abstract class DatabaseManagerHarnessBase {
   abstract getSelectedDatabaseName(): Promise<string | null>;
   abstract clickCreateDatabase(): Promise<void>;
   abstract clickImportDatabase(): Promise<void>;
+  abstract clickExportDatabase(): Promise<void>;
+  abstract clickCopyDatabase(): Promise<void>;
+  abstract clickResetDatabase(): Promise<void>;
+  abstract clickDeleteDatabase(): Promise<void>;
   abstract clickUseDatabase(): Promise<void>;
   abstract isUseDatabaseEnabled(): Promise<boolean>;
 

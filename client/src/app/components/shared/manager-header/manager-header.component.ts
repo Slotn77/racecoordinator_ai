@@ -23,6 +23,14 @@ export class ManagerHeaderComponent {
   showHelp = input(true);
   showDelete = input(true);
   showCopy = input(false);
+  showImport = input(false);
+  showExport = input(false);
+  showReset = input(false);
+  disabledImport = input(false);
+  disabledExport = input(false);
+  disabledReset = input(false);
+  disabledCopy = input(false);
+  disabledDelete = input(false);
   isSaving = input(false);
   helpSteps = input<GuideStep[]>([]);
   helpTitle = input("");
@@ -33,6 +41,9 @@ export class ManagerHeaderComponent {
   copy = output<void>();
   help = output<void>();
   delete = output<void>();
+  import = output<void>();
+  export = output<void>();
+  reset = output<void>();
 
   onAdd() {
     this.add.emit();
@@ -52,5 +63,17 @@ export class ManagerHeaderComponent {
 
   onCopy() {
     this.copy.emit();
+  }
+
+  onImport() {
+    this.import.emit();
+  }
+
+  onExport() {
+    this.export.emit();
+  }
+
+  onReset() {
+    this.reset.emit();
   }
 }

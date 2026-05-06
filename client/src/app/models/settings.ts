@@ -37,6 +37,7 @@ export class Settings {
   assetManagerHelpShown: boolean = false;
   raceManagerHelpShown: boolean = false;
   raceEditorHelpShown: boolean = false;
+  databaseManagerHelpShown: boolean = false;
 
   flagGreen?: string;
   flagYellow?: string;

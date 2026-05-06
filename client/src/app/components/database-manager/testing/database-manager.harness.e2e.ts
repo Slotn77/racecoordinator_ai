@@ -1,21 +1,49 @@
-import { Locator } from '@playwright/test';
+import { Locator } from "@playwright/test";
 
-import { DatabaseManagerHarnessBase } from './database-manager.harness.base';
+import { DatabaseManagerHarnessBase } from "./database-manager.harness.base";
 
 export class DatabaseManagerHarnessE2e implements DatabaseManagerHarnessBase {
   constructor(private locator: Locator) {}
 
-  private get base() { return DatabaseManagerHarnessBase; }
+  private get base() {
+    return DatabaseManagerHarnessBase;
+  }
 
-  private get listItems() { return this.locator.locator(this.base.selectors.listItem); }
-  private get createBtn() { return this.locator.locator(this.base.selectors.createBtn); }
-  private get importBtn() { return this.locator.locator(this.base.selectors.importBtn); }
-  private get useBtn() { return this.locator.locator(this.base.selectors.useBtn); }
-  private get detailHeader() { return this.locator.locator(this.base.selectors.detailHeader); }
-  private get inputModal() { return this.locator.page().locator(this.base.selectors.modalBackdrop); }
+  private get listItems() {
+    return this.locator.locator(this.base.selectors.listItem);
+  }
+  private get createBtn() {
+    return this.locator.locator(this.base.selectors.createBtn);
+  }
+  private get importBtn() {
+    return this.locator.locator(this.base.selectors.importBtn);
+  }
+  private get exportBtn() {
+    return this.locator.locator(this.base.selectors.exportBtn);
+  }
+  private get copyBtn() {
+    return this.locator.locator(this.base.selectors.copyBtn);
+  }
+  private get resetBtn() {
+    return this.locator.locator(this.base.selectors.resetBtn);
+  }
+  private get deleteBtn() {
+    return this.locator.locator(this.base.selectors.deleteBtn);
+  }
+  private get useBtn() {
+    return this.locator.locator(this.base.selectors.useBtn);
+  }
+  private get detailHeader() {
+    return this.locator.locator(this.base.selectors.detailHeader);
+  }
+  private get inputModal() {
+    return this.locator.page().locator(this.base.selectors.modalBackdrop);
+  }
 
   async waitForInputModalVisible(timeout = 10000): Promise<void> {
-    await this.inputModal.locator(this.base.selectors.modalTitle).waitFor({ state: 'visible', timeout });
+    await this.inputModal
+      .locator(this.base.selectors.modalTitle)
+      .waitFor({ state: "visible", timeout });
   }
 
   async getDatabaseCount(): Promise<number> {
@@ -23,7 +51,10 @@ export class DatabaseManagerHarnessE2e implements DatabaseManagerHarnessBase {
   }
 
   async getDatabaseName(index: number): Promise<string> {
-    return await this.listItems.nth(index).locator(this.base.selectors.itemName).innerText();
+    return await this.listItems
+      .nth(index)
+      .locator(this.base.selectors.itemName)
+      .innerText();
   }
 
   async selectDatabase(index: number): Promise<void> {
@@ -45,6 +76,22 @@ export class DatabaseManagerHarnessE2e implements DatabaseManagerHarnessBase {
     await this.importBtn.click();
   }
 
+  async clickExportDatabase(): Promise<void> {
+    await this.exportBtn.click();
+  }
+
+  async clickCopyDatabase(): Promise<void> {
+    await this.copyBtn.click();
+  }
+
+  async clickResetDatabase(): Promise<void> {
+    await this.resetBtn.click();
+  }
+
+  async clickDeleteDatabase(): Promise<void> {
+    await this.deleteBtn.click();
+  }
+
   async clickUseDatabase(): Promise<void> {
     await this.useBtn.click();
   }
@@ -59,7 +106,9 @@ export class DatabaseManagerHarnessE2e implements DatabaseManagerHarnessBase {
   }
 
   async getInputModalTitle(): Promise<string> {
-    return await this.inputModal.locator(this.base.selectors.modalTitle).innerText();
+    return await this.inputModal
+      .locator(this.base.selectors.modalTitle)
+      .innerText();
   }
 
   async setInputModalValue(value: string): Promise<void> {
@@ -71,10 +120,14 @@ export class DatabaseManagerHarnessE2e implements DatabaseManagerHarnessBase {
   }
 
   async isInputModalConfirmEnabled(): Promise<boolean> {
-    return await this.inputModal.locator(this.base.selectors.btnConfirm).isEnabled();
+    return await this.inputModal
+      .locator(this.base.selectors.btnConfirm)
+      .isEnabled();
   }
 
   async isInputModalErrorVisible(): Promise<boolean> {
-    return await this.inputModal.locator(this.base.selectors.errorMsg).isVisible();
+    return await this.inputModal
+      .locator(this.base.selectors.errorMsg)
+      .isVisible();
   }
 }

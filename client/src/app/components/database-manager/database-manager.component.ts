@@ -9,8 +9,8 @@ import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { forkJoin } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
-import { BackButtonComponent } from "@app/components/shared/back-button/back-button.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LoggerService } from "@app/services/logger.service";
@@ -22,9 +22,9 @@ import { SettingsService } from "@app/services/settings.service";
   templateUrl: "./database-manager.component.html",
   styleUrls: ["./database-manager.component.css"],
   imports: [
-    BackButtonComponent,
     ConfirmationModalComponent,
     AcknowledgementModalComponent,
+    ManagerHeaderComponent,
     FormsModule,
     DecimalPipe,
     TranslatePipe,
@@ -218,22 +218,22 @@ export class DatabaseManagerComponent implements OnInit {
 
   copyDatabase() {
     if (!this.selectedDatabase) return;
-    if (this.selectedDatabase.name !== this.currentDatabaseName) {
-      this.openAck("DBM_TITLE", "DBM_ERR_COPY_INACTIVE");
-      return;
-    }
+    const sourceName = this.selectedDatabase.name;
 
     this.openInput(
       "DBM_PROMPT_COPY_TITLE",
       "DBM_PROMPT_COPY_MSG",
-      { name: this.selectedDatabase.name },
+      { name: sourceName },
       (newName) => {
         this.loading = true;
         this.cdr.detectChanges();
 
-        this.dataService.copyDatabase(newName).subscribe({
+        this.dataService.copyDatabase(newName, sourceName).subscribe({
           next: (stats) => {
-            this.openAck("DBM_TITLE", "DBM_SUCCESS_COPY", { name: stats.name });
+            this.openAck("DBM_TITLE", "DBM_SUCCESS_COPY", {
+              name: stats.name,
+            });
+            this.selectedDatabase = stats; // Select the new copy
             this.loadDatabases(); // toggle loading off in here
           },
           error: (err) => {
@@ -248,20 +248,18 @@ export class DatabaseManagerComponent implements OnInit {
           },
         });
       },
+      this.generateUniqueName(`${sourceName}_copy`),
     );
   }
 
   resetDatabase() {
     if (!this.selectedDatabase) return;
-    if (this.selectedDatabase.name !== this.currentDatabaseName) {
-      this.openAck("DBM_TITLE", "DBM_ERR_RESET_INACTIVE");
-      return;
-    }
+    const dbName = this.selectedDatabase.name;
 
     this.openConfirm(
       "DBM_CONFIRM_RESET_TITLE",
       "DBM_CONFIRM_RESET_MSG_1",
-      { name: this.selectedDatabase.name },
+      { name: dbName },
       () => {
         this.openConfirm(
           "DBM_CONFIRM_RESET_TITLE",
@@ -271,10 +269,12 @@ export class DatabaseManagerComponent implements OnInit {
             this.loading = true;
             this.cdr.detectChanges();
 
-            this.dataService.resetDatabase().subscribe({
+            this.dataService.resetDatabase(dbName).subscribe({
               next: (stats) => {
-                // Reset client-side settings to defaults
-                this.settingsService.resetToDefaults();
+                // If we reset the ACTIVE database, we should also reset local settings
+                if (dbName === this.currentDatabaseName) {
+                  this.settingsService.resetToDefaults();
+                }
                 this.openAck("DBM_TITLE", "DBM_SUCCESS_RESET", {
                   name: stats.name,
                 });
@@ -294,7 +294,9 @@ export class DatabaseManagerComponent implements OnInit {
 
   deleteDatabase() {
     if (!this.selectedDatabase) return;
-    if (this.selectedDatabase.name === this.currentDatabaseName) {
+    const dbName = this.selectedDatabase.name;
+
+    if (dbName === this.currentDatabaseName) {
       this.openAck("DBM_TITLE", "DBM_ERR_DELETE_ACTIVE");
       return;
     }
@@ -302,15 +304,15 @@ export class DatabaseManagerComponent implements OnInit {
     this.openConfirm(
       "DBM_CONFIRM_DELETE_TITLE",
       "DBM_CONFIRM_DELETE_MSG",
-      { name: this.selectedDatabase.name },
+      { name: dbName },
       () => {
         this.loading = true;
         this.cdr.detectChanges();
 
-        this.dataService.deleteDatabase(this.selectedDatabase.name).subscribe({
+        this.dataService.deleteDatabase(dbName).subscribe({
           next: () => {
             this.openAck("DBM_TITLE", "DBM_SUCCESS_DELETE", {
-              name: this.selectedDatabase.name,
+              name: dbName,
             });
             this.selectedDatabase = null; // Clear selection
             this.loadDatabases();
@@ -360,6 +362,7 @@ export class DatabaseManagerComponent implements OnInit {
             this.openAck("DBM_TITLE", "DBM_SUCCESS_IMPORT", {
               name: stats.name,
             });
+            this.selectedDatabase = stats; // Select the newly imported DB
             this.loadDatabases();
           },
           error: (err) => {
@@ -462,5 +465,22 @@ export class DatabaseManagerComponent implements OnInit {
   onCancelInput() {
     this.showInputModal = false;
     this.cdr.detectChanges();
+  }
+
+  getHelpSteps() {
+    return [
+      {
+        targetId: "sidebar-list",
+        title: "DBM_HELP_SIDEBAR_TITLE",
+        content: "DBM_HELP_SIDEBAR_CONTENT",
+        position: "right" as const,
+      },
+      {
+        targetId: "detail-panel",
+        title: "DBM_HELP_DETAIL_TITLE",
+        content: "DBM_HELP_DETAIL_CONTENT",
+        position: "left" as const,
+      },
+    ];
   }
 }

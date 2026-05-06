@@ -42,6 +42,12 @@ export class ToolbarComponent implements OnInit {
   helpSteps = input<GuideStep[]>([]);
   helpTitle = input("");
   helpRecordName = input<keyof Settings>();
+  showImport = input(false);
+  showExport = input(false);
+  showReset = input(false);
+  disabledImport = input(false);
+  disabledExport = input(false);
+  disabledReset = input(false);
 
   showAnalyticsModal = false;
   analyticsModalTitle = "";
@@ -85,9 +91,24 @@ export class ToolbarComponent implements OnInit {
   delete = output<void>();
 
   activate = output<void>();
+  import = output<void>();
+  export = output<void>();
+  reset = output<void>();
 
   onActivate() {
     this.activate.emit();
+  }
+
+  onImport() {
+    this.import.emit();
+  }
+
+  onExport() {
+    this.export.emit();
+  }
+
+  onReset() {
+    this.reset.emit();
   }
 
   onAdd() {
@@ -186,6 +207,39 @@ export class ToolbarComponent implements OnInit {
         targetId: "help-track-btn",
         title: this.translationService.translate("TOOLBAR_HELP_HELP_TITLE"),
         content: this.translationService.translate("TOOLBAR_HELP_HELP_CONTENT"),
+        position: "bottom",
+      });
+    }
+
+    if (this.showImport()) {
+      defaultSteps.push({
+        targetId: "import-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_IMPORT_TITLE"),
+        content: this.translationService.translate(
+          "TOOLBAR_HELP_IMPORT_CONTENT",
+        ),
+        position: "bottom",
+      });
+    }
+
+    if (this.showExport()) {
+      defaultSteps.push({
+        targetId: "export-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_EXPORT_TITLE"),
+        content: this.translationService.translate(
+          "TOOLBAR_HELP_EXPORT_CONTENT",
+        ),
+        position: "bottom",
+      });
+    }
+
+    if (this.showReset()) {
+      defaultSteps.push({
+        targetId: "reset-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_RESET_TITLE"),
+        content: this.translationService.translate(
+          "TOOLBAR_HELP_RESET_CONTENT",
+        ),
         position: "bottom",
       });
     }

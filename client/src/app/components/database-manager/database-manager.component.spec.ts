@@ -5,15 +5,20 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of, throwError } from "rxjs";
+import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { MOCK_DATABASES } from "@app/testing/data/databases_data";
 import {
+  mockAnalyticsService,
   mockDataService,
   mockLoggerService,
   mockRouter,
+  mockSettingsService,
   mockTranslationService,
   resetMocks,
 } from "@app/testing/unit-test-mocks";
@@ -83,10 +88,19 @@ describe("DatabaseManagerComponent", () => {
         { provide: Router, useValue: mockRouter },
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { paramMap: { get: () => null } } },
+          useValue: {
+            snapshot: { paramMap: { get: () => null } },
+            queryParams: of({}),
+          },
         },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: LoggerService, useValue: mockLoggerService },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
+        { provide: SettingsService, useValue: mockSettingsService },
+        {
+          provide: HelpService,
+          useValue: { startGuide: jasmine.createSpy("startGuide") },
+        },
         ChangeDetectorRef,
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -229,27 +243,23 @@ describe("DatabaseManagerComponent", () => {
       expect(component.showInputModal).toBeFalse();
     });
 
-    it("should show error if copying inactive database", () => {
+    it("should open input modal for any database", () => {
       component.selectedDatabase = MOCK_DATABASES[1]; // inactive
-      component.copyDatabase();
-      expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalMessage).toBe("DBM_ERR_COPY_INACTIVE");
-    });
-
-    it("should open input modal for active database", () => {
-      component.selectedDatabase = MOCK_DATABASES[0]; // active
       component.copyDatabase();
       expect(component.showInputModal).toBeTrue();
       expect(component.inputModalTitle).toBe("DBM_PROMPT_COPY_TITLE");
     });
 
-    it("should call copyDatabase when input confirmed", () => {
-      component.selectedDatabase = MOCK_DATABASES[0];
+    it("should call copyDatabase when input confirmed with source database", () => {
+      component.selectedDatabase = MOCK_DATABASES[1]; // inactive
       component.copyDatabase();
       component.inputValue = "copyDB";
       component.onInputConfirm();
 
-      expect(dataService.copyDatabase).toHaveBeenCalledWith("copyDB");
+      expect(dataService.copyDatabase).toHaveBeenCalledWith(
+        "copyDB",
+        MOCK_DATABASES[1].name,
+      );
       expect(component.showAckModal).toBeTrue();
       expect(component.ackModalMessage).toBe("DBM_SUCCESS_COPY");
     });
@@ -276,15 +286,15 @@ describe("DatabaseManagerComponent", () => {
       expect(component.showConfirmModal).toBeFalse();
     });
 
-    it("should show error if resetting inactive database", () => {
+    it("should allow resetting inactive database", () => {
       component.selectedDatabase = MOCK_DATABASES[1];
       component.resetDatabase();
-      expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalMessage).toBe("DBM_ERR_RESET_INACTIVE");
+      expect(component.showConfirmModal).toBeTrue();
+      expect(component.confirmModalMessage).toBe("DBM_CONFIRM_RESET_MSG_1");
     });
 
-    it("should require double confirmation", () => {
-      component.selectedDatabase = MOCK_DATABASES[0];
+    it("should require double confirmation and pass database name", () => {
+      component.selectedDatabase = MOCK_DATABASES[1]; // inactive
       component.resetDatabase();
 
       // First confirm
@@ -301,7 +311,9 @@ describe("DatabaseManagerComponent", () => {
 
       component.onConfirm();
 
-      expect(dataService.resetDatabase).toHaveBeenCalled();
+      expect(dataService.resetDatabase).toHaveBeenCalledWith(
+        MOCK_DATABASES[1].name,
+      );
       expect(component.showAckModal).toBeTrue();
       expect(component.ackModalMessage).toBe("DBM_SUCCESS_RESET");
     });
@@ -340,6 +352,16 @@ describe("DatabaseManagerComponent", () => {
       expect(component.selectedDatabase).toEqual(MOCK_DATABASES[0]);
       expect(component.showAckModal).toBeTrue();
       expect(component.ackModalMessage).toBe("DBM_SUCCESS_DELETE");
+    });
+  });
+
+  describe("exportDatabase", () => {
+    it("should call exportDatabase with selected database name", () => {
+      component.selectedDatabase = MOCK_DATABASES[1];
+      component.exportDatabase();
+      expect(dataService.exportDatabase).toHaveBeenCalledWith(
+        MOCK_DATABASES[1].name,
+      );
     });
   });
 

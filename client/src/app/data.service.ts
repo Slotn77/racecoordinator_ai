@@ -722,12 +722,15 @@ export class DataService {
     });
   }
 
-  copyDatabase(name: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/databases/copy`, { name });
+  copyDatabase(name: string, source?: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/databases/copy`, {
+      name,
+      source,
+    });
   }
 
-  resetDatabase(): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/databases/reset`, {});
+  resetDatabase(name?: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/databases/reset`, { name });
   }
 
   deleteDatabase(name: string): Observable<any> {

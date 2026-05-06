@@ -13,6 +13,14 @@
           [showHelp]="showHelp()"
           [showDelete]="showDelete()"
           [showCopy]="showCopy()"
+          [showImport]="showImport()"
+          [showExport]="showExport()"
+          [showReset]="showReset()"
+          [disabledImport]="disabledImport()"
+          [disabledExport]="disabledExport()"
+          [disabledReset]="disabledReset()"
+          [disabledCopy]="disabledCopy()"
+          [disabledDelete]="disabledDelete()"
           [isSaving]="isSaving()"
           [helpSteps]="helpSteps()"
           [helpTitle]="helpTitle()"
@@ -22,6 +30,9 @@
           (help)="onHelp()"
           (delete)="onDelete()"
           (copy)="onCopy()"
+          (import)="onImport()"
+          (export)="onExport()"
+          (reset)="onReset()"
         >
         </app-toolbar>
       </div>

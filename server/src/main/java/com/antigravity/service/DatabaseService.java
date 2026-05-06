@@ -201,10 +201,6 @@ public class DatabaseService {
 
   private Track resetTracks(MongoDatabase database) {
     MongoCollection<Track> trackCollection = database.getCollection("tracks", Track.class);
-    if (trackCollection.countDocuments() > 0) {
-      return trackCollection.find().first();
-    }
-
     trackCollection.drop(); // Clear all existing data
 
     // Reset sequence

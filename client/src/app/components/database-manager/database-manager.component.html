@@ -2,18 +2,32 @@
   class="page-container"
   [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
 >
-  <div class="header">
-    <div class="header-left">
-      <app-back-button
-        route="/raceday-setup"
-        label="DBM_BTN_BACK"
-      ></app-back-button>
-      <h1 class="page-title">{{ "DBM_TITLE" | translate }}</h1>
-    </div>
-  </div>
+  <app-manager-header
+    [title]="'DBM_TITLE'"
+    [showActions]="true"
+    [showAdd]="true"
+    [showEdit]="false"
+    [showDelete]="
+      selectedDatabase != null && selectedDatabase.name !== currentDatabaseName
+    "
+    [showCopy]="selectedDatabase != null"
+    [showImport]="true"
+    [showExport]="selectedDatabase != null"
+    [showReset]="selectedDatabase != null"
+    [isSaving]="loading"
+    [helpSteps]="getHelpSteps()"
+    [helpRecordName]="'databaseManagerHelpShown'"
+    (add)="createDatabase()"
+    (import)="importDatabase()"
+    (export)="exportDatabase()"
+    (copy)="copyDatabase()"
+    (delete)="deleteDatabase()"
+    (reset)="resetDatabase()"
+  >
+  </app-manager-header>
 
   <div class="content-area">
-    <div class="sidebar-list">
+    <div class="sidebar-list" id="sidebar-list">
       <div class="list-container">
         @for (db of databases; track db; let i = $index) {
           <div
@@ -25,34 +39,38 @@
             (click)="selectDatabase(db)"
           >
             <div class="item-name">{{ db.name }}</div>
-            @if (db.name === currentDatabaseName) {
-              <div class="active-bagde">
-                {{ "DBM_BADGE_ACTIVE" | translate }}
-              </div>
-            }
+            <div class="item-nickname">
+              {{
+                db.name === currentDatabaseName
+                  ? ("DBM_BADGE_ACTIVE" | translate)
+                  : ""
+              }}
+            </div>
           </div>
         }
-      </div>
-      <div class="list-actions">
-        <button
-          class="action-btn primary full-width"
-          (click)="createDatabase()"
-        >
-          {{ "DBM_BTN_CREATE" | translate }}
-        </button>
-        <button
-          class="action-btn secondary full-width"
-          (click)="importDatabase()"
-        >
-          {{ "DBM_BTN_IMPORT" | translate }}
-        </button>
       </div>
     </div>
 
     @if (selectedDatabase) {
-      <div class="detail-panel">
+      <div class="detail-panel" id="detail-panel">
         <div class="detail-header">
           <h2>{{ selectedDatabase.name }}</h2>
+          @if (selectedDatabase.name !== currentDatabaseName) {
+            <button
+              class="activate-btn"
+              (click)="useDatabase()"
+              [title]="'DBM_BTN_USE' | translate"
+            >
+              <span class="material-icons">check_circle_outline</span>
+            </button>
+          } @else {
+            <div
+              class="active-indicator"
+              [title]="'DBM_BADGE_ACTIVE' | translate"
+            >
+              <span class="material-icons">check_circle</span>
+            </div>
+          }
         </div>
         <div class="detail-content">
           <div class="stats-grid">
@@ -115,51 +133,6 @@
               {{ "DBM_HINT_SWITCH" | translate }}
             </p>
           }
-        </div>
-        <div class="detail-actions">
-          <button
-            class="action-btn success"
-            (click)="useDatabase()"
-            [disabled]="selectedDatabase.name === currentDatabaseName"
-          >
-            {{ "DBM_BTN_USE" | translate }}
-          </button>
-          <button class="btn-action" (click)="exportDatabase()">
-            <span class="material-icons" style="font-size: 1.2rem"
-              >download</span
-            >
-            {{ "DBM_BTN_EXPORT" | translate }}
-          </button>
-          <button
-            class="btn-action"
-            (click)="copyDatabase()"
-            [disabled]="!selectedDatabase"
-          >
-            <span class="material-icons" style="font-size: 1.2rem"
-              >content_copy</span
-            >
-            {{ "DBM_BTN_COPY" | translate }}
-          </button>
-          <button
-            class="btn-action btn-danger"
-            (click)="deleteDatabase()"
-            [disabled]="
-              !selectedDatabase || selectedDatabase.name === currentDatabaseName
-            "
-          >
-            <span class="material-icons" style="font-size: 1.2rem">delete</span>
-            {{ "DBM_BTN_DELETE" | translate }}
-          </button>
-          <button
-            class="btn-action btn-danger"
-            (click)="resetDatabase()"
-            [disabled]="selectedDatabase.name !== currentDatabaseName"
-          >
-            <span class="material-icons" style="font-size: 1.2rem"
-              >warning</span
-            >
-            {{ "DBM_BTN_RESET" | translate }}
-          </button>
         </div>
       </div>
     }

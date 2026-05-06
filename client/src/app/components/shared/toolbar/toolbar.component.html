@@ -92,6 +92,45 @@
     </button>
   }
 
+  <!-- Import -->
+  @if (showImport()) {
+    <button
+      id="import-btn"
+      class="toolbar-btn info"
+      (click)="onImport()"
+      [disabled]="isSaving() || disabledImport()"
+      [title]="'DBM_BTN_IMPORT' | translate"
+    >
+      <span class="material-icons">upload</span>
+    </button>
+  }
+
+  <!-- Export -->
+  @if (showExport()) {
+    <button
+      id="export-btn"
+      class="toolbar-btn info"
+      (click)="onExport()"
+      [disabled]="isSaving() || disabledExport()"
+      [title]="'DBM_BTN_EXPORT' | translate"
+    >
+      <span class="material-icons">download</span>
+    </button>
+  }
+
+  <!-- Reset -->
+  @if (showReset()) {
+    <button
+      id="reset-btn"
+      class="toolbar-btn danger"
+      (click)="onReset()"
+      [disabled]="isSaving() || disabledReset()"
+      [title]="'DBM_BTN_RESET' | translate"
+    >
+      <span class="material-icons">restart_alt</span>
+    </button>
+  }
+
   <div class="spacer"></div>
 
   <div class="toolbar-utility-group">

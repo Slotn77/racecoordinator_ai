@@ -180,26 +180,28 @@ public class DatabaseTaskHandler {
     try {
       Map<String, String> body = ctx.bodyAsClass(Map.class);
       String newName = body.get("name");
+      String sourceName = body.get("source");
+
       if (newName == null || newName.isEmpty()) {
         ctx.status(400).result("New database name is required");
         return;
       }
 
-      // Check if database already exists
+      // Check if target database already exists
       List<String> existingDbs = databaseContext.listDatabases();
       if (existingDbs.contains(newName)) {
         ctx.status(409).result("Database already exists");
         return;
       }
 
-      String current = databaseContext.getCurrentDatabaseName();
-      databaseContext.copyDatabase(current, newName);
+      if (sourceName == null || sourceName.isEmpty()) {
+        sourceName = databaseContext.getCurrentDatabaseName();
+      } else if (!existingDbs.contains(sourceName)) {
+        ctx.status(404).result("Source database not found");
+        return;
+      }
 
-      // Should we switch to it? Let's say yes for user convenience, or just return
-      // success?
-      // Usually "Copy" implies making a backup or a branch.
-      // The user might stay on current or switch.
-      // Let's NOT switch automatically, let the UI decide.
+      databaseContext.copyDatabase(sourceName, newName);
 
       ctx.json(databaseContext.getDatabaseStats(newName));
     } catch (Exception e) {
@@ -210,10 +212,17 @@ public class DatabaseTaskHandler {
 
   private void resetDatabase(Context ctx) {
     try {
-      // Reset CURRENT database
-      String current = databaseContext.getCurrentDatabaseName();
-      databaseContext.resetDatabaseToFactory(current);
-      ctx.json(databaseContext.getDatabaseStats(current));
+      Map<String, String> body = ctx.bodyAsClass(Map.class);
+      String requestedName = body != null ? body.get("name") : null;
+      String name = requestedName;
+
+      if (name == null || name.isEmpty()) {
+        name = databaseContext.getCurrentDatabaseName();
+      }
+
+      logger.info("Resetting database: {} (Requested: {})", name, requestedName);
+      databaseContext.resetDatabaseToFactory(name);
+      ctx.json(databaseContext.getDatabaseStats(name));
     } catch (Exception e) {
       logger.error("Error resetting database", e);
       ctx.status(500).result("Error resetting database: " + e.getMessage());

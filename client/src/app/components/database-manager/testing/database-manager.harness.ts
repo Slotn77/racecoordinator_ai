@@ -24,6 +24,18 @@ export class DatabaseManagerHarness
   protected getImportBtn = this.locatorFor(
     DatabaseManagerHarnessBase.selectors.importBtn,
   );
+  protected getExportBtn = this.locatorFor(
+    DatabaseManagerHarnessBase.selectors.exportBtn,
+  );
+  protected getCopyBtn = this.locatorFor(
+    DatabaseManagerHarnessBase.selectors.copyBtn,
+  );
+  protected getResetBtn = this.locatorFor(
+    DatabaseManagerHarnessBase.selectors.resetBtn,
+  );
+  protected getDeleteBtn = this.locatorFor(
+    DatabaseManagerHarnessBase.selectors.deleteBtn,
+  );
   protected getUseBtn = this.locatorFor(
     DatabaseManagerHarnessBase.selectors.useBtn,
   );
@@ -76,6 +88,22 @@ export class DatabaseManagerHarness
 
   async clickImportDatabase(): Promise<void> {
     await (await this.getImportBtn()).click();
+  }
+
+  async clickExportDatabase(): Promise<void> {
+    await (await this.getExportBtn()).click();
+  }
+
+  async clickCopyDatabase(): Promise<void> {
+    await (await this.getCopyBtn()).click();
+  }
+
+  async clickResetDatabase(): Promise<void> {
+    await (await this.getResetBtn()).click();
+  }
+
+  async clickDeleteDatabase(): Promise<void> {
+    await (await this.getDeleteBtn()).click();
   }
 
   async clickUseDatabase(): Promise<void> {

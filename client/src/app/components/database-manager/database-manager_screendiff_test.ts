@@ -114,10 +114,11 @@ test.describe("Database Manager Visuals", () => {
     });
 
     await page.addInitScript(() => {
+      window.localStorage.setItem("databaseManagerHelpShown", "true");
       window.addEventListener("DOMContentLoaded", () => {
         const style = document.createElement("style");
         style.textContent =
-          ".connection-lost-overlay, app-acknowledgement-modal { display: none !important; }";
+          ".connection-lost-overlay, app-acknowledgement-modal, app-help-overlay { display: none !important; }";
         document.head.appendChild(style);
       });
     });
@@ -131,12 +132,6 @@ test.describe("Database Manager Visuals", () => {
       "en",
       page.goto("/database-manager"),
     );
-    await page.evaluate(() => {
-      const style = document.createElement("style");
-      style.textContent =
-        ".connection-lost-overlay, app-acknowledgement-modal { display: none !important; }";
-      document.head.appendChild(style);
-    });
 
     const container = page.locator(".page-container");
     const _harness = new DatabaseManagerHarnessE2e(container);
@@ -157,12 +152,6 @@ test.describe("Database Manager Visuals", () => {
       "en",
       page.goto("/database-manager"),
     );
-    await page.evaluate(() => {
-      const style = document.createElement("style");
-      style.textContent =
-        ".connection-lost-overlay, app-acknowledgement-modal { display: none !important; }";
-      document.head.appendChild(style);
-    });
 
     const container = page.locator(".page-container");
     const harness = new DatabaseManagerHarnessE2e(container);
@@ -183,5 +172,72 @@ test.describe("Database Manager Visuals", () => {
     // Error and disabled state checked visually
 
     await expect(page).toHaveScreenshot("database-manager-import-error.png");
+  });
+
+  test("should handle database copy visuals", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/database-manager"),
+    );
+
+    const container = page.locator(".page-container");
+    const harness = new DatabaseManagerHarnessE2e(container);
+
+    await page.locator(".list-item").first().waitFor({ state: "visible" });
+    await harness.selectDatabase(0);
+    // Ensure button is ready
+    await page.locator("#copy-item-btn").waitFor({ state: "visible" });
+    await harness.clickCopyDatabase();
+    await harness.waitForInputModalVisible(5000);
+
+    await expect(page).toHaveScreenshot("database-manager-copy-modal.png");
+  });
+
+  test("should handle database reset visuals", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/database-manager"),
+    );
+
+    const container = page.locator(".page-container");
+    const harness = new DatabaseManagerHarnessE2e(container);
+
+    await page.locator(".list-item").first().waitFor({ state: "visible" });
+    await harness.selectDatabase(0);
+    // Ensure button is ready
+    await page.locator("#reset-btn").waitFor({ state: "visible" });
+    await harness.clickResetDatabase();
+    // Wait for confirmation modal content to be rendered
+    await page
+      .locator("#confirmation-modal-content")
+      .waitFor({ state: "visible" });
+
+    await expect(page).toHaveScreenshot("database-manager-reset-confirm.png");
+  });
+
+  test("should handle database delete visuals", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/database-manager"),
+    );
+
+    const container = page.locator(".page-container");
+    const harness = new DatabaseManagerHarnessE2e(container);
+
+    await page.locator(".list-item").first().waitFor({ state: "visible" });
+    // Select a non-current database
+    await harness.selectDatabase(1);
+    // Ensure button is ready
+    await page.locator("#delete-track-btn").waitFor({ state: "visible" });
+    await harness.clickDeleteDatabase();
+    // Wait for confirmation modal content to be rendered
+    await page
+      .locator("#confirmation-modal-content")
+      .waitFor({ state: "visible" });
+
+    await expect(page).toHaveScreenshot("database-manager-delete-confirm.png");
   });
 });
