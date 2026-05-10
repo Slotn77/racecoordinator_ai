@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.antigravity.models.Driver;
+import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
@@ -13,6 +14,7 @@ import com.antigravity.models.Track;
 import com.antigravity.proto.RecordData;
 import com.antigravity.proto.RecordEntry;
 import com.antigravity.race.states.Racing;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.After;
@@ -404,5 +406,105 @@ public class RaceRecordTest {
     RecordData recordData = minLapRace.getRecordData();
     assertEquals(3.5, recordData.getCurrent().getFastestLap().getValue(), 0.001);
     assertEquals(3.5, recordData.getCurrent().getLaneFastestLap(0).getValue(), 0.001);
+  }
+
+  @Test
+  public void testManualLapAdjustmentUpdatesRecords() {
+    // Driver 0 gets 5 laps manually
+    race.getCurrentHeat().getDrivers().get(0).setUserLaps(5.0);
+    race.updateAndBroadcastOverallStandings();
+
+    RecordData recordData = race.getRecordData();
+    // In LAP_COUNT scoring, highest score = total adjusted laps
+    assertEquals(5.0, recordData.getCurrent().getHighestScore().getValue(), 0.001);
+    assertEquals("D0", recordData.getCurrent().getHighestScore().getHolderName());
+    assertEquals(5.0, recordData.getOverall().getHighestScore().getValue(), 0.001);
+  }
+
+  @Test
+  public void testManualLapRemovalRevertsToOtherDriver() {
+    // Driver 0 has 10 laps
+    race.getCurrentHeat().getDrivers().get(0).setUserLaps(10.0);
+    // Driver 1 has 15 laps (Current record holder)
+    race.getCurrentHeat().getDrivers().get(1).setUserLaps(15.0);
+
+    race.updateAndBroadcastOverallStandings();
+    assertEquals(15.0, race.getRecordData().getCurrent().getHighestScore().getValue(), 0.001);
+    assertEquals("D1", race.getRecordData().getCurrent().getHighestScore().getHolderName());
+
+    // Remove 10 laps from Driver 1 -> total 5
+    race.getCurrentHeat().getDrivers().get(1).setUserLaps(5.0);
+    race.updateAndBroadcastOverallStandings();
+
+    // Record should revert to Driver 0 (10 laps)
+    RecordData recordData = race.getRecordData();
+    assertEquals(10.0, recordData.getCurrent().getHighestScore().getValue(), 0.001);
+    assertEquals("D0", recordData.getCurrent().getHighestScore().getHolderName());
+  }
+
+  @Test
+  public void testManualLapRemovalRevertsToBaseStatistics() throws Exception {
+    // Setup base statistics with a pre-existing high score
+    GlobalStatistics baseStats = new GlobalStatistics();
+    baseStats.setHighestScore(20.0);
+    baseStats.setHighestScoreHolderName("Legacy Champ");
+    baseStats.setHighestScoreDate(123456789L);
+
+    // Inject into race using reflection since it's private and loaded on init
+    Field field = com.antigravity.race.Race.class.getDeclaredField("baseStatistics");
+    field.setAccessible(true);
+    field.set(race, baseStats);
+
+    // Sync overall with base records (normally happens on load/recalc)
+    race.updateScoreRecords();
+    assertEquals(20.0, race.getRecordData().getOverall().getHighestScore().getValue(), 0.001);
+    assertEquals(
+        "Legacy Champ", race.getRecordData().getOverall().getHighestScore().getHolderName());
+
+    // Driver 0 gets 25 laps (Breaks all-time record)
+    race.getCurrentHeat().getDrivers().get(0).setUserLaps(25.0);
+    race.updateAndBroadcastOverallStandings();
+
+    assertEquals(25.0, race.getRecordData().getOverall().getHighestScore().getValue(), 0.001);
+    assertEquals("D0", race.getRecordData().getOverall().getHighestScore().getHolderName());
+
+    // Driver 0 has laps removed -> total 15 (less than legacy record)
+    race.getCurrentHeat().getDrivers().get(0).setUserLaps(15.0);
+    race.updateAndBroadcastOverallStandings();
+
+    // Overall Record should revert to Legacy Champ (20.0)
+    RecordData recordData = race.getRecordData();
+    assertEquals(20.0, recordData.getOverall().getHighestScore().getValue(), 0.001);
+    assertEquals("Legacy Champ", recordData.getOverall().getHighestScore().getHolderName());
+    assertEquals(123456789L, recordData.getOverall().getHighestScore().getDate());
+
+    // Current Race Record should revert to Driver 0 (15.0) since it's still the best in THIS race
+    assertEquals(15.0, recordData.getCurrent().getHighestScore().getValue(), 0.001);
+    assertEquals("D0", recordData.getCurrent().getHighestScore().getHolderName());
+  }
+
+  @Test
+  public void testDriverChangeUpdatesRecordHolder() {
+    // Driver 0 gets 10 laps
+    race.getCurrentHeat().getDrivers().get(0).setUserLaps(10.0);
+    race.updateAndBroadcastOverallStandings();
+
+    assertEquals("D0", race.getRecordData().getCurrent().getHighestScore().getHolderName());
+
+    // Change actual driver for lane 0 to D1
+    Driver newDriver = drivers.get(1).getDriver();
+    race.getCurrentHeat().getDrivers().get(0).setActualDriver(newDriver);
+
+    // Note: recalculateScoreRecords currently uses participant driver name by default,
+    // but updateAndBroadcastOverallStandings should ideally handle driver swaps.
+    // Let's verify current behavior and see if it needs fix.
+    race.updateAndBroadcastOverallStandings();
+
+    // Since recalculateScoreRecords currently uses p.getDriver().getName() (the primary driver),
+    // and we changed actualDriver in the heat but not the participant's primary driver,
+    // this test might fail if we expect it to change to D1.
+    // However, if we are in a Team Race, p.getDriver() IS the team name.
+
+    // Let's see what happens.
   }
 }

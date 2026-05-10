@@ -793,6 +793,7 @@ public class ClientCommandTaskHandler {
             }
           }
           dhd.setActualDriver(driver);
+          race.updateAndBroadcastOverallStandings();
           race.broadcast(race.createSnapshot());
           ctx.status(200);
         } else {
@@ -835,6 +836,7 @@ public class ClientCommandTaskHandler {
           // Recalculate standings because laps changed
           race.getCurrentHeat().initializeStandings(race.getRaceModel().getHeatScoring());
           race.updateAndBroadcastOverallStandings();
+          race.updateScoreRecords();
           race.broadcast(race.createSnapshot());
 
           ctx.status(200).json(Map.of("adjustedLapCount", dhd.getAdjustedLapCount()));

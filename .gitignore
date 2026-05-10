@@ -70,6 +70,7 @@ client/browsers/
 
 # I think this is generated code on the client/server
 .m2/
+.m2_repo/
 server/.m2
 server/.m2_repo
 server/build_output/
