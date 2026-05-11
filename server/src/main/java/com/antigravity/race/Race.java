@@ -11,6 +11,8 @@ import com.antigravity.models.Driver;
 import com.antigravity.models.FuelOptions;
 import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.HeatRotationType;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.HeatScoring.AllowFinish;
 import com.antigravity.models.Lane;
 import com.antigravity.models.Track;
 import com.antigravity.proto.CallbuttonEvent;
@@ -847,6 +849,29 @@ public class Race implements ProtocolListener {
     }
   }
 
+  public void syncLanePowerWithState(boolean on) {
+    if (!on) {
+      setLanePower(false, -1);
+      return;
+    }
+
+    Set<Integer> finishedLanes = executionManager.getFinishedLanes();
+    for (int i = 0; i < getTrack().getLanes().size(); i++) {
+      boolean hasPenalty = false;
+      if (currentHeat != null && i < currentHeat.getDrivers().size()) {
+        if (currentHeat.getDrivers().get(i).getRemainingFalseStartTimePenalty() > 0) {
+          hasPenalty = true;
+        }
+      }
+
+      if (!finishedLanes.contains(i) && !hasPenalty) {
+        setLanePower(true, i);
+      } else {
+        setLanePower(false, i);
+      }
+    }
+  }
+
   public void updatePowerForFlag(RaceFlag flag) {
     switch (flag) {
       case RED:
@@ -856,8 +881,10 @@ public class Race implements ProtocolListener {
             && model.isHotStart()
             && !hasRacedInCurrentHeat) {
           setMainPower(true);
+          setLanePower(true, -1);
         } else {
           setMainPower(false);
+          setLanePower(false, -1);
         }
         break;
       case GREEN_YELLOW:
@@ -867,9 +894,19 @@ public class Race implements ProtocolListener {
       case GREEN:
       case WHITE:
         setMainPower(true);
+        syncLanePowerWithState(true);
         break;
       case CHECKERED:
-        setMainPower(false);
+        HeatScoring scoring = model.getHeatScoring();
+        if (scoring != null
+            && (scoring.getAllowFinish() == AllowFinish.None
+                || scoring.getAllowFinish() == AllowFinish.NoneAutoSegments)) {
+          setMainPower(false);
+          setLanePower(false, -1);
+        } else {
+          setMainPower(true);
+          syncLanePowerWithState(true);
+        }
         break;
       default:
         break;

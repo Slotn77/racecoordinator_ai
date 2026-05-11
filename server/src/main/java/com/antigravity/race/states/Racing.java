@@ -57,7 +57,7 @@ public class Racing implements IRaceState {
       // For lap-based races, show checkered when any driver finishes
       for (int i = 0; i < heatDrivers.size(); i++) {
         DriverHeatData hd = heatDrivers.get(i);
-        if (isDriverFinished(i, hd, scoring)) {
+        if (isDriverFinished(race, i, hd)) {
           return RaceFlag.CHECKERED;
         }
       }
@@ -79,19 +79,6 @@ public class Racing implements IRaceState {
     }
 
     return RaceFlag.GREEN;
-  }
-
-  private boolean isDriverFinished(int laneIndex, DriverHeatData hd, HeatScoring scoring) {
-    if (scoring == null || hd == null) return false;
-
-    if (scoring.getFinishMethod() == FinishMethod.Lap) {
-      return hd.getLapCount() >= scoring.getFinishValue();
-    } else if (scoring.getFinishMethod() == FinishMethod.Timed) {
-      // For timed races, they are finished if they've crossed the line after time expired
-      // This is tracked by the execution manager
-      return executionManager.getFinishedLanes().contains(laneIndex);
-    }
-    return false;
   }
 
   @Override
@@ -444,7 +431,8 @@ public class Racing implements IRaceState {
       DriverHeatData dhd = drivers.get(i);
       if (dhd == null) continue;
 
-      // Lap based race: the driver that got to the lap limit ending the heat should get 0 auto
+      // Lap based race: the driver that got to the lap limit ending the heat should
+      // get 0 auto
       // segments
       if (isLapBased && dhd.getLapCount() >= limit) {
         dhd.setAutoCalculatedLaps(0.0);

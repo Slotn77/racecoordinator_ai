@@ -423,6 +423,49 @@ public class ArduinoProtocolTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
+  public void testUpdateConfig_SyncsPower() {
+    // Configure Pin 4 as Main Relay
+    config.digitalIds =
+        new ArrayList<>(Collections.nCopies(10, PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(4, PinBehavior.BEHAVIOR_RELAY.getNumber());
+    config.normallyClosedRelays = false;
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+
+    // Verify version to allow power commands
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+
+    // Initial state: Power OFF, NC=false -> 0V
+    protocol.setMainPower(false);
+    serialConnection.allWrittenData.clear();
+
+    // Update config: Change to NC=true
+    ArduinoConfig newConfig = new ArduinoConfig();
+    newConfig.commPort = "COM1";
+    newConfig.baudRate = 115200;
+    newConfig.normallyClosedRelays = true; // CHANGED
+    newConfig.digitalIds =
+        new ArrayList<>(Collections.nCopies(10, PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    newConfig.digitalIds.set(4, PinBehavior.BEHAVIOR_RELAY.getNumber());
+
+    protocol.updateConfig(newConfig);
+
+    // Verify it sent a new power command (should now be 5V for OFF because NC=true)
+    boolean foundPower = false;
+    byte[] expectedPower = {0x4F, 0x44, 0x04, 0x01, 0x3B};
+    for (byte[] data : serialConnection.allWrittenData) {
+      if (Arrays.equals(data, expectedPower)) {
+        foundPower = true;
+        break;
+      }
+    }
+    assertTrue("Should have synchronized power after NC setting change", foundPower);
+  }
+
+  @Test
   public void testSetPinState_Digital() {
     protocol.open();
     // O D 2 1 ; -> 4F 44 02 01 3B

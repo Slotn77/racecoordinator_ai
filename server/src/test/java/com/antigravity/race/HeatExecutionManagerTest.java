@@ -127,6 +127,7 @@ public class HeatExecutionManagerTest {
             .build();
     executionManager = race.getHeatExecutionManager();
     executionManager.initialize(track.getLanes().size());
+    race.updatePowerForFlag(com.antigravity.proto.RaceFlag.GREEN);
 
     // Driver 1 completes 3 laps
     executionManager.onLap(0, 1.0, 1, false, true, false); // Reaction
@@ -135,6 +136,8 @@ public class HeatExecutionManagerTest {
     executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 3 (Finished)
     assertFalse(race.getState() instanceof HeatOver);
     assertTrue(executionManager.getFinishedLanes().contains(0));
+    assertFalse("Lane 0 power should be OFF after finishing", race.isLanePower(0));
+    assertTrue("Lane 1 power should stay ON for Driver 2", race.isLanePower(1));
 
     // Driver 2 completes 3 laps
     executionManager.onLap(1, 1.0, 1, false, true, false); // Reaction
@@ -142,6 +145,58 @@ public class HeatExecutionManagerTest {
     executionManager.onLap(1, 5.0, 1, false, true, false); // Lap 2
     executionManager.onLap(1, 5.0, 1, false, true, false); // Lap 3 (Finished)
     assertTrue(race.getState() instanceof HeatOver);
+  }
+
+  @Test
+  public void testLapRace_AllowFinish_SingleLap() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Lap,
+            3L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.SingleLap);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race1")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.updatePowerForFlag(com.antigravity.proto.RaceFlag.GREEN);
+
+    // Driver 1 completes 3 laps (Leader finishes)
+    executionManager.onLap(0, 1.0, 1, false, true, false); // Reaction
+    executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 1
+    executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 2
+    executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 3 (Finished)
+
+    assertFalse(race.getState() instanceof HeatOver);
+    assertTrue(executionManager.getFinishedLanes().contains(0));
+    assertFalse("Lane 0 power should be OFF", race.isLanePower(0));
+    assertTrue("Lane 1 power should be ON", race.isLanePower(1));
+
+    // Driver 2 is at Lap 0. In SingleLap mode, since someone finished,
+    // their NEXT lap hit should finish them regardless of the 3 lap limit.
+    executionManager.onLap(1, 1.0, 1, false, true, false); // Reaction (Lap 0)
+    assertFalse(race.getState() instanceof HeatOver);
+
+    executionManager.onLap(1, 5.0, 1, false, true, false); // Lap 1 (Finish triggered by SingleLap)
+    assertTrue(
+        "Heat should end after Driver 2 completes their single extra lap",
+        race.getState() instanceof HeatOver);
+    assertTrue(executionManager.getFinishedLanes().contains(1));
   }
 
   @Test

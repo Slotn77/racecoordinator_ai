@@ -171,4 +171,69 @@ public class RaceFlagTest {
     when(d.getLapCount()).thenReturn(10);
     assertEquals(RaceFlag.CHECKERED, state.getFlagType(race));
   }
+
+  @Test
+  public void testLaneFlagRedAllowFinish() {
+    Racing state = new Racing();
+    Heat currentHeat = mock(Heat.class);
+    when(race.getCurrentHeat()).thenReturn(currentHeat);
+
+    List<DriverHeatData> activeDrivers = new ArrayList<>();
+    DriverHeatData d0 = mock(DriverHeatData.class); // Driver 0 (Finished)
+    DriverHeatData d1 = mock(DriverHeatData.class); // Driver 1 (Racing)
+    activeDrivers.add(d0);
+    activeDrivers.add(d1);
+    when(currentHeat.getDrivers()).thenReturn(activeDrivers);
+
+    HeatExecutionManager hem = mock(HeatExecutionManager.class);
+    when(race.getHeatExecutionManager()).thenReturn(hem);
+
+    when(heatScoring.getFinishMethod()).thenReturn(FinishMethod.Lap);
+    when(heatScoring.getFinishValue()).thenReturn(10L);
+    when(heatScoring.getAllowFinish()).thenReturn(AllowFinish.Allow);
+
+    // Driver 0 is finished (10 laps)
+    when(d0.getLapCount()).thenReturn(10);
+    // Driver 1 is still racing (5 laps)
+    when(d1.getLapCount()).thenReturn(5);
+
+    // Global flag should be CHECKERED because someone finished
+    assertEquals(RaceFlag.CHECKERED, state.getFlagType(race));
+
+    // Driver 0 should show RED (Individual finish)
+    assertEquals(RaceFlag.RED, state.getLaneFlagType(race, 0));
+
+    // Driver 1 should show CHECKERED (Inherited global state)
+    assertEquals(RaceFlag.CHECKERED, state.getLaneFlagType(race, 1));
+  }
+
+  @Test
+  public void testLaneFlagRedAllowFinishTimed() {
+    Racing state = new Racing();
+    Heat currentHeat = mock(Heat.class);
+    when(race.getCurrentHeat()).thenReturn(currentHeat);
+
+    List<DriverHeatData> activeDrivers = new ArrayList<>();
+    DriverHeatData d0 = mock(DriverHeatData.class);
+    activeDrivers.add(d0);
+    when(currentHeat.getDrivers()).thenReturn(activeDrivers);
+
+    HeatExecutionManager hem = mock(HeatExecutionManager.class);
+    when(race.getHeatExecutionManager()).thenReturn(hem);
+
+    when(heatScoring.getFinishMethod()).thenReturn(FinishMethod.Timed);
+    when(heatScoring.getAllowFinish()).thenReturn(AllowFinish.Allow);
+
+    // Driver 0 in finished lanes
+    java.util.Set<Integer> finished = new java.util.HashSet<>();
+    finished.add(0);
+    when(hem.getFinishedLanes()).thenReturn(finished);
+
+    // Global flag should be CHECKERED if time is up
+    when(race.getRaceTime()).thenReturn(0.0f);
+    assertEquals(RaceFlag.CHECKERED, state.getFlagType(race));
+
+    // Driver 0 should show RED
+    assertEquals(RaceFlag.RED, state.getLaneFlagType(race, 0));
+  }
 }

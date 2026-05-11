@@ -101,6 +101,7 @@ describe("DriverStationComponent", () => {
       "getFlagType",
       "getFlagColor",
       "getFlagNameKey",
+      "getFlagTypeForFlag",
     ]);
     mockRaceFlagService.getFlagType.and.returnValue("red");
     mockRaceFlagService.getFlagColor.and.returnValue("red");
@@ -229,5 +230,33 @@ describe("DriverStationComponent", () => {
 
     // Test passes if no error is thrown
     expect(true).toBe(true);
+  });
+
+  it("should return RED flag type when individual driver is finished in allow finish mode", () => {
+    const mockRaceFlagService = TestBed.inject(RaceFlagService);
+    (mockRaceFlagService.getFlagTypeForFlag as jasmine.Spy).and.returnValue(
+      "red",
+    );
+
+    component["driverData"] = { flag: RaceFlag.RED } as any;
+    const result = component.raceStateColor;
+    expect(result).toBe("red");
+    expect(mockRaceFlagService.getFlagTypeForFlag).toHaveBeenCalledWith(
+      RaceFlag.RED,
+    );
+  });
+
+  it("should return CHECKERED flag type when individual driver is still racing and race is checkered", () => {
+    const mockRaceFlagService = TestBed.inject(RaceFlagService);
+    (mockRaceFlagService.getFlagTypeForFlag as jasmine.Spy).and.returnValue(
+      "checkered",
+    );
+
+    component["driverData"] = { flag: RaceFlag.CHECKERED } as any;
+    const result = component.raceStateColor;
+    expect(result).toBe("checkered");
+    expect(mockRaceFlagService.getFlagTypeForFlag).toHaveBeenCalledWith(
+      RaceFlag.CHECKERED,
+    );
   });
 });

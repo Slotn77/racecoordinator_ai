@@ -734,6 +734,30 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBe("http://localhost/red_flag.png");
       expect(mockRaceFlagService.getFlagType).toHaveBeenCalled();
     });
+
+    it("should use individual driver flag from server if present in formatValue", () => {
+      mockRaceFlagService.getFlagUrl.and.returnValue(
+        "http://localhost/finished_red.png",
+      );
+      const result = component.formatValue("flag", RaceFlag.RED, mockHd as any);
+      expect(result).toBe("http://localhost/finished_red.png");
+      expect(mockRaceFlagService.getFlagUrl).toHaveBeenCalledWith(RaceFlag.RED);
+    });
+
+    it("should use checkered flag from server if present in formatValue", () => {
+      mockRaceFlagService.getFlagUrl.and.returnValue(
+        "http://localhost/checkered.png",
+      );
+      const result = component.formatValue(
+        "flag",
+        RaceFlag.CHECKERED,
+        mockHd as any,
+      );
+      expect(result).toBe("http://localhost/checkered.png");
+      expect(mockRaceFlagService.getFlagUrl).toHaveBeenCalledWith(
+        RaceFlag.CHECKERED,
+      );
+    });
   });
 
   describe("themed audio events", () => {

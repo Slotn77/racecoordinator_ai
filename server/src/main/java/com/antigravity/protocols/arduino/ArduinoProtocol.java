@@ -372,6 +372,10 @@ public class ArduinoProtocol extends DefaultProtocol {
     boolean digitalPinsChanged = !this.config.digitalIds.equals(newConfig.digitalIds);
     boolean analogPinsChanged = !this.config.analogIds.equals(newConfig.analogIds);
     boolean ledStringsChanged = !Objects.equals(this.config.ledStrings, newConfig.ledStrings);
+    boolean normallyClosedRelaysChanged =
+        this.config.normallyClosedRelays != newConfig.normallyClosedRelays;
+    boolean normallyClosedLaneSensorsChanged =
+        this.config.normallyClosedLaneSensors != newConfig.normallyClosedLaneSensors;
 
     String oldPort = this.config.commPort;
     this.config = newConfig;
@@ -383,7 +387,7 @@ public class ArduinoProtocol extends DefaultProtocol {
       close();
       open();
     } else if (versionVerified) {
-      if (digitalPinsChanged || analogPinsChanged) {
+      if (digitalPinsChanged || analogPinsChanged || normallyClosedLaneSensorsChanged) {
         sendPinModeRead();
         sendPinModeWrite();
         sendPinModeAnalogRead();
@@ -393,6 +397,9 @@ public class ArduinoProtocol extends DefaultProtocol {
       }
       if (debounceChanged) {
         sendDebounce();
+      }
+      if (digitalPinsChanged || analogPinsChanged || normallyClosedRelaysChanged) {
+        syncPower();
       }
     }
   }

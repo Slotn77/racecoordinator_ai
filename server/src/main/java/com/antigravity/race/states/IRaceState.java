@@ -1,5 +1,8 @@
 package com.antigravity.race.states;
 
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.HeatScoring.AllowFinish;
+import com.antigravity.models.HeatScoring.FinishMethod;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.DriverHeatData;
@@ -34,7 +37,35 @@ public interface IRaceState {
       return RaceFlag.BLACK;
     }
 
+    // 3) Finished in Allow Finish mode - show RED instead of CHECKERED for the driver
+    if (race.getRaceModel() != null && race.getRaceModel().getHeatScoring() != null) {
+      HeatScoring scoring = race.getRaceModel().getHeatScoring();
+      if (scoring.getAllowFinish() != AllowFinish.None
+          && scoring.getAllowFinish() != AllowFinish.NoneAutoSegments) {
+        if (isDriverFinished(race, lane, dhd)) {
+          return RaceFlag.RED;
+        }
+      }
+    }
+
     return baseFlag;
+  }
+
+  default boolean isDriverFinished(Race race, int laneIndex, DriverHeatData hd) {
+    if (race == null || race.getRaceModel() == null || hd == null) return false;
+    HeatScoring scoring = race.getRaceModel().getHeatScoring();
+    if (scoring == null) return false;
+
+    // Check if they are already in the finished lanes list (most authoritative)
+    if (race.getHeatExecutionManager() != null
+        && race.getHeatExecutionManager().getFinishedLanes().contains(laneIndex)) {
+      return true;
+    }
+
+    if (scoring.getFinishMethod() == FinishMethod.Lap) {
+      return hd.getLapCount() >= scoring.getFinishValue();
+    }
+    return false;
   }
 
   void enter(Race race);

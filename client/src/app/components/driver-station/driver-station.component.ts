@@ -7,7 +7,7 @@ import { FinishMethod } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import { RaceState } from "@app/proto/antigravity";
+import { RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { LoggerService } from "@app/services/logger.service";
@@ -266,7 +266,13 @@ export class DriverStationComponent implements OnInit, OnDestroy {
   }
 
   get raceStateColor(): string {
-    return this.raceFlagService.getFlagColor();
+    const flag = this.driverData?.flag || RaceFlag.UNKNOWN_FLAG;
+
+    if (flag === RaceFlag.UNKNOWN_FLAG || flag === 0) {
+      return this.raceFlagService.getFlagColor();
+    }
+
+    return this.raceFlagService.getFlagTypeForFlag(flag);
   }
 
   get backgroundColor(): string {
