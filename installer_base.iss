@@ -39,20 +39,20 @@ Source: "release\RaceCoordinator\arduino\*"; DestDir: "{app}\arduino"; Flags: ig
 
 [Icons]
 ; Desktop Icons
-Name: "{autodesktop}\Race Coordinator Server (Headless)"; Filename: "{app}\jre\bin\java.exe"; \
-    Parameters: "-Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless"; \
+Name: "{autodesktop}\Race Coordinator Server (Headless)"; Filename: "{cmd}"; \
+    Parameters: "/c """"{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless || pause"""""; \
     IconFilename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 
-Name: "{autodesktop}\Race Coordinator Client"; Filename: "cmd.exe"; \
+Name: "{autodesktop}\Race Coordinator Client"; Filename: "{cmd}"; \
     Parameters: "/c start {#MyAppURL}"; IconFilename: "{app}\server\web\favicon.ico"
 
 ; Start Menu Icons
-Name: "{group}\Race Coordinator Server"; Filename: "{app}\jre\bin\java.exe"; \
-    Parameters: "-Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"""; \
+Name: "{group}\Race Coordinator Server"; Filename: "{cmd}"; \
+    Parameters: "/c """"{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" || pause"""""; \
     IconFilename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 
-Name: "{group}\Race Coordinator Server (Headless)"; Filename: "{app}\jre\bin\java.exe"; \
-    Parameters: "-Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless"; \
+Name: "{group}\Race Coordinator Server (Headless)"; Filename: "{cmd}"; \
+    Parameters: "/c """"{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless || pause"""""; \
     IconFilename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 
 Name: "{group}\Race Coordinator Client"; Filename: "cmd.exe"; \
@@ -74,6 +74,23 @@ Name: "{commonappdata}\{#MyAppName}\server_temp"; Permissions: users-full
 Name: "{app}\mongodb"; Permissions: users-full
 
 [Code]
+function KillProcesses: Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := True;
+  // Kill java and mongod processes that might be using our ports or files.
+  // We use PowerShell to specifically target processes using our known ports (7070, 27017)
+  // as well as a fallback by name for our specific JAR.
+  Log('Attempting to kill existing Race Coordinator processes...');
+  
+  // 1. Kill by port (most reliable for clearing locks)
+  Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "Get-NetTCPConnection -LocalPort 7070, 27017 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  
+  // 2. Kill by name/command line (fallback)
+  Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "Get-Process -Name java, mongod -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like ''*RaceCoordinator*'' -or $_.Name -eq ''mongod'' } | Stop-Process -Force -ErrorAction SilentlyContinue"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
 function IsWindows10OrNewer: Boolean;
 var
   Version: TWindowsVersion;
@@ -81,4 +98,10 @@ begin
   GetWindowsVersionEx(Version);
   // Windows 10 is version 10.0
   Result := (Version.Major >= 10);
+end;
+
+function InitializeSetup: Boolean;
+begin
+  KillProcesses;
+  Result := True;
 end;
