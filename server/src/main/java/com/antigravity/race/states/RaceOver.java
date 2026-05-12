@@ -38,6 +38,9 @@ public class RaceOver implements IRaceState {
         && race.getCurrentHeat().getStatistics().getEndTime() == null) {
       race.getCurrentHeat().getStatistics().setEndTime(OffsetDateTime.now().toString());
       long heatStart = race.getCurrentHeat().getStatistics().getStartMillis();
+      // Broadcast final standings one last time
+      race.updateAndBroadcastOverallStandings();
+      race.updateScoreRecords();
       if (heatStart > 0) {
         race.getCurrentHeat()
             .getStatistics()

@@ -13,6 +13,7 @@ import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import com.antigravity.proto.RecordData;
 import com.antigravity.proto.RecordEntry;
+import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -116,13 +117,10 @@ public class RaceRecordTest {
     race.onLap(0, 5.0, 0, 0);
 
     RecordData recordData = race.getRecordData();
-    // Check Overall
-    assertEquals(6.0, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
-    assertEquals("D0", recordData.getOverall().getLaneFastestLap(0).getHolderName());
-    assertEquals("Nick0", recordData.getOverall().getLaneFastestLap(0).getHolderNickname());
-    assertTrue(recordData.getOverall().getLaneFastestLap(0).getDate() > 0);
+    // Check Overall (Still 0, deferred)
+    assertEquals(0.0, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
 
-    // Check Current
+    // Check Current (Updated immediately)
     assertEquals(6.0, recordData.getCurrent().getLaneFastestLap(0).getValue(), 0.001);
     assertEquals("D0", recordData.getCurrent().getLaneFastestLap(0).getHolderName());
 
@@ -136,7 +134,17 @@ public class RaceRecordTest {
     race.onLap(0, 4.5, 0, 0);
     recordData = race.getRecordData();
     assertEquals(4.5, recordData.getCurrent().getLaneFastestLap(0).getValue(), 0.001);
+
+    // Overall still 0
+    assertEquals(0.0, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
+
+    // End race to see Overall update
+    race.changeState(new RaceOver());
+    recordData = race.getRecordData();
     assertEquals(4.5, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
+    assertEquals("D0", recordData.getOverall().getLaneFastestLap(0).getHolderName());
+    assertEquals("Nick0", recordData.getOverall().getLaneFastestLap(0).getHolderNickname());
+    assertTrue(recordData.getOverall().getLaneFastestLap(0).getDate() > 0);
   }
 
   @Test
@@ -147,13 +155,18 @@ public class RaceRecordTest {
     race.onLap(2, 1.0, 0, 0);
     race.onLap(2, 5.0, 0, 0); // effective 6.0, lapCount = 1
 
+    // 4. End the race to update score records
+    race.changeState(new RaceOver());
+
     RecordData recordData = race.getRecordData();
     assertEquals(1.0, recordData.getOverall().getLaneHighestScore(2).getValue(), 0.001);
     assertEquals(1.0, recordData.getCurrent().getLaneHighestScore(2).getValue(), 0.001);
     assertEquals("D2", recordData.getCurrent().getLaneHighestScore(2).getHolderName());
 
     // Second lap for lane 2
+    race.changeState(new Racing());
     race.onLap(2, 5.0, 0, 0); // lapCount = 2
+    race.changeState(new RaceOver());
     recordData = race.getRecordData();
     assertEquals(2.0, recordData.getCurrent().getLaneHighestScore(2).getValue(), 0.001);
     assertEquals(2.0, recordData.getOverall().getLaneHighestScore(2).getValue(), 0.001);
@@ -174,6 +187,9 @@ public class RaceRecordTest {
     RecordEntry lapRecord = recordData.getCurrent().getLaneFastestLap(3);
     assertEquals(2.0, lapRecord.getValue(), 0.001);
     assertEquals("D3", lapRecord.getHolderName());
+
+    race.changeState(new RaceOver());
+    recordData = race.getRecordData();
 
     RecordEntry scoreRecord = recordData.getCurrent().getLaneHighestScore(3);
     System.out.println(
@@ -217,6 +233,7 @@ public class RaceRecordTest {
     race.onLap(0, 1.0, 0, 0);
     race.onLap(0, 5.0, 0, 0);
 
+    race.changeState(new RaceOver());
     RecordData recordData = race.getRecordData();
 
     // 1. Overall Fastest Lap
@@ -274,6 +291,8 @@ public class RaceRecordTest {
     // First call is reaction time, second is the lap
     race.onLap(0, 1.0, 0, 0);
     race.onLap(0, 5.0, 0, 0);
+
+    race.changeState(new RaceOver());
 
     // Export to CSV
     String csv = com.antigravity.util.CsvExporter.export(race);
@@ -411,13 +430,20 @@ public class RaceRecordTest {
   @Test
   public void testManualLapAdjustmentUpdatesRecords() {
     // Driver 0 gets 5 laps manually
+    // Driver 0 gets 5 laps manually
     race.getCurrentHeat().getDrivers().get(0).setUserLaps(5.0);
     race.updateAndBroadcastOverallStandings();
 
+    // Current Race record updates immediately because updateAndBroadcastOverallStandings() calls it
     RecordData recordData = race.getRecordData();
-    // In LAP_COUNT scoring, highest score = total adjusted laps
     assertEquals(5.0, recordData.getCurrent().getHighestScore().getValue(), 0.001);
     assertEquals("D0", recordData.getCurrent().getHighestScore().getHolderName());
+
+    // Overall remains 0 until RaceOver
+    assertEquals(0.0, recordData.getOverall().getHighestScore().getValue(), 0.001);
+
+    race.changeState(new RaceOver());
+    recordData = race.getRecordData();
     assertEquals(5.0, recordData.getOverall().getHighestScore().getValue(), 0.001);
   }
 
@@ -429,12 +455,15 @@ public class RaceRecordTest {
     race.getCurrentHeat().getDrivers().get(1).setUserLaps(15.0);
 
     race.updateAndBroadcastOverallStandings();
+    race.changeState(new RaceOver());
     assertEquals(15.0, race.getRecordData().getCurrent().getHighestScore().getValue(), 0.001);
     assertEquals("D1", race.getRecordData().getCurrent().getHighestScore().getHolderName());
 
     // Remove 10 laps from Driver 1 -> total 5
+    race.changeState(new Racing());
     race.getCurrentHeat().getDrivers().get(1).setUserLaps(5.0);
     race.updateAndBroadcastOverallStandings();
+    race.changeState(new RaceOver());
 
     // Record should revert to Driver 0 (10 laps)
     RecordData recordData = race.getRecordData();
@@ -456,7 +485,7 @@ public class RaceRecordTest {
     field.set(race, baseStats);
 
     // Sync overall with base records (normally happens on load/recalc)
-    race.updateScoreRecords();
+    race.changeState(new RaceOver());
     assertEquals(20.0, race.getRecordData().getOverall().getHighestScore().getValue(), 0.001);
     assertEquals(
         "Legacy Champ", race.getRecordData().getOverall().getHighestScore().getHolderName());
@@ -469,8 +498,10 @@ public class RaceRecordTest {
     assertEquals("D0", race.getRecordData().getOverall().getHighestScore().getHolderName());
 
     // Driver 0 has laps removed -> total 15 (less than legacy record)
+    race.changeState(new Racing());
     race.getCurrentHeat().getDrivers().get(0).setUserLaps(15.0);
     race.updateAndBroadcastOverallStandings();
+    race.changeState(new RaceOver());
 
     // Overall Record should revert to Legacy Champ (20.0)
     RecordData recordData = race.getRecordData();
@@ -488,17 +519,17 @@ public class RaceRecordTest {
     // Driver 0 gets 10 laps
     race.getCurrentHeat().getDrivers().get(0).setUserLaps(10.0);
     race.updateAndBroadcastOverallStandings();
+    race.changeState(new RaceOver());
 
     assertEquals("D0", race.getRecordData().getCurrent().getHighestScore().getHolderName());
 
     // Change actual driver for lane 0 to D1
+    race.changeState(new Racing());
     Driver newDriver = drivers.get(1).getDriver();
     race.getCurrentHeat().getDrivers().get(0).setActualDriver(newDriver);
 
-    // Note: recalculateScoreRecords currently uses participant driver name by default,
-    // but updateAndBroadcastOverallStandings should ideally handle driver swaps.
-    // Let's verify current behavior and see if it needs fix.
     race.updateAndBroadcastOverallStandings();
+    race.changeState(new RaceOver());
 
     // Since recalculateScoreRecords currently uses p.getDriver().getName() (the primary driver),
     // and we changed actualDriver in the heat but not the participant's primary driver,
