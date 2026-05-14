@@ -40,6 +40,7 @@ import com.antigravity.race.states.Starting;
 import com.google.protobuf.GeneratedMessageV3;
 import com.mongodb.client.model.Filters;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -116,7 +117,7 @@ public class Race implements ProtocolListener {
 
     this.accumulatedRaceTime = builder.accumulatedRaceTime;
     this.lanePower = new boolean[this.track.getLanes().size()];
-    java.util.Arrays.fill(this.lanePower, true);
+    Arrays.fill(this.lanePower, true);
     this.hasRacedInCurrentHeat = builder.hasRacedInCurrentHeat;
     this.autoStartFired = builder.autoStartFired;
     this.autoAdvanceFired = builder.autoAdvanceFired;
@@ -785,7 +786,7 @@ public class Race implements ProtocolListener {
 
     // Re-sync lane power
     syncLanePowerWithState(mainPower);
-    broadcast(HeatConverter.toProto(currentHeat, new java.util.HashSet<>()));
+    broadcast(HeatConverter.toProto(currentHeat, new HashSet<>()));
   }
 
   public void setRaceState(RaceState protoState, RaceFlag protoFlag, double countdown) {

@@ -1681,10 +1681,11 @@ export class DefaultRacedayComponent
   }
 
   public get isDeferHeatDisabled(): boolean {
-    // Disabled in Starting, Racing.
-    // "Heat Over: Everything... disabled".
     const s = this.raceState;
-    return s !== RaceState.NOT_STARTED;
+    if (s !== RaceState.NOT_STARTED && s !== RaceState.UNKNOWN_STATE) {
+      return true;
+    }
+    return this.totalHeats <= 1;
   }
 
   public get isSkipHeatDisabled(): boolean {
