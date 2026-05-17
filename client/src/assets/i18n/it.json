@@ -576,6 +576,8 @@
   "RD_CONFIRM_EXIT_BTN_STAY": "Resta",
   "RD_CONFIRM_EXIT_MESSAGE": "Sei sicuro di voler uscire dalla gara?",
   "RD_CONFIRM_EXIT_TITLE": "Esci dalla gara",
+  "RD_CONFIRM_SKIP_HEAT_MESSAGE": "Sei sicuro di voler saltare questa manche?",
+  "RD_CONFIRM_SKIP_HEAT_TITLE": "Salta Manche",
   "RD_DRIFT_LAP": "DRIFT",
   "RD_MODIFY_HEATS": "Modifica manche",
   "RD_REGENERATE_HEATS": "Rigenera manche",

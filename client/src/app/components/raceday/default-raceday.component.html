@@ -19,6 +19,17 @@
   >
   </app-confirmation-modal>
 
+  <app-confirmation-modal
+    [visible]="showSkipHeatConfirmation"
+    [title]="skipHeatModalTitle"
+    [message]="skipHeatModalMessage"
+    [confirmText]="skipHeatConfirmText"
+    [cancelText]="skipHeatCancelText"
+    (confirm)="onSkipHeatConfirm()"
+    (cancel)="onSkipHeatCancel()"
+  >
+  </app-confirmation-modal>
+
   @if (showCountdownOverlay) {
     <div class="countdown-overlay">
       @if (race) {

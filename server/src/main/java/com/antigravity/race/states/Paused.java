@@ -60,8 +60,8 @@ public class Paused implements IRaceState {
 
   @Override
   public void skipHeat(Race race) {
-    logger.info("Paused.skipHeat() called. Advancing to HeatOver.");
-    race.changeState(new HeatOver());
+    logger.info("Paused.skipHeat() called. Skipping current heat and auto-advancing.");
+    Common.advanceToNextHeat(race);
   }
 
   @Override

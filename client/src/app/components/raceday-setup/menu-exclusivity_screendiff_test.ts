@@ -28,7 +28,16 @@ test.describe("Raceday Setup Menu Exclusivity", () => {
       await expect(splashScreen).not.toBeVisible({ timeout: 10000 });
     }
 
-    await page.evaluate(() => document.fonts.ready);
+    await Promise.race([
+      page.evaluate(() => document.fonts.ready),
+      new Promise<void>((resolve) => setTimeout(resolve, 2000)),
+    ]).catch((err) => {
+      console.warn(
+        "Menu Exclusivity visual test: font ready wait failed:",
+        err,
+      );
+    });
+
     await TestSetupHelper.disableAnimations(page);
 
     await expect(page.getByText("Alice")).toBeVisible();

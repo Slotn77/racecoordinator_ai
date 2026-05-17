@@ -576,6 +576,8 @@
   "RD_CONFIRM_EXIT_BTN_STAY": "Quedarse",
   "RD_CONFIRM_EXIT_MESSAGE": "¿Está seguro de que desea salir de la carrera?",
   "RD_CONFIRM_EXIT_TITLE": "Salir de la carrera",
+  "RD_CONFIRM_SKIP_HEAT_MESSAGE": "¿Está seguro de que desea saltar esta manga?",
+  "RD_CONFIRM_SKIP_HEAT_TITLE": "Saltar Manga",
   "RD_DRIFT_LAP": "DRIFT",
   "RD_MODIFY_HEATS": "Modificar mangas",
   "RD_REGENERATE_HEATS": "Regenerar mangas",

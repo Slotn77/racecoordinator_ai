@@ -64,8 +64,8 @@ public class DemoModePersistenceTest {
     ClientSubscriptionManager.setInstance(mockManager);
 
     DatabaseContext mockContext = mock(DatabaseContext.class);
-    when(mockManager.getDatabaseContext()).thenReturn(mockContext);
-    when(mockContext.getDatabase()).thenReturn(mock(MongoDatabase.class));
+    doReturn(mockContext).when(mockManager).getDatabaseContext();
+    doReturn(mock(MongoDatabase.class)).when(mockContext).getDatabase();
 
     // Create and enter RaceOver state
     RaceOver raceOver = new RaceOver();
@@ -112,8 +112,8 @@ public class DemoModePersistenceTest {
     ClientSubscriptionManager.setInstance(mockManager);
 
     DatabaseContext mockContext = mock(DatabaseContext.class);
-    when(mockManager.getDatabaseContext()).thenReturn(mockContext);
-    when(mockContext.getDatabase()).thenReturn(mock(MongoDatabase.class));
+    doReturn(mockContext).when(mockManager).getDatabaseContext();
+    doReturn(mock(MongoDatabase.class)).when(mockContext).getDatabase();
 
     RaceOver raceOver = new RaceOver();
     raceOver.enter(normalRace);

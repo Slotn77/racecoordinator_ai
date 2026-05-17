@@ -239,8 +239,8 @@ public class RaceStateTest {
 
     refreshSession();
     race.skipHeat();
-    verifyBroadcast(RaceState.HEAT_OVER);
-    assertTrue(race.getState() instanceof HeatOver);
+    verifyBroadcast(RaceState.RACE_OVER);
+    assertTrue(race.getState() instanceof RaceOver);
   }
 
   @Test
@@ -253,8 +253,28 @@ public class RaceStateTest {
 
     refreshSession();
     race.skipHeat();
-    verifyBroadcast(RaceState.HEAT_OVER);
-    assertTrue(race.getState() instanceof HeatOver);
+    verifyBroadcast(RaceState.RACE_OVER);
+    assertTrue(race.getState() instanceof RaceOver);
+  }
+
+  @Test
+  public void testSkipHeatWithMultipleHeats() throws Exception {
+    // Add a second heat to the race
+    List<Heat> heats = race.getHeats();
+    Heat h2 = mock(Heat.class);
+    when(h2.getDrivers()).thenReturn(new ArrayList<>());
+    when(h2.getHeatStandings()).thenReturn(mock(HeatStandings.class));
+    heats.add(h2);
+
+    assertTrue(race.getState() instanceof NotStarted);
+
+    refreshSession();
+    race.skipHeat();
+
+    // Verify it transitioned to NotStarted (for the second heat)
+    verifyBroadcast(RaceState.NOT_STARTED);
+    assertTrue(race.getState() instanceof NotStarted);
+    assertEquals(h2, race.getCurrentHeat());
   }
 
   @Test

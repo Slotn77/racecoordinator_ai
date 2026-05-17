@@ -576,6 +576,8 @@
   "RD_CONFIRM_EXIT_BTN_STAY": "Stay",
   "RD_CONFIRM_EXIT_MESSAGE": "Are you sure you want to exit the race?",
   "RD_CONFIRM_EXIT_TITLE": "Exit Race",
+  "RD_CONFIRM_SKIP_HEAT_MESSAGE": "Are you sure you want to skip this heat?",
+  "RD_CONFIRM_SKIP_HEAT_TITLE": "Skip Heat",
   "RD_DRIFT_LAP": "DRIFT",
   "RD_MODIFY_HEATS": "Modify Heats",
   "RD_REGENERATE_HEATS": "Regenerate Heats",

@@ -576,6 +576,8 @@
   "RD_CONFIRM_EXIT_BTN_STAY": "Blijven",
   "RD_CONFIRM_EXIT_MESSAGE": "Weet u zeker dat u de race wilt verlaten?",
   "RD_CONFIRM_EXIT_TITLE": "Race verlaten",
+  "RD_CONFIRM_SKIP_HEAT_MESSAGE": "Weet u zeker dat u deze heat wilt overslaan?",
+  "RD_CONFIRM_SKIP_HEAT_TITLE": "Heat Overslaan",
   "RD_DRIFT_LAP": "DRIFT",
   "RD_MODIFY_HEATS": "Heats wijzigen",
   "RD_REGENERATE_HEATS": "Heats hergenereren",

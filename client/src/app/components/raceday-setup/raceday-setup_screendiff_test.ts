@@ -58,7 +58,12 @@ test.describe("Splash Screen Visuals", () => {
 
     await page.clock.runFor(2000);
     await page.waitForTimeout(500);
-    await page.evaluate(() => document.fonts.ready);
+    await Promise.race([
+      page.evaluate(() => document.fonts.ready),
+      new Promise<void>((resolve) => setTimeout(resolve, 2000)),
+    ]).catch((err) => {
+      console.warn("Splash Screen visual test: font ready wait failed:", err);
+    });
 
     await page.addStyleTag({
       content: `

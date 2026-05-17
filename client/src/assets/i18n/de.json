@@ -576,6 +576,8 @@
   "UE_CONFIRM_LAST_VALUE_TITLE": "Letzten Wert entfernen",
   "UE_CONFIRM_LAST_VALUE_MESSAGE": "Sind Sie sicher, dass Sie den letzten Wert aus dieser Spalte entfernen möchten?",
   "RD_CONFIRM_EXIT_TITLE": "Rennen verlassen",
+  "RD_CONFIRM_SKIP_HEAT_MESSAGE": "Sind Sie sicher, dass Sie diesen Heat überspringen möchten?",
+  "RD_CONFIRM_SKIP_HEAT_TITLE": "Heat überspringen",
   "RD_DRIFT_LAP": "DRIFT",
   "RD_MODIFY_HEATS": "Läufe ändern",
   "RD_REGENERATE_HEATS": "Läufe neu generieren",

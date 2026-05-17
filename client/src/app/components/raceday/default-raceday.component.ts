@@ -358,6 +358,13 @@ export class DefaultRacedayComponent
   exitConfirmText = "RD_CONFIRM_EXIT_BTN_LEAVE";
   exitCancelText = "RD_CONFIRM_EXIT_BTN_STAY";
 
+  // Skip Heat Confirmation Modal State
+  showSkipHeatConfirmation = false;
+  skipHeatModalTitle = "RD_CONFIRM_SKIP_HEAT_TITLE";
+  skipHeatModalMessage = "RD_CONFIRM_SKIP_HEAT_MESSAGE";
+  skipHeatConfirmText = "GEN_YES";
+  skipHeatCancelText = "GEN_NO";
+
   // Acknowledgement Modal State (kept for interface errors)
   activeMenu: string | null = null;
   ackModalMessageParams: Record<string, any> = {};
@@ -829,6 +836,28 @@ export class DefaultRacedayComponent
   onExitCancel() {
     this.showExitConfirmation = false;
     this.deactivateSubject.next(false);
+  }
+
+  onSkipHeatConfirm() {
+    this.showSkipHeatConfirmation = false;
+    this.dataService.skipHeat().subscribe(
+      (success) => {
+        if (success) {
+          this.logger.debug("Skip heat command sent successfully");
+        } else {
+          this.logger.error("Failed to send skip heat command");
+        }
+      },
+      (error) => {
+        this.logger.error("Error skipping heat:", error);
+      },
+    );
+    this.cdr.markForCheck();
+  }
+
+  onSkipHeatCancel() {
+    this.showSkipHeatConfirmation = false;
+    this.cdr.markForCheck();
   }
 
   canDeactivate(
@@ -1405,18 +1434,8 @@ export class DefaultRacedayComponent
         },
       );
     } else if (action === "SKIP_HEAT") {
-      this.dataService.skipHeat().subscribe(
-        (success) => {
-          if (success) {
-            this.logger.debug("Skip heat command sent successfully");
-          } else {
-            this.logger.error("Failed to send skip heat command");
-          }
-        },
-        (error) => {
-          this.logger.error("Error skipping heat:", error);
-        },
-      );
+      this.showSkipHeatConfirmation = true;
+      this.cdr.markForCheck();
     } else if (action === "DEFER_HEAT") {
       this.dataService.deferHeat().subscribe(
         (success) => {

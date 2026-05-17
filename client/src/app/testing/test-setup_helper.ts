@@ -160,6 +160,72 @@ export class TestSetupHelper {
       });
     });
 
+    // Mock Google Fonts and Material Icons CSS requests to return local fallbacks and original URLs
+    // to avoid hitting external networks that block/hang visual tests, but allowing real fonts when online.
+    await page.route("**/icon?family=Material+Icons*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/css",
+        body: `@font-face {
+          font-family: 'Material Icons';
+          font-style: normal;
+          font-weight: 400;
+          src: local('Material Icons'),
+               local('MaterialIcons-Regular'),
+               url('https://fonts.gstatic.com/s/materialicons/v142/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2') format('woff2');
+        }
+        .material-icons {
+          font-family: 'Material Icons';
+          font-weight: normal;
+          font-style: normal;
+          font-size: 24px;
+          line-height: 1;
+          letter-spacing: normal;
+          text-transform: none;
+          display: inline-block;
+          white-space: nowrap;
+          word-wrap: normal;
+          direction: ltr;
+          -webkit-font-feature-settings: 'liga';
+          -webkit-font-smoothing: antialiased;
+        }`,
+      });
+    });
+
+    await page.route("**/css2?family=Rajdhani*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/css",
+        body: `@font-face {
+          font-family: 'Rajdhani';
+          font-style: normal;
+          font-weight: 300;
+          src: local('Rajdhani'),
+               local('Rajdhani-Light'),
+               url('https://fonts.gstatic.com/s/rajdhani/v15/L0x5DFM4tM2s7KCDQIm32C5yXg.woff2') format('woff2'),
+               local('sans-serif');
+        }
+        @font-face {
+          font-family: 'Rajdhani';
+          font-style: normal;
+          font-weight: 500;
+          src: local('Rajdhani'),
+               local('Rajdhani-Medium'),
+               url('https://fonts.gstatic.com/s/rajdhani/v15/L0x5DFM4tM2s7KCDQIm3Fh5yXg.woff2') format('woff2'),
+               local('sans-serif');
+        }
+        @font-face {
+          font-family: 'Rajdhani';
+          font-style: normal;
+          font-weight: 700;
+          src: local('Rajdhani'),
+               local('Rajdhani-Bold'),
+               url('https://fonts.gstatic.com/s/rajdhani/v15/L0x5DFM4tM2s7KCDQIm3Bx5yXg.woff2') format('woff2'),
+               local('sans-serif');
+        }`,
+      });
+    });
+
     // Force load fonts only during tests to prevent flakiness without changing app code
     await page.addStyleTag({
       url: "https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&display=swap",
@@ -428,16 +494,34 @@ export class TestSetupHelper {
       });
 
     // 4. Ensure fonts and layout have settled after text swap
-    await page.evaluate(async () => {
-      // Explicitly load fonts used in UI to ensure they're ready for screenshots
-      await Promise.all([
-        document.fonts.load("16px Rajdhani"),
-        document.fonts.load("24px Rajdhani"),
-        document.fonts.load("700 16px Rajdhani"),
-        document.fonts.load("16px 'Material Icons'"),
-      ]).catch(() => {});
-      return document.fonts.ready;
+    // We execute the font loading in the browser, but race it at the Node level with a 2-second timeout
+    // to prevent any event loop stalls or fake timer issues from hanging the test suite.
+    const fontsEvaluatePromise = page
+      .evaluate(async () => {
+        try {
+          await Promise.all([
+            document.fonts.load("16px Rajdhani"),
+            document.fonts.load("24px Rajdhani"),
+            document.fonts.load("700 16px Rajdhani"),
+            document.fonts.load("16px 'Material Icons'"),
+          ]);
+          await document.fonts.ready;
+        } catch (e) {
+          // Ignore font loading errors/stalls
+        }
+      })
+      .catch((err) => {
+        console.warn(
+          "TestSetupHelper: font settling evaluate failed/timed out:",
+          err,
+        );
+      });
+
+    const fontsTimeoutPromise = new Promise<void>((resolve) => {
+      setTimeout(resolve, 2000);
     });
+
+    await Promise.race([fontsEvaluatePromise, fontsTimeoutPromise]);
 
     // 5. Wait for a paint cycle to ensure DOM updates are flushed
     await page.evaluate(

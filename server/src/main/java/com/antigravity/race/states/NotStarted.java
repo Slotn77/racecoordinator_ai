@@ -126,8 +126,8 @@ public class NotStarted implements IRaceState {
 
   @Override
   public void skipHeat(Race race) {
-    logger.info("NotStarted.skipHeat() called. Advancing to HeatOver.");
-    race.changeState(new HeatOver());
+    logger.info("NotStarted.skipHeat() called. Skipping current heat and auto-advancing.");
+    Common.advanceToNextHeat(race);
   }
 
   @Override

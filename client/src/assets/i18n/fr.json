@@ -576,6 +576,8 @@
   "RD_CONFIRM_EXIT_BTN_STAY": "Rester",
   "RD_CONFIRM_EXIT_MESSAGE": "Êtes-vous sûr de vouloir quitter la course ?",
   "RD_CONFIRM_EXIT_TITLE": "Quitter la course",
+  "RD_CONFIRM_SKIP_HEAT_MESSAGE": "Êtes-vous sûr de vouloir sauter cette manche ?",
+  "RD_CONFIRM_SKIP_HEAT_TITLE": "Sauter Manche",
   "RD_DRIFT_LAP": "DRIFT",
   "RD_MODIFY_HEATS": "Modifier les séries",
   "RD_REGENERATE_HEATS": "Régénérer les séries",
