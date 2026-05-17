@@ -560,4 +560,33 @@ public class RaceStateTest {
     com.antigravity.proto.RaceFlag flag = raceOver.getFlagType(mockRace);
     assertTrue(flag == com.antigravity.proto.RaceFlag.RED);
   }
+
+  @Test
+  public void testChangeStateUpdatesDriverFlags() {
+    // Set a positive race time so it doesn't show checkered due to timed race finishing
+    race.addRaceTime(100.0f);
+
+    // Transition to Racing manually
+    race.changeState(new Racing());
+
+    // We have 1 driver in heat (Drivers list size = 1)
+    assertEquals(1, race.getCurrentHeat().getDrivers().size());
+
+    // Global flag for Racing is GREEN
+    assertEquals(com.antigravity.proto.RaceFlag.GREEN, race.getState().getFlagType(race));
+
+    // The driver flag should have been updated to GREEN
+    assertEquals(
+        com.antigravity.proto.RaceFlag.GREEN, race.getCurrentHeat().getDrivers().get(0).getFlag());
+
+    // Transition to HeatOver
+    race.changeState(new HeatOver());
+
+    // Global flag for HeatOver is RED
+    assertEquals(com.antigravity.proto.RaceFlag.RED, race.getState().getFlagType(race));
+
+    // The driver flag should have been updated to RED
+    assertEquals(
+        com.antigravity.proto.RaceFlag.RED, race.getCurrentHeat().getDrivers().get(0).getFlag());
+  }
 }

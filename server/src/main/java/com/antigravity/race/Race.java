@@ -483,7 +483,26 @@ public class Race implements ProtocolListener {
     RaceState protoState = getProtoState(state);
     RaceFlag protoFlag = state.getFlagType(this);
 
-    broadcast(RaceData.newBuilder().setRaceState(protoState).setFlag(protoFlag).build());
+    if (currentHeat != null && currentHeat.getDrivers() != null) {
+      for (int i = 0; i < currentHeat.getDrivers().size(); i++) {
+        DriverHeatData dhd = currentHeat.getDrivers().get(i);
+        if (dhd != null) {
+          dhd.setFlag(state.getLaneFlagType(this, i));
+        }
+      }
+      broadcast(
+          RaceData.newBuilder()
+              .setRaceState(protoState)
+              .setFlag(protoFlag)
+              .setRace(
+                  com.antigravity.proto.Race.newBuilder() // fqn-collision
+                      .setCurrentHeat(HeatConverter.toProto(currentHeat, new HashSet<>()))
+                      .build())
+              .build());
+    } else {
+      broadcast(RaceData.newBuilder().setRaceState(protoState).setFlag(protoFlag).build());
+    }
+
     if (hardwareManager.getProtocols() != null) {
       hardwareManager
           .getProtocols()
@@ -498,7 +517,24 @@ public class Race implements ProtocolListener {
   }
 
   public void broadcastFlag(RaceFlag flag) {
-    broadcast(RaceData.newBuilder().setFlag(flag).build());
+    if (currentHeat != null && currentHeat.getDrivers() != null) {
+      for (int i = 0; i < currentHeat.getDrivers().size(); i++) {
+        DriverHeatData dhd = currentHeat.getDrivers().get(i);
+        if (dhd != null) {
+          dhd.setFlag(state.getLaneFlagType(this, i));
+        }
+      }
+      broadcast(
+          RaceData.newBuilder()
+              .setFlag(flag)
+              .setRace(
+                  com.antigravity.proto.Race.newBuilder() // fqn-collision
+                      .setCurrentHeat(HeatConverter.toProto(currentHeat, new HashSet<>()))
+                      .build())
+              .build());
+    } else {
+      broadcast(RaceData.newBuilder().setFlag(flag).build());
+    }
   }
 
   public boolean startRace() {
@@ -801,7 +837,26 @@ public class Race implements ProtocolListener {
   }
 
   public void setRaceState(RaceState protoState, RaceFlag protoFlag, double countdown) {
-    broadcast(RaceData.newBuilder().setRaceState(protoState).setFlag(protoFlag).build());
+    if (currentHeat != null && currentHeat.getDrivers() != null) {
+      for (int i = 0; i < currentHeat.getDrivers().size(); i++) {
+        DriverHeatData dhd = currentHeat.getDrivers().get(i);
+        if (dhd != null) {
+          dhd.setFlag(state.getLaneFlagType(this, i));
+        }
+      }
+      broadcast(
+          RaceData.newBuilder()
+              .setRaceState(protoState)
+              .setFlag(protoFlag)
+              .setRace(
+                  com.antigravity.proto.Race.newBuilder() // fqn-collision
+                      .setCurrentHeat(HeatConverter.toProto(currentHeat, new HashSet<>()))
+                      .build())
+              .build());
+    } else {
+      broadcast(RaceData.newBuilder().setRaceState(protoState).setFlag(protoFlag).build());
+    }
+
     if (hardwareManager.getProtocols() != null) {
       hardwareManager.getProtocols().setRaceState(protoState, protoFlag, countdown);
     }
