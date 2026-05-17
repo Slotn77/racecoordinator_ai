@@ -38,6 +38,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { TranslationService } from "@app/services/translation.service";
+import { checkLaneEquality } from "@app/utils/lane-equality";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 import { ModifyHeatsService } from "./modify-heats.service";
@@ -135,6 +136,8 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected isDraggingHeat = false;
   protected allTeams: Team[] = [];
   protected isLoading = false;
+  protected equalityReport: any[] | null = null;
+  protected isHeatsEqual: boolean = false;
 
   private translationService = inject(TranslationService);
   private router = inject(Router);
@@ -821,5 +824,42 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     this.localParticipants.forEach((p, i) => {
       p.seed = i + 1;
     });
+  }
+
+  protected onLaneCheck() {
+    const activeParticipants = this.localParticipants.filter(
+      (p) => p.driver && !p.driver.isEmpty(),
+    );
+    const driverIds = activeParticipants.map((p) => p.objectId);
+    const driverNames = new Map<string, string>();
+    activeParticipants.forEach((p) => {
+      driverNames.set(p.objectId, getParticipantName(p));
+    });
+
+    const heats = this.localHeats.map((h) =>
+      this.track().lanes.map((_, laneIdx) => {
+        const dhd = h.heatDrivers.find((d) => d.laneIndex === laneIdx);
+        return dhd &&
+          dhd.participant &&
+          dhd.participant.driver &&
+          !dhd.participant.driver.isEmpty()
+          ? dhd.participant.objectId
+          : null;
+      }),
+    );
+
+    const result = checkLaneEquality(
+      this.track().lanes.length,
+      driverIds,
+      heats,
+      driverNames,
+      this.translationService,
+    );
+    this.equalityReport = result.reports;
+    this.isHeatsEqual = result.allEqual;
+  }
+
+  protected closeReport() {
+    this.equalityReport = null;
   }
 }

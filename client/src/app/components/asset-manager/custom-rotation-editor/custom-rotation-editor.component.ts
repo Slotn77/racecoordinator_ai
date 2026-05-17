@@ -23,6 +23,7 @@ import {
 import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
+import { checkLaneEquality } from "@app/utils/lane-equality";
 
 @Component({
   standalone: true,
@@ -223,140 +224,38 @@ export class CustomRotationEditorComponent implements OnInit {
 
   isRotationEqual(rotation: ICustomRotation): boolean {
     const numDrivers = rotation.numDrivers ?? 0;
-    const numHeats = rotation.heats?.length || 0;
-    const numLanes = this.internalNumLanes;
-
-    if (numDrivers <= 0 || numHeats === 0 || numLanes <= 0) return false;
-
-    const driverLaneCounts = new Map<number, number[]>();
-    const laneTotals = new Array(numLanes).fill(0);
-
+    const driverIds: string[] = [];
     for (let d = 1; d <= numDrivers; d++) {
-      driverLaneCounts.set(d, new Array(numLanes).fill(0));
+      driverIds.push(d.toString());
     }
-
-    rotation.heats?.forEach((heat) => {
-      heat.driverIndices?.forEach((driverIdx, laneIdx) => {
-        if (
-          driverIdx !== undefined &&
-          driverIdx !== null &&
-          driverIdx > 0 &&
-          driverIdx <= numDrivers
-        ) {
-          laneTotals[laneIdx]++;
-          const counts = driverLaneCounts.get(driverIdx);
-          if (counts && laneIdx < numLanes) {
-            counts[laneIdx]++;
-          }
-        }
-      });
-    });
-
-    let totalHeats = 0;
-    for (let l = 0; l < numLanes; l++) {
-      const total = laneTotals[l];
-      if (total % numDrivers !== 0) return false;
-      const expected = total / numDrivers;
-      totalHeats += total;
-      for (let d = 1; d <= numDrivers; d++) {
-        if (driverLaneCounts.get(d)![l] !== expected) return false;
-      }
-    }
-
-    return totalHeats > 0;
+    const heats = (rotation.heats || []).map((h) =>
+      (h.driverIndices || []).map((idx) =>
+        idx && idx > 0 ? idx.toString() : null,
+      ),
+    );
+    return checkLaneEquality(this.internalNumLanes, driverIds, heats).allEqual;
   }
 
   showEqualityReport(rotation: ICustomRotation, idx: number) {
-    const numDrivers = rotation.numDrivers ?? 0;
-    const numHeats = rotation.heats?.length || 0;
-    const numLanes = this.internalNumLanes;
-    const reports: any[] = [];
-
     this.reportRotationIdx = idx;
-
-    if (numDrivers <= 0) {
-      this.equalityReport = [{ key: "AM_REPORT_NO_DRIVERS" }];
-      return;
-    }
-    if (numHeats === 0) {
-      this.equalityReport = [{ key: "AM_REPORT_NO_DRIVERS" }];
-      return;
-    }
-
-    const driverLaneCounts = new Map<number, number[]>();
-    const laneTotals = new Array(numLanes).fill(0);
-
+    const numDrivers = rotation.numDrivers ?? 0;
+    const driverIds: string[] = [];
     for (let d = 1; d <= numDrivers; d++) {
-      driverLaneCounts.set(d, new Array(numLanes).fill(0));
+      driverIds.push(d.toString());
     }
-
-    let allEqual = true;
-    let totalAssignments = 0;
-
-    rotation.heats?.forEach((heat, hIdx) => {
-      heat.driverIndices?.forEach((driverIdx, laneIdx) => {
-        if (driverIdx && driverIdx > 0) {
-          if (driverIdx <= numDrivers) {
-            laneTotals[laneIdx]++;
-            const counts = driverLaneCounts.get(driverIdx);
-            if (counts && laneIdx < numLanes) {
-              counts[laneIdx]++;
-            }
-          } else {
-            allEqual = false;
-            reports.push({
-              key: "AM_REPORT_INVALID_DRIVER",
-              params: { heat: hIdx + 1, driver: driverIdx },
-            });
-          }
-        }
-      });
-    });
-
-    for (let l = 0; l < numLanes; l++) {
-      totalAssignments += laneTotals[l];
-      for (let d1 = 1; d1 <= numDrivers; d1++) {
-        const count1 = driverLaneCounts.get(d1)![l];
-        for (let d2 = 1; d2 <= numDrivers; d2++) {
-          if (d1 === d2) continue;
-          const count2 = driverLaneCounts.get(d2)![l];
-          if (count1 !== count2) {
-            allEqual = false;
-            reports.push({
-              key: "AM_REPORT_LANE_DIFF",
-              params: {
-                lane: l + 1,
-                d1: d1,
-                count1: count1,
-                heat1: this.translationService.translate(
-                  count1 === 1
-                    ? "AM_LABEL_HEAT_SINGULAR"
-                    : "AM_LABEL_HEAT_PLURAL",
-                ),
-                d2: d2,
-                count2: count2,
-                heat2: this.translationService.translate(
-                  count2 === 1
-                    ? "AM_LABEL_HEAT_SINGULAR"
-                    : "AM_LABEL_HEAT_PLURAL",
-                ),
-              },
-            });
-          }
-        }
-      }
-    }
-
-    if (totalAssignments === 0) {
-      allEqual = false;
-      reports.push({ key: "AM_REPORT_NO_DRIVERS" });
-    }
-
-    if (allEqual && reports.length === 0) {
-      this.equalityReport = [{ key: "AM_REPORT_ALL_EQUAL" }];
-    } else {
-      this.equalityReport = reports;
-    }
+    const heats = (rotation.heats || []).map((h) =>
+      (h.driverIndices || []).map((idx) =>
+        idx && idx > 0 ? idx.toString() : null,
+      ),
+    );
+    const result = checkLaneEquality(
+      this.internalNumLanes,
+      driverIds,
+      heats,
+      undefined,
+      this.translationService,
+    );
+    this.equalityReport = result.reports;
   }
 
   closeReport() {

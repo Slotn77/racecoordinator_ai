@@ -219,9 +219,9 @@ describe("CustomRotationEditorComponent", () => {
         (r) => r.params?.lane === 1,
       );
       expect(lane1Diff.key).toBe("AM_REPORT_LANE_DIFF");
-      expect(lane1Diff.params.d1).toBe(1);
+      expect(lane1Diff.params.d1).toBe("1");
       expect(lane1Diff.params.count1).toBe(2);
-      expect(lane1Diff.params.d2).toBe(2);
+      expect(lane1Diff.params.d2).toBe("2");
       expect(lane1Diff.params.count2).toBe(0);
     });
 
@@ -238,6 +238,42 @@ describe("CustomRotationEditorComponent", () => {
       ]);
     });
 
+    it("should allow individual sit-out (empty) lanes without reporting invalid driver", () => {
+      fixture.detectChanges();
+      const rotation = component.internalRotations[0];
+      rotation.numDrivers = 2;
+      component.internalNumLanes = 3;
+      rotation.heats = [
+        { driverIndices: [1, 2, 0] }, // Lane 3 is an empty lane (0)
+        { driverIndices: [2, 1, 0] }, // Lane 3 is an empty lane (0)
+      ];
+
+      component.showEqualityReport(rotation, 0);
+
+      expect(component.isRotationEqual(rotation)).toBeTrue();
+      expect(component.equalityReport).toEqual([
+        { key: "AM_REPORT_ALL_EQUAL" },
+      ]);
+    });
+
+    it("should report completely empty heats as AM_REPORT_EMPTY_HEAT", () => {
+      fixture.detectChanges();
+      const rotation = component.internalRotations[0];
+      rotation.numDrivers = 2;
+      component.internalNumLanes = 2;
+      rotation.heats = [
+        { driverIndices: [0, 0] }, // Heat 1 is completely empty
+        { driverIndices: [1, 2] },
+      ];
+
+      component.showEqualityReport(rotation, 0);
+      const emptyReport = component.equalityReport?.find(
+        (r) => r.key === "AM_REPORT_EMPTY_HEAT",
+      );
+      expect(emptyReport).toBeDefined();
+      expect(emptyReport.params.heat).toBe(1);
+    });
+
     it("should identify invalid driver indices in report", () => {
       fixture.detectChanges();
       const rotation = component.internalRotations[0];
@@ -252,7 +288,7 @@ describe("CustomRotationEditorComponent", () => {
         (r) => r.key === "AM_REPORT_INVALID_DRIVER",
       );
       expect(invalidReport).toBeDefined();
-      expect(invalidReport.params.driver).toBe(3);
+      expect(invalidReport.params.driver).toBe("3");
       expect(invalidReport.params.heat).toBe(1);
     });
 
@@ -270,7 +306,7 @@ describe("CustomRotationEditorComponent", () => {
 
       // Check lane 2 where count is 1
       const lane2Diff = component.equalityReport?.find(
-        (r) => r.params?.lane === 2 && r.params?.d2 === 2,
+        (r) => r.params?.lane === 2 && r.params?.d2 === "2",
       );
       expect(lane2Diff.params.count2).toBe(1);
       expect(lane2Diff.params.heat2).toBe("AM_LABEL_HEAT_SINGULAR");

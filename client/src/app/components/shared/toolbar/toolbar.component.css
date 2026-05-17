@@ -71,6 +71,17 @@
   border-color: rgba(14, 165, 233, 0.6);
 }
 
+.toolbar-btn.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.toolbar-btn.success:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.6);
+}
+
 .spacer {
   flex: 1;
 }

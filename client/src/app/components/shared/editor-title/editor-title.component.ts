@@ -38,6 +38,8 @@ export class EditorTitleComponent implements AfterViewChecked {
   showDelete = input(false);
   showRegenerate = input(false);
   disabledRegenerate = input(false);
+  showLaneCheck = input(false);
+  disabledLaneCheck = input(false);
   isSaving = input(false);
   helpSteps = input<GuideStep[]>([]);
   helpTitle = input("");
@@ -49,6 +51,7 @@ export class EditorTitleComponent implements AfterViewChecked {
   add = output<void>();
   delete = output<void>();
   regenerate = output<void>();
+  laneCheck = output<void>();
 
   constructor(
     private router: Router,
@@ -78,6 +81,10 @@ export class EditorTitleComponent implements AfterViewChecked {
 
   onRegenerate() {
     this.regenerate.emit();
+  }
+
+  onLaneCheck() {
+    this.laneCheck.emit();
   }
 
   onBack() {

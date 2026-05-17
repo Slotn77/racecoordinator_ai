@@ -144,6 +144,19 @@
     </button>
   }
 
+  <!-- Lane Check -->
+  @if (showLaneCheck()) {
+    <button
+      id="lane-check-btn"
+      class="toolbar-btn success"
+      (click)="onLaneCheck()"
+      [disabled]="isSaving() || disabledLaneCheck()"
+      [title]="'RD_BTN_LANE_CHECK' | translate"
+    >
+      <span class="material-icons">check</span>
+    </button>
+  }
+
   <div class="spacer"></div>
 
   <div class="toolbar-utility-group">

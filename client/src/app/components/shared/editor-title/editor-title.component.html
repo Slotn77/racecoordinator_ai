@@ -20,6 +20,8 @@
       [showCopy]="showCopy()"
       [showRegenerate]="showRegenerate()"
       [disabledRegenerate]="disabledRegenerate()"
+      [showLaneCheck]="showLaneCheck()"
+      [disabledLaneCheck]="disabledLaneCheck()"
       [isSaving]="isSaving()"
       [undoManager]="undoManager()"
       [helpSteps]="helpSteps()"
@@ -30,6 +32,7 @@
       (add)="onAdd()"
       (delete)="onDelete()"
       (regenerate)="onRegenerate()"
+      (laneCheck)="onLaneCheck()"
     >
     </app-toolbar>
   </div>

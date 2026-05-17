@@ -687,4 +687,131 @@ describe("ModifyHeatsModalComponent", () => {
       expect(result.found).toBe(3);
     });
   });
+
+  describe("onLaneCheck", () => {
+    it("should perform lane equality checking and populate equalityReport and isHeatsEqual", () => {
+      const p1 = new RaceParticipant(
+        "p1",
+        new Driver("d1", "D1", "D1"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const p2 = new RaceParticipant(
+        "p2",
+        new Driver("d2", "D2", "D2"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const heat1 = new Heat("h1", 1, [
+        new DriverHeatData("dhd1", p1, 0),
+        new DriverHeatData("dhd2", p2, 1),
+      ]);
+      const heat2 = new Heat("h2", 2, [
+        new DriverHeatData("dhd3", p2, 0),
+        new DriverHeatData("dhd4", p1, 1),
+      ]);
+
+      const track = createMockTrack();
+      fixture.componentRef.setInput("trackInput", track);
+      component["localHeats"] = [heat1, heat2];
+      component["localParticipants"] = [p1, p2];
+
+      component["onLaneCheck"]();
+
+      expect(component["equalityReport"]).toBeDefined();
+      expect(component["isHeatsEqual"]).toBeTrue();
+    });
+
+    it("should ignore empty lanes (Driver.isEmpty()) when checking lane equality", () => {
+      const p1 = new RaceParticipant(
+        "p1",
+        new Driver("d1", "D1", "D1"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const emptyParticipant = new RaceParticipant(
+        "p-empty",
+        new Driver("EMPTY_LANE", "Empty", "Empty"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const heat1 = new Heat("h1", 1, [
+        new DriverHeatData("dhd1", p1, 0),
+        new DriverHeatData("dhd2", emptyParticipant, 1),
+      ]);
+      const heat2 = new Heat("h2", 2, [
+        new DriverHeatData("dhd3", p1, 0),
+        new DriverHeatData("dhd4", emptyParticipant, 1),
+      ]);
+
+      const track = createMockTrack();
+      fixture.componentRef.setInput("trackInput", track);
+      component["localHeats"] = [heat1, heat2];
+      component["localParticipants"] = [p1, emptyParticipant];
+
+      component["onLaneCheck"]();
+
+      expect(component["isHeatsEqual"]).toBeTrue();
+      expect(component["equalityReport"]?.[0]?.key).toBe("AM_REPORT_ALL_EQUAL");
+    });
+
+    it("should mark as unequal and add an empty heat warning if a heat is completely empty", () => {
+      const p1 = new RaceParticipant(
+        "p1",
+        new Driver("d1", "D1", "D1"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const heat1 = new Heat("h1", 1, []);
+      const heat2 = new Heat("h2", 2, [new DriverHeatData("dhd3", p1, 0)]);
+
+      const track = createMockTrack();
+      fixture.componentRef.setInput("trackInput", track);
+      component["localHeats"] = [heat1, heat2];
+      component["localParticipants"] = [p1];
+
+      component["onLaneCheck"]();
+
+      expect(component["isHeatsEqual"]).toBeFalse();
+      expect(component["equalityReport"]?.[0]?.key).toBe(
+        "AM_REPORT_EMPTY_HEAT",
+      );
+      expect(component["equalityReport"]?.[0]?.params?.heat).toBe(1);
+    });
+  });
 });

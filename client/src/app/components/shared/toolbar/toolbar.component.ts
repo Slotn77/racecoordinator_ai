@@ -50,6 +50,8 @@ export class ToolbarComponent implements OnInit {
   disabledReset = input(false);
   showRegenerate = input(false);
   disabledRegenerate = input(false);
+  showLaneCheck = input(false);
+  disabledLaneCheck = input(false);
 
   showAnalyticsModal = false;
   analyticsModalTitle = "";
@@ -97,6 +99,7 @@ export class ToolbarComponent implements OnInit {
   export = output<void>();
   reset = output<void>();
   regenerate = output<void>();
+  laneCheck = output<void>();
 
   onActivate() {
     this.activate.emit();
@@ -116,6 +119,10 @@ export class ToolbarComponent implements OnInit {
 
   onRegenerate() {
     this.regenerate.emit();
+  }
+
+  onLaneCheck() {
+    this.laneCheck.emit();
   }
 
   onAdd() {

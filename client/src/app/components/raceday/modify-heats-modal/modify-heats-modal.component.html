@@ -8,9 +8,11 @@
     [showAdd]="true"
     [showRegenerate]="true"
     [disabledRegenerate]="isRegenerateDisabled"
+    [showLaneCheck]="true"
     [isSaving]="isSaving"
     (add)="onAddHeat()"
     (regenerate)="onRegenerateHeats()"
+    (laneCheck)="onLaneCheck()"
     (back)="onBack()"
   >
   </app-editor-title>
@@ -450,4 +452,40 @@
     (acknowledge)="onAckModalClose()"
   >
   </app-acknowledgement-modal>
+
+  @if (equalityReport) {
+    <div class="equality-report-overlay" (click)="closeReport()">
+      <div class="equality-report-modal" (click)="$event.stopPropagation()">
+        <div class="report-header">
+          <h4>
+            {{ "AM_REPORT_TITLE" | translate }}
+          </h4>
+          <button class="close-btn" (click)="closeReport()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <div class="report-content">
+          <ul class="report-list">
+            @for (item of equalityReport; track $index) {
+              <li
+                class="report-item"
+                [class.success]="isHeatsEqual"
+                [class.error]="!isHeatsEqual"
+              >
+                @if (isHeatsEqual) {
+                  <span class="material-icons success-icon">check_circle</span>
+                } @else {
+                  <span class="material-icons warn-icon">warning</span>
+                }
+                <span>{{ item.key | translate: item.params }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+        <div class="report-footer">
+          <button (click)="closeReport()">{{ "GEN_OK" | translate }}</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>
