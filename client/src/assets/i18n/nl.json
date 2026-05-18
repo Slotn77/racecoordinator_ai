@@ -794,6 +794,7 @@
   "TEM_BTN_SAVING": "OPSLAAN...",
   "TEM_CONFIRM_DISCARD_MESSAGE": "U heeft niet-opgeslagen wijzigingen. Weet u zeker dat u deze wilt negeren?",
   "TEM_CONFIRM_DISCARD_TITLE": "Niet-opgeslagen Wijzigingen",
+  "TEM_EMPTY_DRIVERS_HINT": "Klik hieronder om coureurs aan het team toe te wijzen",
   "TEM_HEADER_CONFIG": "TEAM CONFIGURATIE",
   "TEM_HEADER_MEMBERS": "TEAMLEDEN",
   "TEM_HELP_ASSIGNED_CONTENT": "Sleep en zet neer om de coureursopstelling te herschikken.",

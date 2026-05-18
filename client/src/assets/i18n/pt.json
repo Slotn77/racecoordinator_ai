@@ -794,6 +794,7 @@
   "TEM_BTN_SAVING": "SALVANDO...",
   "TEM_CONFIRM_DISCARD_MESSAGE": "Você tem alterações não salvas. Tem certeza de que deseja descartá-las?",
   "TEM_CONFIRM_DISCARD_TITLE": "Alterações não salvas",
+  "TEM_EMPTY_DRIVERS_HINT": "Clique abaixo para atribuir pilotos à equipe",
   "TEM_HEADER_CONFIG": "CONFIGURAÇÃO DA EQUIPE",
   "TEM_HEADER_MEMBERS": "MEMBROS DA EQUIPE",
   "TEM_HELP_ASSIGNED_CONTENT": "Arraste e solte para reordenar a escalação de pilotos.",

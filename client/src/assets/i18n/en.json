@@ -794,6 +794,7 @@
   "TEM_BTN_SAVING": "SAVING...",
   "TEM_CONFIRM_DISCARD_MESSAGE": "You have unsaved changes. Are you sure you want to discard them?",
   "TEM_CONFIRM_DISCARD_TITLE": "Unsaved Changes",
+  "TEM_EMPTY_DRIVERS_HINT": "Click below to assign drivers to the team",
   "TEM_HEADER_CONFIG": "TEAM CONFIGURATION",
   "TEM_HEADER_MEMBERS": "TEAM MEMBERS",
   "TEM_HELP_ASSIGNED_CONTENT": "Drag and drop to reorder the team driver lineup.",

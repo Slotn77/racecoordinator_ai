@@ -794,6 +794,7 @@
   "TEM_BTN_SAVING": "SALVATAGGIO...",
   "TEM_CONFIRM_DISCARD_MESSAGE": "Hai delle modifiche non salvate. Sei sicuro di volerle scartare?",
   "TEM_CONFIRM_DISCARD_TITLE": "Modifiche non salvate",
+  "TEM_EMPTY_DRIVERS_HINT": "Fai clic in basso per assegnare piloti al team",
   "TEM_HEADER_CONFIG": "CONFIGURAZIONE SQUADRA",
   "TEM_HEADER_MEMBERS": "MEMBRI DELLA SQUADRA",
   "TEM_HELP_ASSIGNED_CONTENT": "Trascina e rilascia per riordinare la formazione dei piloti.",

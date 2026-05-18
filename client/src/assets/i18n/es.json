@@ -794,6 +794,7 @@
   "TEM_BTN_SAVING": "GUARDANDO...",
   "TEM_CONFIRM_DISCARD_MESSAGE": "Tiene cambios sin guardar. ¿Está seguro de que desea descartarlos?",
   "TEM_CONFIRM_DISCARD_TITLE": "Cambios sin guardar",
+  "TEM_EMPTY_DRIVERS_HINT": "Haz clic abajo para asignar pilotos al equipo",
   "TEM_HEADER_CONFIG": "CONFIGURACIÓN DEL EQUIPO",
   "TEM_HEADER_MEMBERS": "MIEMBROS DEL EQUIPO",
   "TEM_HELP_ASSIGNED_CONTENT": "Arrastra y suelta para reordenar la alineación de pilotos del equipo.",

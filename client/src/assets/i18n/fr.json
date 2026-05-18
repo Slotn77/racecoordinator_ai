@@ -794,6 +794,7 @@
   "TEM_BTN_SAVING": "ENREGISTREMENT...",
   "TEM_CONFIRM_DISCARD_MESSAGE": "Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir les abandonner ?",
   "TEM_CONFIRM_DISCARD_TITLE": "Modifications non enregistrées",
+  "TEM_EMPTY_DRIVERS_HINT": "Cliquez ci-dessous pour assigner des pilotes à l'équipe",
   "TEM_HEADER_CONFIG": "CONFIGURATION DE L'ÉQUIPE",
   "TEM_HEADER_MEMBERS": "MEMBRES DE L'ÉQUIPE",
   "TEM_HELP_ASSIGNED_CONTENT": "Faites glisser et déposez pour réordonner l'alignement des pilotes.",

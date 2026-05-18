@@ -85,7 +85,7 @@
             >
               @if (assignedDrivers.length === 0) {
                 <div class="empty-list-hint">
-                  Drag drivers here or click below to assign
+                  {{ "TEM_EMPTY_DRIVERS_HINT" | translate }}
                 </div>
               }
               @for (driver of assignedDrivers; track driver) {

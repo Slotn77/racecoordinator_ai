@@ -794,6 +794,7 @@
   "TEM_BTN_SAVING": "SPEICHERN...",
   "TEM_CONFIRM_DISCARD_MESSAGE": "Sie haben ungespeicherte Änderungen. Möchten Sie diese wirklich verwerfen?",
   "TEM_CONFIRM_DISCARD_TITLE": "Ungespeicherte Änderungen",
+  "TEM_EMPTY_DRIVERS_HINT": "Klicken Sie unten, um dem Team Fahrer zuzuweisen",
   "TEM_HEADER_CONFIG": "TEAM-KONFIGURATION",
   "TEM_HEADER_MEMBERS": "TEAM-MITGLIEDER",
   "TEM_HELP_ASSIGNED_CONTENT": "Ziehen und Ablegen, um die Fahreraufstellung neu zu ordnen.",
