@@ -563,7 +563,9 @@ public class App {
         command.add(String.valueOf(MONGO_PORT));
         command.add("--bind_ip");
         command.add("127.0.0.1");
-        command.add("--nounixsocket");
+        if (!lowerOs.contains("win")) {
+          command.add("--nounixsocket");
+        }
 
         if (osName != null) {
           String lowerOsName = osName.toLowerCase();
