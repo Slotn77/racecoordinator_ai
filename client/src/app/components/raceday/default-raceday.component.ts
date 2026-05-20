@@ -29,7 +29,10 @@ import { DataService } from "@app/data.service";
 import { CanComponentDeactivate } from "@app/guards/raceday.guard";
 import { Driver } from "@app/models/driver";
 import { FinishMethod, HeatScoring } from "@app/models/heat_scoring";
-import { OverallRanking } from "@app/models/overall_scoring";
+import {
+  getOverallScoreFormat,
+  OverallRanking,
+} from "@app/models/overall_scoring";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { ColumnVisibility, Settings } from "@app/models/settings";
@@ -185,10 +188,11 @@ export class DefaultRacedayComponent
 
   protected getLeaderboardScoreFormat(entry: any): string {
     if (!entry) return "1.0-0";
-    if (entry.isTime) {
-      return "1.3-3";
+    if (entry.isTime !== undefined) {
+      return entry.isTime ? "1.3-3" : "1.2-2";
     }
-    return "1.2-2";
+    const rankingMethod = this.race?.overall_scoring?.rankingMethod;
+    return getOverallScoreFormat(rankingMethod);
   }
 
   protected get autoStatusLabel(): string {
@@ -780,6 +784,7 @@ export class DefaultRacedayComponent
 
   private leaderBoardWindow: Window | null = null;
   private heatResultsWindow: Window | null = null;
+  private raceResultsWindow: Window | null = null;
 
   ngOnDestroy() {
     this.isDestroyed = true;
@@ -795,6 +800,10 @@ export class DefaultRacedayComponent
     if (this.heatResultsWindow) {
       this.heatResultsWindow.close();
       this.heatResultsWindow = null;
+    }
+    if (this.raceResultsWindow) {
+      this.raceResultsWindow.close();
+      this.raceResultsWindow = null;
     }
   }
 
@@ -1451,6 +1460,15 @@ export class DefaultRacedayComponent
         "_blank",
         "width=1200,height=800,menubar=no,toolbar=no,location=no,status=no",
       );
+    } else if (action === "RACE_RESULTS") {
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(["/race-results"]),
+      );
+      this.raceResultsWindow = window.open(
+        url,
+        "_blank",
+        "width=1200,height=800,menubar=no,toolbar=no,location=no,status=no",
+      );
     }
   }
 
@@ -1463,6 +1481,10 @@ export class DefaultRacedayComponent
     if (this.heatResultsWindow) {
       this.heatResultsWindow.close();
       this.heatResultsWindow = null;
+    }
+    if (this.raceResultsWindow) {
+      this.raceResultsWindow.close();
+      this.raceResultsWindow = null;
     }
   }
 

@@ -10,8 +10,13 @@ export class PrintService {
    * Triggers the native browser print dialog.
    * @param pageName Optional name to use in the exported file title (<pageName> -- yyyy-mm-dd)
    * @param fullScroll If true, adds a class to the body to unroll scrollable regions before printing.
+   * @param timestamp Optional fixed date to use for the filename. Defaults to the current time.
    */
-  public print(pageName?: string, fullScroll: boolean = false): void {
+  public print(
+    pageName?: string,
+    fullScroll: boolean = false,
+    timestamp?: Date,
+  ): void {
     if (fullScroll) {
       document.body.classList.add("print-full-scroll");
     }
@@ -19,7 +24,7 @@ export class PrintService {
     let originalTitle = "";
     if (pageName) {
       originalTitle = document.title;
-      const now = new Date();
+      const now = timestamp || new Date();
       const yyyy = now.getFullYear();
       const mm = String(now.getMonth() + 1).padStart(2, "0");
       const dd = String(now.getDate()).padStart(2, "0");

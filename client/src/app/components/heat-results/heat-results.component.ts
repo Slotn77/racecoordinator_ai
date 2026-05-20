@@ -12,6 +12,7 @@ import { TranslationService } from "@app/services/translation.service";
 interface GraphPoint {
   x: number;
   y: number;
+  isOwnLap?: boolean;
 }
 
 interface DriverLine {
@@ -196,6 +197,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
         rankingHistory[score.objectId].push({
           x: event.absoluteTime,
           y: index + 1,
+          isOwnLap: score.objectId === event.objectId,
         });
       });
     });
@@ -206,7 +208,25 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
       if (history.length > 1 && history[0].x === 0 && history[0].y === 0) {
         history[0].y = history[1].y; // align start point for cleaner curve
       }
-      line.rankPoints = history;
+
+      // Filter to keep only the points when 1 or more positions change, or when it's the driver's own completed lap (and boundary start/end points)
+      const filtered: GraphPoint[] = [];
+      if (history.length > 0) {
+        filtered.push(history[0]);
+        for (let idx = 1; idx < history.length - 1; idx++) {
+          const prev = history[idx - 1];
+          const curr = history[idx];
+          const next = history[idx + 1];
+
+          if (curr.y !== prev.y || curr.y !== next.y || curr.isOwnLap) {
+            filtered.push(curr);
+          }
+        }
+        if (history.length > 1) {
+          filtered.push(history[history.length - 1]);
+        }
+      }
+      line.rankPoints = filtered;
     });
 
     // Calculate Max X & Max Y for scaling

@@ -130,16 +130,18 @@
             fill="none"
           />
           @for (p of line.rankPoints; track p) {
-            <g>
-              <circle
-                [attr.cx]="scaleXLeft(p.x)"
-                [attr.cy]="scaleYLeft(p.y)"
-                r="5"
-                [attr.fill]="line.backgroundColor"
-                [attr.stroke]="line.color"
-                stroke-width="2"
-              />
-            </g>
+            @if (p.isOwnLap) {
+              <g>
+                <circle
+                  [attr.cx]="scaleXLeft(p.x)"
+                  [attr.cy]="scaleYLeft(p.y)"
+                  r="5"
+                  [attr.fill]="line.backgroundColor"
+                  [attr.stroke]="line.color"
+                  stroke-width="2"
+                />
+              </g>
+            }
           }
         </g>
       }

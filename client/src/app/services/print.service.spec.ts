@@ -57,4 +57,15 @@ describe("PrintService", () => {
     // After print finishes, it should restore the original title
     expect(document.title).toBe(originalTitle);
   }));
+
+  it("should use the provided timestamp for the filename instead of current time", fakeAsync(() => {
+    const fixedDate = new Date(2024, 5, 15, 14, 30, 45); // June 15, 2024 2:30:45 PM
+
+    service.print("Race Results", false, fixedDate);
+
+    const updatedTitle = document.title;
+    expect(updatedTitle).toBe("Race Results -- 2024-06-15 -- 02-30-45_PM");
+
+    tick(100);
+  }));
 });

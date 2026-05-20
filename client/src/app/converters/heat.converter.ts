@@ -41,7 +41,10 @@ export class HeatConverter {
 
             let actualDriver: Driver | undefined;
             if (dProto.actualDriver) {
-              actualDriver = DriverConverter.fromProto(dProto.actualDriver);
+              const parsed = DriverConverter.fromProto(dProto.actualDriver);
+              if (parsed && !parsed.isEmpty()) {
+                actualDriver = parsed;
+              }
             }
 
             const heatDriverId = dProto.objectId;
