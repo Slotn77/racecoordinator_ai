@@ -503,6 +503,36 @@
   font-size: 24px;
 }
 
+/* Highlight/Fade hover actions for driver graphs */
+.driver-group {
+  transition: opacity 250ms ease, filter 250ms ease;
+}
+
+.graph-highlight {
+  z-index: 100;
+  opacity: 1 !important;
+}
+
+.graph-highlight .graph-path-rank,
+.graph-highlight .graph-path-lap {
+  stroke-width: 6px;
+  stroke: var(--line-color) !important;
+  filter: drop-shadow(0 0 12px var(--line-color));
+}
+
+.graph-highlight .graph-point-circle {
+  r: 7px;
+  fill: var(--line-color) !important;
+  stroke: #ffffff !important;
+  stroke-width: 2.5px;
+}
+
+.graph-faded {
+  opacity: 0.15;
+  filter: grayscale(0.5);
+  pointer-events: none;
+}
+
 @media print {
   * {
     text-shadow: none !important;

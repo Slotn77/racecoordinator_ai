@@ -535,6 +535,61 @@ describe("RaceResultsComponent", () => {
       const ownLapPoints = line1.rankPoints.filter((p) => p.isOwnLap);
       expect(ownLapPoints.length).toBeGreaterThan(0);
     });
+
+    it("should mark causesStandingsChange correctly when a lap causes a standings change", () => {
+      const d1 = createDriver("d1", "Alice", "Ally");
+      const d2 = createDriver("d2", "Bob", "Bobby");
+
+      const heat = createHeatWithLaps("h1", 1, [
+        { driver: d1, laps: [5.0, 4.5] },
+        { driver: d2, laps: [4.0] },
+      ]);
+
+      mockRaceService.getHeats.and.returnValue([heat]);
+
+      const p1 = createParticipant(
+        "d1",
+        d1,
+        1,
+        2,
+        9.5,
+        4.5,
+        4.75,
+        4.75,
+        100,
+        1,
+      );
+      const p2 = createParticipant("d2", d2, 2, 1, 4.0, 4.0, 4.0, 4.0, 80, 2);
+
+      participantsSubject.next([p1, p2]);
+
+      const line1 = component["driverLines"].find((l) => l.objectId === "d1")!;
+      const line2 = component["driverLines"].find((l) => l.objectId === "d2")!;
+
+      // Check Bob's points
+      const bobPoints = line2.rankPoints;
+      const bobOwnLapChange = bobPoints.filter(
+        (p) => p.isOwnLap && p.causesStandingsChange,
+      );
+      expect(bobOwnLapChange.length).toBe(1);
+      expect(bobOwnLapChange[0].x).toBe(4.0);
+      expect(bobOwnLapChange[0].y).toBe(1);
+
+      // Check Alice's points
+      const alicePoints = line1.rankPoints;
+      const aliceOwnLaps = alicePoints.filter((p) => p.isOwnLap);
+      expect(aliceOwnLaps.length).toBe(2);
+
+      // Alice's lap at 5.0 should not have caused standings change (remained at rank 2 behind Bob who ran 4.0s earlier)
+      const lapAt5 = aliceOwnLaps.find((p) => p.x === 5.0);
+      expect(lapAt5).toBeTruthy();
+      expect(lapAt5?.causesStandingsChange).toBeFalse();
+
+      // Alice's lap at 9.5 should have caused standings change (since she finishes 2nd lap and leads on laps 2 > 1)
+      const lapAt95 = aliceOwnLaps.find((p) => p.x === 9.5);
+      expect(lapAt95).toBeTruthy();
+      expect(lapAt95?.causesStandingsChange).toBeTrue();
+    });
   });
 
   describe("Driver Visibility (Legend Interaction)", () => {
@@ -591,6 +646,41 @@ describe("RaceResultsComponent", () => {
       expect(component["isDriverVisible"]("d1")).toBeTrue();
       expect(component["isDriverVisible"]("d2")).toBeTrue();
       expect(component["isDriverVisible"]("d3")).toBeTrue();
+    });
+
+    it("should set hoveredDriverId on legend hover", () => {
+      expect(component["hoveredDriverId"]).toBeNull();
+
+      component["hoveredDriverId"] = "d2";
+      expect(component["hoveredDriverId"]).toBe("d2");
+
+      component["hoveredDriverId"] = null;
+      expect(component["hoveredDriverId"]).toBeNull();
+    });
+
+    it("should force hidden driver back into DOM / render it when hovered", () => {
+      fixture.detectChanges();
+
+      // Initially all 3 drivers are visible, so we should have 6 driver-group elements (3 in left graph, 3 in right graph)
+      let driverGroups =
+        fixture.nativeElement.querySelectorAll(".driver-group");
+      expect(driverGroups.length).toBe(6);
+
+      // Hide Bob (d2)
+      component["toggleDriverVisibility"]("d2");
+      fixture.detectChanges();
+
+      driverGroups = fixture.nativeElement.querySelectorAll(".driver-group");
+      // Bob is hidden, so only d1 and d3 are rendered (2 in left graph, 2 in right graph -> 4 total)
+      expect(driverGroups.length).toBe(4);
+
+      // Hover over Bob (d2)
+      component["hoveredDriverId"] = "d2";
+      fixture.detectChanges();
+
+      driverGroups = fixture.nativeElement.querySelectorAll(".driver-group");
+      // Bob is hovered, so he should temporarily re-enter the DOM / render in both graphs (6 total)
+      expect(driverGroups.length).toBe(6);
     });
   });
 

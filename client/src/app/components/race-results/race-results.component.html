@@ -283,8 +283,20 @@
                   line of driverLines;
                   track trackByDriverLine($index, line)
                 ) {
-                  @if (isDriverVisible(line.objectId)) {
-                    <g>
+                  @if (
+                    isDriverVisible(line.objectId) ||
+                    hoveredDriverId === line.objectId
+                  ) {
+                    <g
+                      class="driver-group"
+                      [class.graph-highlight]="
+                        hoveredDriverId === line.objectId
+                      "
+                      [class.graph-faded]="
+                        hoveredDriverId !== null &&
+                        hoveredDriverId !== line.objectId
+                      "
+                    >
                       <path
                         [attr.d]="line.rankPathData"
                         [attr.stroke]="line.backgroundColor"
@@ -292,7 +304,7 @@
                         [style.--line-color]="line.color"
                       />
                       @for (p of line.rankPoints; track $index) {
-                        @if (p.isOwnLap) {
+                        @if (p.isOwnLap && p.causesStandingsChange) {
                           <g>
                             <circle
                               [attr.cx]="scaleXLeft(p.x)"
@@ -403,8 +415,20 @@
                   line of driverLines;
                   track trackByDriverLine($index, line)
                 ) {
-                  @if (isDriverVisible(line.objectId)) {
-                    <g>
+                  @if (
+                    isDriverVisible(line.objectId) ||
+                    hoveredDriverId === line.objectId
+                  ) {
+                    <g
+                      class="driver-group"
+                      [class.graph-highlight]="
+                        hoveredDriverId === line.objectId
+                      "
+                      [class.graph-faded]="
+                        hoveredDriverId !== null &&
+                        hoveredDriverId !== line.objectId
+                      "
+                    >
                       <path
                         [attr.d]="line.pathData"
                         [attr.stroke]="line.backgroundColor"
@@ -440,6 +464,8 @@
                     "
                     (click)="onLegendClick(line.objectId)"
                     (dblclick)="onLegendDblClick(line.objectId)"
+                    (mouseenter)="hoveredDriverId = line.objectId"
+                    (mouseleave)="hoveredDriverId = null"
                     [style.--hover-color]="line.color"
                   >
                     <!-- Invisible background rect for larger click target -->

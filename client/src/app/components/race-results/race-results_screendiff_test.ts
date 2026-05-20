@@ -98,6 +98,30 @@ test.describe("Race Results Visuals", () => {
       maxDiffPixelRatio: 0.05,
     });
   });
+
+  test("should highlight driver graph when hovering over a name on the legend", async ({
+    page,
+  }) => {
+    const mockData = createMockRaceData();
+    await injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-results"),
+    );
+
+    // Hover over the "Bob" legend item
+    const bobLegend = page.locator(".legend-item").filter({ hasText: "Bob" });
+    await bobLegend.hover();
+
+    await page.waitForTimeout(400);
+
+    // Verify Bob's graph is highlighted, and others are faded
+    await expect(page).toHaveScreenshot("race-results-bob-hovered.png", {
+      maxDiffPixelRatio: 0.05,
+    });
+  });
 });
 
 // Helper to construct fully compliant mock RaceData structure

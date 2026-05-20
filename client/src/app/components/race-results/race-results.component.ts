@@ -37,6 +37,7 @@ interface GraphPoint {
   x: number;
   y: number;
   isOwnLap?: boolean;
+  causesStandingsChange?: boolean;
 }
 
 interface DriverLine {
@@ -80,6 +81,7 @@ export class RaceResultsComponent implements OnInit, OnDestroy {
   protected driverLines: DriverLine[] = [];
   private subscriptions: Subscription[] = [];
   protected hiddenDriverKeys = new Set<string>();
+  protected hoveredDriverId: string | null = null;
   private clickTimeout: any = null;
   private raceStartTime: Date = new Date();
 
@@ -519,10 +521,40 @@ export class RaceResultsComponent implements OnInit, OnDestroy {
     const lastLapTime: { [id: string]: number } = {};
     const rankingHistory: { [id: string]: GraphPoint[] } = {};
 
+    // To get the correct initial standings at x = 0, sort drivers by their starting positions/seed.
+    const initialScores = this.driverLines.map((line) => {
+      const participant = this.participants.find(
+        (p) => p && p.driver && this.getDriverKey(p.driver) === line.objectId,
+      );
+      return {
+        objectId: line.objectId,
+        rank: participant?.rank || 0,
+        rankValue: participant?.rankValue || 0,
+        seed: participant?.seed || 0,
+      };
+    });
+
+    initialScores.sort((a, b) => {
+      if (a.rank !== b.rank) {
+        if (a.rank === 0) return 1;
+        if (b.rank === 0) return -1;
+        return a.rank - b.rank;
+      }
+      if (b.rankValue !== a.rankValue) {
+        return b.rankValue - a.rankValue;
+      }
+      return a.seed - b.seed;
+    });
+
     this.driverLines.forEach((line) => {
       lapsCount[line.objectId] = 0;
       lastLapTime[line.objectId] = 0;
-      rankingHistory[line.objectId] = [{ x: 0, y: 0 }]; // Initial setup
+      const initialIndex = initialScores.findIndex(
+        (s) => s.objectId === line.objectId,
+      );
+      rankingHistory[line.objectId] = [
+        { x: 0, y: initialIndex !== -1 ? initialIndex + 1 : 1 },
+      ];
     });
 
     events.forEach((event) => {
@@ -542,10 +574,17 @@ export class RaceResultsComponent implements OnInit, OnDestroy {
       });
 
       scores.forEach((score, index) => {
-        rankingHistory[score.objectId].push({
+        const isOwnLap = score.objectId === event.objectId;
+        const history = rankingHistory[score.objectId];
+        const prevRank = history[history.length - 1].y;
+        const newRank = index + 1;
+        const causesStandingsChange = isOwnLap && newRank !== prevRank;
+
+        history.push({
           x: event.absoluteTime,
-          y: index + 1,
-          isOwnLap: score.objectId === event.objectId,
+          y: newRank,
+          isOwnLap,
+          causesStandingsChange,
         });
       });
     });

@@ -8,6 +8,7 @@ import com.antigravity.race.RaceParticipant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Common {
 
@@ -24,7 +25,7 @@ public class Common {
       race.setAutoAdvanceFired(false);
       race.changeState(new NotStarted());
 
-      // Optimized update: only send currentHeat
+      // Optimized update: send currentHeat and all heats
       Set<String> sentObjectIds = new HashSet<>();
       for (RaceParticipant p : race.getDrivers()) {
         sentObjectIds.add(HeatConverter.PARTICIPANT_PREFIX + p.getObjectId());
@@ -33,6 +34,10 @@ public class Common {
       com.antigravity.proto.Race raceProto = // fqn-collision
           com.antigravity.proto.Race.newBuilder() // fqn-collision
               .setCurrentHeat(HeatConverter.toProto(race.getCurrentHeat(), sentObjectIds))
+              .addAllHeats(
+                  heats.stream()
+                      .map(h -> HeatConverter.toProto(h, sentObjectIds))
+                      .collect(Collectors.toList()))
               .build();
 
       race.broadcast(RaceData.newBuilder().setRace(raceProto).build());
