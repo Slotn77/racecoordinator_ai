@@ -58,6 +58,7 @@ export class ToolbarComponent implements OnInit {
   disabledRegenerate = input(false);
   showLaneCheck = input(false);
   disabledLaneCheck = input(false);
+  isHeatsEqual = input<boolean | undefined>(undefined);
 
   showAnalyticsModal = false;
   analyticsModalTitle = "";

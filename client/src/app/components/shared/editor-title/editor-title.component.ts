@@ -40,6 +40,7 @@ export class EditorTitleComponent implements AfterViewChecked {
   disabledRegenerate = input(false);
   showLaneCheck = input(false);
   disabledLaneCheck = input(false);
+  isHeatsEqual = input<boolean | undefined>(undefined);
   showImport = input(false);
   showImportRc1 = input(false);
   showExport = input(false);

@@ -228,6 +228,7 @@
                 <!-- Equality badge -->
                 <button
                   class="equality-btn icon-only"
+                  [class.unequal]="!isRotationEqual(rotation)"
                   (click)="showEqualityReport(rotation, rotIdx)"
                   [title]="'AM_LABEL_LANE_EQUALITY' | translate"
                 >

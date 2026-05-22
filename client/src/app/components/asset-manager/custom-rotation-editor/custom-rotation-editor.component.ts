@@ -32,12 +32,17 @@ import {
 import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
-import { checkLaneEquality } from "@app/utils/lane-equality";
+import {
+  checkLaneEquality,
+  LaneEqualityResult,
+} from "@app/utils/lane-equality";
 
 import { parseAndValidateImportFile } from "./rotation-import.utils";
 
 interface LocalRotation extends ICustomRotation {
   isExpanded?: boolean;
+  isEqual?: boolean;
+  equalityReport?: any[];
 }
 
 interface CustomRotationState {
@@ -75,6 +80,10 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
   reportRotationIdx: number = -1;
   importSummary: any[] | null = null;
   allAssets: IAssetMessage[] = [];
+  private rotationEqualityCache = new Map<
+    ICustomRotation,
+    { signature: string; result: LaneEqualityResult }
+  >();
 
   tracks: ITrackModel[] = [];
   selectedTrackId: string = "";
@@ -203,6 +212,7 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
             (t: any) =>
               (t.entity_id || t.model?.entityId) === this.selectedTrackId,
           );
+          this.validateAllRotationsLaneEquality();
           this.updateDropListConnections();
         },
       },
@@ -411,6 +421,7 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
           rotations: this.internalRotations,
         });
 
+        this.validateAllRotationsLaneEquality();
         this.updateDropListConnections();
         this.cdr.detectChanges();
       },
@@ -626,6 +637,7 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
   }
 
   save() {
+    this.validateAllRotationsLaneEquality();
     if (!this.isConfigValid()) {
       return;
     }
@@ -677,6 +689,7 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
   }
 
   autoSave(triggeredBy: UndoEventType = "push") {
+    this.validateAllRotationsLaneEquality();
     if (!this.isConfigValid()) {
       return;
     }
@@ -813,22 +826,16 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
     });
   }
 
-  isRotationEqual(rotation: ICustomRotation): boolean {
-    const numDrivers = rotation.numDrivers ?? 0;
-    const driverIds: string[] = [];
-    for (let d = 1; d <= numDrivers; d++) {
-      driverIds.push(d.toString());
-    }
-    const heats = (rotation.heats || []).map((h) =>
-      (h.driverIndices || []).map((idx) =>
-        idx && idx > 0 ? idx.toString() : null,
-      ),
-    );
-    return checkLaneEquality(this.internalNumLanes, driverIds, heats).allEqual;
+  private getRotationSignature(rotation: ICustomRotation): string {
+    const heatsSig = (rotation.heats || [])
+      .map((h) => (h.driverIndices || []).join(","))
+      .join("|");
+    return `${rotation.numDrivers || 0}:${this.internalNumLanes}:${heatsSig}`;
   }
 
-  showEqualityReport(rotation: ICustomRotation, idx: number) {
-    this.reportRotationIdx = idx;
+  private checkRotationLaneEqualityDirect(
+    rotation: ICustomRotation,
+  ): LaneEqualityResult {
     const numDrivers = rotation.numDrivers ?? 0;
     const driverIds: string[] = [];
     for (let d = 1; d <= numDrivers; d++) {
@@ -839,14 +846,58 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
         idx && idx > 0 ? idx.toString() : null,
       ),
     );
-    const result = checkLaneEquality(
+    return checkLaneEquality(
       this.internalNumLanes,
       driverIds,
       heats,
       undefined,
       this.translationService,
     );
-    this.equalityReport = result.reports;
+  }
+
+  isRotationEqual(rotation: ICustomRotation): boolean {
+    const sig = this.getRotationSignature(rotation);
+    let cached = this.rotationEqualityCache.get(rotation);
+    if (!cached || cached.signature !== sig) {
+      const res = this.checkRotationLaneEqualityDirect(rotation);
+      cached = { signature: sig, result: res };
+      this.rotationEqualityCache.set(rotation, cached);
+
+      const localRot = rotation as LocalRotation;
+      localRot.isEqual = res.allEqual;
+      localRot.equalityReport = res.reports;
+    }
+    return cached.result.allEqual;
+  }
+
+  validateRotationLaneEquality(rotation: LocalRotation) {
+    const sig = this.getRotationSignature(rotation);
+    const result = this.checkRotationLaneEqualityDirect(rotation);
+    rotation.isEqual = result.allEqual;
+    rotation.equalityReport = result.reports;
+    this.rotationEqualityCache.set(rotation, { signature: sig, result });
+  }
+
+  validateAllRotationsLaneEquality() {
+    this.internalRotations.forEach((rot) => {
+      this.validateRotationLaneEquality(rot);
+    });
+  }
+
+  showEqualityReport(rotation: ICustomRotation, idx: number) {
+    this.reportRotationIdx = idx;
+    const sig = this.getRotationSignature(rotation);
+    let cached = this.rotationEqualityCache.get(rotation);
+    if (!cached || cached.signature !== sig) {
+      const res = this.checkRotationLaneEqualityDirect(rotation);
+      cached = { signature: sig, result: res };
+      this.rotationEqualityCache.set(rotation, cached);
+
+      const localRot = rotation as LocalRotation;
+      localRot.isEqual = res.allEqual;
+      localRot.equalityReport = res.reports;
+    }
+    this.equalityReport = cached.result.reports;
   }
 
   closeReport() {

@@ -5,9 +5,11 @@ import {
   TestBed,
   tick,
 } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
 import { NoopAnimationsModule } from "@angular/platform-browser/animations";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
+import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { GroupOptions } from "@app/models/group_options";
@@ -812,6 +814,92 @@ describe("ModifyHeatsModalComponent", () => {
         "AM_REPORT_EMPTY_HEAT",
       );
       expect(component["equalityReport"]?.[0]?.params?.heat).toBe(1);
+    });
+
+    it("should update isHeatsEqual but not open diagnostic report overlay when showModal is false", () => {
+      const p1 = new RaceParticipant(
+        "p1",
+        new Driver("d1", "D1", "D1"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const p2 = new RaceParticipant(
+        "p2",
+        new Driver("d2", "D2", "D2"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const heat1 = new Heat("h1", 1, [
+        new DriverHeatData("dhd1", p1, 0),
+        new DriverHeatData("dhd2", p2, 1),
+      ]);
+      const heat2 = new Heat("h2", 2, [
+        new DriverHeatData("dhd3", p2, 0),
+        new DriverHeatData("dhd4", p1, 1),
+      ]);
+
+      const track = createMockTrack();
+      fixture.componentRef.setInput("trackInput", track);
+      component["localHeats"] = [heat1, heat2];
+      component["localParticipants"] = [p1, p2];
+
+      component["equalityReport"] = null;
+
+      component["onLaneCheck"](false);
+
+      expect(component["isHeatsEqual"]).toBeTrue();
+      expect(component["equalityReport"]).toBeNull();
+    });
+
+    it("should call onLaneCheck(false) during component initialization to set isHeatsEqual", () => {
+      spyOn(component as any, "onLaneCheck").and.callThrough();
+
+      fixture.detectChanges();
+
+      expect(component["onLaneCheck"]).toHaveBeenCalledWith(false);
+      expect(component["isHeatsEqual"]).toBeFalse();
+    });
+
+    it("should call onLaneCheck(false) during autoSave to update isHeatsEqual", fakeAsync(() => {
+      fixture.detectChanges();
+
+      spyOn(component as any, "onLaneCheck").and.callThrough();
+
+      component["autoSave"]();
+      tick();
+
+      expect(component["onLaneCheck"]).toHaveBeenCalledWith(false);
+    }));
+
+    it("should bind isHeatsEqual to EditorTitleComponent's isHeatsEqual input", () => {
+      fixture.detectChanges();
+
+      const editorTitleEl = fixture.debugElement.query(
+        By.directive(EditorTitleComponent),
+      );
+      expect(editorTitleEl).toBeTruthy();
+
+      component["isHeatsEqual"] = false;
+      fixture.detectChanges();
+      expect(editorTitleEl.componentInstance.isHeatsEqual()).toBeFalse();
+
+      component["isHeatsEqual"] = true;
+      fixture.detectChanges();
+      expect(editorTitleEl.componentInstance.isHeatsEqual()).toBeTrue();
     });
   });
 

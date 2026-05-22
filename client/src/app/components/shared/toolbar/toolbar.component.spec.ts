@@ -300,4 +300,36 @@ describe("ToolbarComponent", () => {
       expect(settingsServiceSpy.saveSettings).not.toHaveBeenCalled();
     }));
   });
+
+  describe("Lane Check Button State", () => {
+    it("should display unequal style on lane check button when isHeatsEqual is false", () => {
+      fixture.componentRef.setInput("showLaneCheck", true);
+      fixture.componentRef.setInput("isHeatsEqual", false);
+      fixture.detectChanges();
+      const laneCheckBtn =
+        fixture.nativeElement.querySelector("#lane-check-btn");
+      expect(laneCheckBtn).toBeTruthy();
+      expect(laneCheckBtn.classList.contains("unequal")).toBeTrue();
+    });
+
+    it("should NOT display unequal style on lane check button when isHeatsEqual is true", () => {
+      fixture.componentRef.setInput("showLaneCheck", true);
+      fixture.componentRef.setInput("isHeatsEqual", true);
+      fixture.detectChanges();
+      const laneCheckBtn =
+        fixture.nativeElement.querySelector("#lane-check-btn");
+      expect(laneCheckBtn).toBeTruthy();
+      expect(laneCheckBtn.classList.contains("unequal")).toBeFalse();
+    });
+
+    it("should NOT display unequal style on lane check button when isHeatsEqual is undefined", () => {
+      fixture.componentRef.setInput("showLaneCheck", true);
+      fixture.componentRef.setInput("isHeatsEqual", undefined);
+      fixture.detectChanges();
+      const laneCheckBtn =
+        fixture.nativeElement.querySelector("#lane-check-btn");
+      expect(laneCheckBtn).toBeTruthy();
+      expect(laneCheckBtn.classList.contains("unequal")).toBeFalse();
+    });
+  });
 });

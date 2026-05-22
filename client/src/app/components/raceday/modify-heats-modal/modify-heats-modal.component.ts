@@ -304,6 +304,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
         } else {
           this.updateDatabaseParticipants();
           this.updateDriverPool();
+          this.onLaneCheck(false);
         }
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -344,6 +345,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     });
     this.updateDatabaseParticipants();
     this.updateDriverPool();
+    this.onLaneCheck(false);
   }
 
   ngOnDestroy() {
@@ -731,6 +733,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       return;
     }
     this.errorMessage.set(undefined);
+    this.onLaneCheck(false);
 
     this.savingCount++;
     this.cdr.detectChanges();
@@ -827,7 +830,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     });
   }
 
-  protected onLaneCheck() {
+  protected onLaneCheck(showModal = true) {
     const activeParticipants = this.localParticipants.filter(
       (p) => p.driver && !p.driver.isEmpty(),
     );
@@ -856,8 +859,10 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       driverNames,
       this.translationService,
     );
-    this.equalityReport = result.reports;
     this.isHeatsEqual = result.allEqual;
+    if (showModal) {
+      this.equalityReport = result.reports;
+    }
   }
 
   protected closeReport() {

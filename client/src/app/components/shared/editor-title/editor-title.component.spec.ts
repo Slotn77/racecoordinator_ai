@@ -39,6 +39,7 @@ class MockToolbarComponent {
   helpSteps = input<any[]>([]);
   helpTitle = input<string>("");
   helpRecordName = input<string | undefined>();
+  isHeatsEqual = input<boolean | undefined>(undefined);
   help = output<void>();
   add = output<void>();
   delete = output<void>();
@@ -116,5 +117,11 @@ describe("EditorTitleComponent", () => {
     spyOn(component.help, "emit");
     await harness.clickHelp();
     expect(component.help.emit).toHaveBeenCalled();
+  });
+
+  it("should forward isHeatsEqual input", () => {
+    fixture.componentRef.setInput("isHeatsEqual", true);
+    fixture.detectChanges();
+    expect(component.isHeatsEqual()).toBeTrue();
   });
 });

@@ -162,6 +162,7 @@
     <button
       id="lane-check-btn"
       class="toolbar-btn success"
+      [class.unequal]="isHeatsEqual() === false"
       (click)="onLaneCheck()"
       [disabled]="isSaving() || disabledLaneCheck()"
       [title]="'RD_BTN_LANE_CHECK' | translate"

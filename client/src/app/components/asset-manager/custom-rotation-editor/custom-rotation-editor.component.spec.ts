@@ -453,6 +453,73 @@ describe("CustomRotationEditorComponent", () => {
       expect(lane1Diff.params.count1).toBe(2);
       expect(lane1Diff.params.heat1).toBe("AM_LABEL_HEAT_PLURAL");
     });
+
+    it("should dynamically re-evaluate lane equality when heats are mutated via signature caching", () => {
+      fixture.detectChanges();
+      const rotation = component.internalRotations[0];
+      rotation.numDrivers = 2;
+      component.internalNumLanes = 2;
+      rotation.heats = [{ driverIndices: [1, 2] }, { driverIndices: [2, 1] }];
+
+      // Initial check (cache it as equal)
+      expect(component.isRotationEqual(rotation)).toBeTrue();
+
+      // Mutate the heats directly in-place (causing inequality)
+      rotation.heats = [{ driverIndices: [1, 2] }, { driverIndices: [1, 2] }];
+
+      // It should detect the change via signature-based cache miss and return false
+      expect(component.isRotationEqual(rotation)).toBeFalse();
+    });
+
+    it("should recalculate cache when track lane count changes", () => {
+      fixture.detectChanges();
+      const rotation = component.internalRotations[0];
+      rotation.numDrivers = 2;
+      component.internalNumLanes = 2;
+      rotation.heats = [{ driverIndices: [1, 2] }, { driverIndices: [2, 1] }];
+
+      // Initial equal check
+      expect(component.isRotationEqual(rotation)).toBeTrue();
+
+      // Spy on checkRotationLaneEqualityDirect to see if cache is bypassed
+      spyOn(
+        component as any,
+        "checkRotationLaneEqualityDirect",
+      ).and.callThrough();
+
+      // Mutate track lanes
+      component.internalNumLanes = 3;
+
+      // Cache signature includes internalNumLanes, so it should re-evaluate and call checkRotationLaneEqualityDirect
+      component.isRotationEqual(rotation);
+      expect(
+        (component as any).checkRotationLaneEqualityDirect,
+      ).toHaveBeenCalled();
+    });
+
+    it("should call validateAllRotationsLaneEquality on track selection / loading tracks", fakeAsync(() => {
+      spyOn(component, "validateAllRotationsLaneEquality").and.callThrough();
+      component.ngOnInit();
+      tick();
+      fixture.detectChanges();
+      expect(component.validateAllRotationsLaneEquality).toHaveBeenCalled();
+    }));
+
+    it("should call validateAllRotationsLaneEquality on autoSave / undo-redo events", () => {
+      fixture.detectChanges();
+      spyOn(component, "validateAllRotationsLaneEquality").and.callThrough();
+      component.autoSave("push");
+      expect(component.validateAllRotationsLaneEquality).toHaveBeenCalled();
+    });
+
+    it("should call validateAllRotationsLaneEquality when saving the asset configuration", fakeAsync(() => {
+      fixture.detectChanges();
+      component.internalAssetName = "Test Rotation Asset";
+      spyOn(component, "validateAllRotationsLaneEquality").and.callThrough();
+      component.save();
+      tick();
+      expect(component.validateAllRotationsLaneEquality).toHaveBeenCalled();
+    }));
   });
 
   describe("Import Rotation", () => {
