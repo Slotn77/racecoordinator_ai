@@ -37,6 +37,7 @@ import com.antigravity.race.states.Paused;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import com.antigravity.race.states.Starting;
+import com.antigravity.service.DatabaseService;
 import com.google.protobuf.GeneratedMessageV3;
 import com.mongodb.client.model.Filters;
 import java.util.ArrayList;
@@ -88,6 +89,21 @@ public class Race implements ProtocolListener {
     this.customRotations = builder.customRotations;
 
     this.recordsManager = new RaceRecords(this);
+    if (this.databaseContext != null && this.model != null && this.model.getEntityId() != null) {
+      RecordData existingRecords =
+          DatabaseService.getInstance()
+              .getRaceRecords( // fqn-collision
+                  this.databaseContext.getDatabase(), this.model.getEntityId(), builder.isDemoMode);
+      if (existingRecords != null) {
+        // Only load Overall records — Current session always starts fresh.
+        // Loading stale current records from a previous session causes the UI to show
+        // old per-session records before any laps have been run.
+        if (existingRecords.hasOverall()) {
+          this.recordsManager.loadOverallRaceRecords(existingRecords.getOverall());
+        }
+      }
+    }
+
     this.heatManager = new RaceHeatManager(this);
     this.hardwareManager = new RaceHardwareManager(this);
 
@@ -150,7 +166,7 @@ public class Race implements ProtocolListener {
     }
 
     this.state.enter(this);
-    recordsManager.loadGlobalRecords();
+
     if (isTimeBasedRanking()) {
       recordsManager.recalculateScoreRecords();
     }
@@ -794,7 +810,8 @@ public class Race implements ProtocolListener {
                     .setTime(accumulatedRaceTime)
                     .setAutoStartRemaining(getAutoStartRemaining())
                     .setAutoAdvanceRemaining(getAutoAdvanceRemaining())
-                    .build());
+                    .build())
+            .setRecordData(getRecordData());
 
     if (state != null) {
       builder.setRaceState(getProtoState(state));

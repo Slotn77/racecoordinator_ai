@@ -1026,4 +1026,268 @@
   text-shadow: 0 0 4px rgba(0, 229, 255, 0.3);
 }
 
+/* ==========================================================================
+   Driver Statistics Dashboard (Premium Glassmorphic Design)
+   ========================================================================== */
+.stats-dashboard-container {
+  background: rgba(13, 21, 30, 0.45);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(0, 229, 255, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37),
+              inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  overflow: hidden;
+  box-sizing: border-box;
+  animation: statsGlowEntry 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
+@keyframes statsGlowEntry {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37),
+                inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stats-highlights-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: center;
+}
+
+.highlight-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 20px 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.01);
+}
+
+.highlight-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.02) 50%, rgba(255, 255, 255, 0) 100%);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.highlight-item:hover::before {
+  transform: translateX(100%);
+}
+
+.highlight-item:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.highlight-item.glow-cyan {
+  border-left: 4px solid #00e5ff;
+}
+.highlight-item.glow-cyan:hover {
+  border-color: #00e5ff;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.15),
+              inset 0 0 10px rgba(0, 229, 255, 0.05);
+}
+
+.highlight-item.glow-magenta {
+  border-left: 4px solid #d500f9;
+}
+.highlight-item.glow-magenta:hover {
+  border-color: #d500f9;
+  box-shadow: 0 0 20px rgba(213, 0, 249, 0.15),
+              inset 0 0 10px rgba(213, 0, 249, 0.05);
+}
+
+.highlight-icon {
+  font-size: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.glow-cyan .highlight-icon {
+  color: #00e5ff;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+}
+
+.glow-magenta .highlight-icon {
+  color: #d500f9;
+  text-shadow: 0 0 8px rgba(213, 0, 249, 0.6);
+}
+
+.highlight-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.highlight-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #90a4ae;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.highlight-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 1px;
+}
+
+.highlight-val-container {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.highlight-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: #78909c;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+}
+
+.glow-cyan .highlight-value {
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+}
+
+.glow-magenta .highlight-value {
+  text-shadow: 0 0 10px rgba(213, 0, 249, 0.4);
+}
+
+.stats-lanes-card {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lanes-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #b0bec5;
+  text-transform: uppercase;
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lanes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lane-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 10px 16px;
+  transition: all 0.25s ease;
+}
+
+.lane-stat-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateX(4px);
+}
+
+.lane-name-col {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lane-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.lane-name-text {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #ffffff;
+}
+
+.lane-metrics-col {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.lane-metric {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lane-val-group {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.metric-icon {
+  font-size: 18px;
+  color: #78909c;
+}
+
+.metric-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e0e6ed;
+}
+
+.lane-metric-date {
+  font-size: 11px;
+  font-weight: 600;
+  color: #607d8b;
+}
+
+.lane-metric .metric-val.text-best-lap {
+  color: #00e5ff;
+  text-shadow: 0 0 6px rgba(0, 229, 255, 0.3);
+}

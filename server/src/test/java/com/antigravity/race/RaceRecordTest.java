@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.antigravity.models.Driver;
-import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
@@ -15,7 +14,6 @@ import com.antigravity.proto.RecordData;
 import com.antigravity.proto.RecordEntry;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.After;
@@ -117,8 +115,8 @@ public class RaceRecordTest {
     race.onLap(0, 5.0, 0, 0);
 
     RecordData recordData = race.getRecordData();
-    // Check Overall (Still 0, deferred)
-    assertEquals(0.0, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
+    // Check Overall (Updated immediately)
+    assertEquals(6.0, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
 
     // Check Current (Updated immediately)
     assertEquals(6.0, recordData.getCurrent().getLaneFastestLap(0).getValue(), 0.001);
@@ -135,8 +133,8 @@ public class RaceRecordTest {
     recordData = race.getRecordData();
     assertEquals(4.5, recordData.getCurrent().getLaneFastestLap(0).getValue(), 0.001);
 
-    // Overall still 0
-    assertEquals(0.0, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
+    // Overall updated immediately
+    assertEquals(4.5, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
 
     // End race to see Overall update
     race.changeState(new RaceOver());
@@ -468,55 +466,6 @@ public class RaceRecordTest {
     // Record should revert to Driver 0 (10 laps)
     RecordData recordData = race.getRecordData();
     assertEquals(10.0, recordData.getCurrent().getHighestScore().getValue(), 0.001);
-    assertEquals("D0", recordData.getCurrent().getHighestScore().getHolderName());
-  }
-
-  @Test
-  public void testManualLapRemovalRevertsToBaseStatistics() throws Exception {
-    // Setup base statistics with a pre-existing high score
-    GlobalStatistics baseStats = new GlobalStatistics();
-    baseStats.setHighestScore(20.0);
-    baseStats.setHighestScoreHolderName("Legacy Champ");
-    baseStats.setHighestScoreDate(123456789L);
-
-    // Inject into race using reflection since it's private and loaded on init
-    Field recordsManagerField = com.antigravity.race.Race.class.getDeclaredField("recordsManager");
-    recordsManagerField.setAccessible(true);
-    com.antigravity.race.RaceRecords recordsManager =
-        (com.antigravity.race.RaceRecords) recordsManagerField.get(race);
-
-    Field baseStatsField =
-        com.antigravity.race.RaceRecords.class.getDeclaredField("baseStatistics");
-    baseStatsField.setAccessible(true);
-    baseStatsField.set(recordsManager, baseStats);
-
-    // Sync overall with base records (normally happens on load/recalc)
-    race.changeState(new RaceOver());
-    assertEquals(20.0, race.getRecordData().getOverall().getHighestScore().getValue(), 0.001);
-    assertEquals(
-        "Legacy Champ", race.getRecordData().getOverall().getHighestScore().getHolderName());
-
-    // Driver 0 gets 25 laps (Breaks all-time record)
-    race.getCurrentHeat().getDrivers().get(0).setUserLaps(25.0);
-    race.updateAndBroadcastOverallStandings();
-
-    assertEquals(25.0, race.getRecordData().getOverall().getHighestScore().getValue(), 0.001);
-    assertEquals("D0", race.getRecordData().getOverall().getHighestScore().getHolderName());
-
-    // Driver 0 has laps removed -> total 15 (less than legacy record)
-    race.changeState(new Racing());
-    race.getCurrentHeat().getDrivers().get(0).setUserLaps(15.0);
-    race.updateAndBroadcastOverallStandings();
-    race.changeState(new RaceOver());
-
-    // Overall Record should revert to Legacy Champ (20.0)
-    RecordData recordData = race.getRecordData();
-    assertEquals(20.0, recordData.getOverall().getHighestScore().getValue(), 0.001);
-    assertEquals("Legacy Champ", recordData.getOverall().getHighestScore().getHolderName());
-    assertEquals(123456789L, recordData.getOverall().getHighestScore().getDate());
-
-    // Current Race Record should revert to Driver 0 (15.0) since it's still the best in THIS race
-    assertEquals(15.0, recordData.getCurrent().getHighestScore().getValue(), 0.001);
     assertEquals("D0", recordData.getCurrent().getHighestScore().getHolderName());
   }
 

@@ -38,6 +38,131 @@
       }
     </div>
 
+    <!-- Premium Cyberpunk Glassmorphic Statistics Dashboard -->
+    <div class="stats-dashboard-container section-container">
+      <h2 class="section-title">{{ "DR_STATS_HEADER" | translate }}</h2>
+      <div class="stats-grid">
+        <!-- Overall Highlights (Left Side) -->
+        <div class="stats-highlights-card">
+          <div class="highlight-item glow-cyan">
+            <span class="material-icons highlight-icon">timer</span>
+            <div class="highlight-info">
+              <span class="highlight-label">{{
+                "DR_STATS_BEST_LAP_OVERALL" | translate
+              }}</span>
+              <div class="highlight-val-container">
+                <span class="highlight-value text-best-lap">
+                  {{
+                    driverStats?.best_lap_time > 0 &&
+                    driverStats?.best_lap_time < 9999
+                      ? (driverStats?.best_lap_time | number: "1.3-3") + "s"
+                      : "--.---"
+                  }}
+                </span>
+                @if (driverStats?.best_lap_time_date) {
+                  <span class="highlight-date">{{
+                    driverStats.best_lap_time_date | date: "shortDate"
+                  }}</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="highlight-item glow-magenta">
+            <span class="material-icons highlight-icon">star</span>
+            <div class="highlight-info">
+              <span class="highlight-label">{{
+                "DR_STATS_BEST_LAPS_OVERALL" | translate
+              }}</span>
+              <div class="highlight-val-container">
+                <span class="highlight-value">
+                  {{
+                    driverStats?.best_lap_count > 0
+                      ? (driverStats?.best_lap_count | number: "1.2-2")
+                      : "--"
+                  }}
+                </span>
+                @if (driverStats?.best_lap_count_date) {
+                  <span class="highlight-date">{{
+                    driverStats.best_lap_count_date | date: "shortDate"
+                  }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Per-Lane breakdown (Right Side) -->
+        <div class="stats-lanes-card">
+          <h3 class="lanes-title">{{ "DR_STATS_PER_LANE" | translate }}</h3>
+          <div class="lanes-list">
+            @for (lane of getLanes(); track $index; let i = $index) {
+              <div
+                class="lane-stat-row"
+                [style.border-left]="
+                  '4px solid ' +
+                  (race?.track?.lanes?.[i]?.background_color || '#333')
+                "
+              >
+                <div class="lane-name-col">
+                  <span
+                    class="lane-dot"
+                    [style.background-color]="
+                      race?.track?.lanes?.[i]?.background_color || '#333'
+                    "
+                  ></span>
+                  <span class="lane-name-text">{{
+                    "DR_LABEL_LANE" | translate: { lane: i + 1 }
+                  }}</span>
+                </div>
+                <div class="lane-metrics-col">
+                  <div class="lane-metric">
+                    <span class="metric-icon material-icons">timer</span>
+                    <div class="lane-val-group">
+                      <span class="metric-val text-best-lap">
+                        {{
+                          driverStats?.lane_best_lap_times?.[i] > 0 &&
+                          driverStats?.lane_best_lap_times?.[i] < 9999
+                            ? (driverStats?.lane_best_lap_times?.[i]
+                                | number: "1.3-3") + "s"
+                            : "--.---"
+                        }}
+                      </span>
+                      @if (driverStats?.lane_best_lap_times_dates?.[i]) {
+                        <span class="lane-metric-date">{{
+                          driverStats.lane_best_lap_times_dates[i]
+                            | date: "shortDate"
+                        }}</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="lane-metric">
+                    <span class="metric-icon material-icons">star</span>
+                    <div class="lane-val-group">
+                      <span class="metric-val">
+                        {{
+                          driverStats?.lane_best_lap_counts?.[i] > 0
+                            ? (driverStats?.lane_best_lap_counts?.[i]
+                              | number: "1.2-2")
+                            : "--"
+                        }}
+                      </span>
+                      @if (driverStats?.lane_best_lap_counts_dates?.[i]) {
+                        <span class="lane-metric-date">{{
+                          driverStats.lane_best_lap_counts_dates[i]
+                            | date: "shortDate"
+                        }}</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Overall Standing Data Container -->
     <div class="results-container section-container">
       <h2 class="section-title">{{ "OR_RANKINGS_HEADER" | translate }}</h2>

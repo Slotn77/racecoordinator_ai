@@ -275,7 +275,12 @@
               track trackByDriver(idx, row);
               let idx = $index
             ) {
-              <div class="driver-row" [style.top.px]="idx * 90">
+              <a
+                class="driver-row"
+                [style.top.px]="idx * 90"
+                [routerLink]="['/driver-results', getDriverId(row.driver)]"
+                target="_blank"
+              >
                 <!-- Position Overall Column -->
                 <div class="body-cell col-pos">
                   <div
@@ -304,25 +309,19 @@
                 </div>
                 <!-- Driver Details -->
                 <div class="body-cell col-driver">
-                  <a
-                    [routerLink]="['/driver-results', getDriverId(row.driver)]"
-                    target="_blank"
-                    class="driver-results-link"
-                  >
-                    <div class="driver-name-block">
-                      <div class="driver-nickname">
-                        {{ row.driver.nickname || row.driver.name }}
-                      </div>
-                      @if (
-                        row.driver.nickname &&
-                        row.driver.nickname !== row.driver.name
-                      ) {
-                        <div class="driver-full-name">
-                          {{ row.driver.name }}
-                        </div>
-                      }
+                  <div class="driver-name-block">
+                    <div class="driver-nickname">
+                      {{ row.driver.nickname || row.driver.name }}
                     </div>
-                  </a>
+                    @if (
+                      row.driver.nickname &&
+                      row.driver.nickname !== row.driver.name
+                    ) {
+                      <div class="driver-full-name">
+                        {{ row.driver.name }}
+                      </div>
+                    }
+                  </div>
                 </div>
                 <!-- Overall Score -->
                 <div class="body-cell col-score text-highlight">
@@ -372,7 +371,7 @@
                 <div class="body-cell col-gap-ahead text-gap">
                   {{ formatGap(row.gapAhead) }}
                 </div>
-              </div>
+              </a>
             }
 
             <!-- No Drivers Row -->

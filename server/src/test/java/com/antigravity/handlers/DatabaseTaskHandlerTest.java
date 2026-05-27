@@ -13,17 +13,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.DriverStatistics;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.Race;
 import com.antigravity.models.Team;
 import com.antigravity.models.TeamOptions;
 import com.antigravity.models.Track;
+import com.antigravity.race.ClientSubscriptionManager;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import io.javalin.Javalin;
+import io.javalin.http.Context;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.Before;
@@ -50,6 +55,7 @@ public class DatabaseTaskHandlerTest {
     app = mock(Javalin.class);
 
     when(databaseContext.getDatabase()).thenReturn(mongoDatabase);
+    when(mongoDatabase.getCollection(any(String.class))).thenReturn(mock(MongoCollection.class));
     when(mongoDatabase.getCollection(eq("races"), eq(Race.class))).thenReturn(raceCollection);
     when(mongoDatabase.getCollection(eq("teams"), eq(Team.class))).thenReturn(teamCollection);
     when(mongoDatabase.getCollection(eq("tracks"), eq(Track.class)))
@@ -316,6 +322,7 @@ public class DatabaseTaskHandlerTest {
     MongoCollection historyCollection = mock(MongoCollection.class);
     MongoCollection statsCollection = mock(MongoCollection.class);
     MongoCollection savedRacesCollection = mock(MongoCollection.class);
+    MongoCollection driverStatsCollection = mock(MongoCollection.class);
 
     when(mongoDatabase.getCollection("race_history")).thenReturn(historyCollection);
     when(mongoDatabase.getCollection("demo_race_history")).thenReturn(historyCollection);
@@ -323,6 +330,8 @@ public class DatabaseTaskHandlerTest {
     when(mongoDatabase.getCollection("demo_global_statistics")).thenReturn(statsCollection);
     when(mongoDatabase.getCollection("saved_races")).thenReturn(savedRacesCollection);
     when(mongoDatabase.getCollection("demo_saved_races")).thenReturn(savedRacesCollection);
+    when(mongoDatabase.getCollection("driver_statistics")).thenReturn(driverStatsCollection);
+    when(mongoDatabase.getCollection("demo_driver_statistics")).thenReturn(driverStatsCollection);
 
     DeleteResult deleteResult = mock(DeleteResult.class);
     when(deleteResult.getDeletedCount()).thenReturn(1L);
@@ -334,6 +343,7 @@ public class DatabaseTaskHandlerTest {
     verify(historyCollection, times(2)).deleteMany(any(Bson.class));
     verify(statsCollection, times(2)).deleteMany(any(Bson.class));
     verify(savedRacesCollection, times(2)).deleteMany(any(Bson.class));
+    verify(driverStatsCollection, times(2)).deleteMany(any(Bson.class));
 
     // Verify race itself was deleted
     verify(raceCollection).deleteOne(any(Bson.class));
@@ -429,5 +439,136 @@ public class DatabaseTaskHandlerTest {
     handler.deleteTeam(teamId);
 
     verify(teamCollection).deleteOne(any(Bson.class));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testGetDriverStatistics_AutoDetectDemoMode() throws Exception {
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    when(req.getParameter("raceId")).thenReturn("race-123");
+    when(req.getParameter("demo")).thenReturn(null);
+    when(req.getQueryString()).thenReturn("raceId=race-123");
+    java.util.Map<String, String[]> parameterMap = new java.util.HashMap<>();
+    parameterMap.put("raceId", new String[] {"race-123"});
+    when(req.getParameterMap()).thenReturn(parameterMap);
+
+    java.util.Map<String, Object> appAttrs = new java.util.HashMap<>();
+    appAttrs.put(
+        io.javalin.plugin.json.JsonMapperKt.JSON_MAPPER_KEY,
+        new io.javalin.plugin.json.JavalinJackson());
+    Context ctx = new Context(req, res, appAttrs);
+
+    java.util.Map<String, String> pathParams = new java.util.HashMap<>();
+    pathParams.put("driverId", "d1");
+    java.lang.reflect.Method setParams =
+        ctx.getClass().getMethod("setPathParamMap$javalin", java.util.Map.class);
+    setParams.invoke(ctx, pathParams);
+
+    // Mock active demo race
+    com.antigravity.race.Race activeRace = mock(com.antigravity.race.Race.class); // fqn-collision
+    Race raceModel = new Race.Builder().withEntityId("race-123").build();
+    when(activeRace.getRaceModel()).thenReturn(raceModel);
+    when(activeRace.isDemoMode()).thenReturn(true);
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+
+    // Mock db collection and result
+    MongoCollection<DriverStatistics> statsCollection = mock(MongoCollection.class);
+    when(mongoDatabase.getCollection(eq("demo_driver_statistics"), eq(DriverStatistics.class)))
+        .thenReturn(statsCollection);
+    FindIterable<DriverStatistics> findIterable = mock(FindIterable.class);
+    when(statsCollection.find(any(Bson.class))).thenReturn(findIterable);
+
+    DriverStatistics stats =
+        new DriverStatistics(
+            null,
+            "d:d1",
+            "race-123",
+            5.2,
+            2.0,
+            java.util.Arrays.asList(5.5, 5.2),
+            java.util.Arrays.asList(1.0, 2.0),
+            null,
+            null,
+            null,
+            null);
+    when(findIterable.first()).thenReturn(stats);
+
+    try {
+      java.lang.reflect.Method method =
+          DatabaseTaskHandler.class.getDeclaredMethod("getDriverStatistics", Context.class);
+      method.setAccessible(true);
+      method.invoke(handler, ctx);
+
+      // Verify that it auto-detected demo and requested demo collection
+      verify(mongoDatabase).getCollection(eq("demo_driver_statistics"), eq(DriverStatistics.class));
+      verify(mongoDatabase, never())
+          .getCollection(eq("driver_statistics"), eq(DriverStatistics.class));
+      verify(res).setContentType("application/json");
+    } finally {
+      ClientSubscriptionManager.getInstance().setRace(null);
+    }
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testGetDriverStatistics_RegularMode() throws Exception {
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    when(req.getParameter("raceId")).thenReturn("race-123");
+    when(req.getParameter("demo")).thenReturn("false");
+    when(req.getQueryString()).thenReturn("raceId=race-123&demo=false");
+    java.util.Map<String, String[]> parameterMap = new java.util.HashMap<>();
+    parameterMap.put("raceId", new String[] {"race-123"});
+    parameterMap.put("demo", new String[] {"false"});
+    when(req.getParameterMap()).thenReturn(parameterMap);
+
+    java.util.Map<String, Object> appAttrs = new java.util.HashMap<>();
+    appAttrs.put(
+        io.javalin.plugin.json.JsonMapperKt.JSON_MAPPER_KEY,
+        new io.javalin.plugin.json.JavalinJackson());
+    Context ctx = new Context(req, res, appAttrs);
+
+    java.util.Map<String, String> pathParams = new java.util.HashMap<>();
+    pathParams.put("driverId", "d1");
+    java.lang.reflect.Method setParams =
+        ctx.getClass().getMethod("setPathParamMap$javalin", java.util.Map.class);
+    setParams.invoke(ctx, pathParams);
+
+    // Mock active race is null
+    ClientSubscriptionManager.getInstance().setRace(null);
+
+    // Mock db collection and result
+    MongoCollection<DriverStatistics> statsCollection = mock(MongoCollection.class);
+    when(mongoDatabase.getCollection(eq("driver_statistics"), eq(DriverStatistics.class)))
+        .thenReturn(statsCollection);
+    FindIterable<DriverStatistics> findIterable = mock(FindIterable.class);
+    when(statsCollection.find(any(Bson.class))).thenReturn(findIterable);
+
+    DriverStatistics stats =
+        new DriverStatistics(
+            null,
+            "d:d1",
+            "race-123",
+            5.2,
+            2.0,
+            java.util.Arrays.asList(5.5, 5.2),
+            java.util.Arrays.asList(1.0, 2.0),
+            null,
+            null,
+            null,
+            null);
+    when(findIterable.first()).thenReturn(stats);
+
+    java.lang.reflect.Method method =
+        DatabaseTaskHandler.class.getDeclaredMethod("getDriverStatistics", Context.class);
+    method.setAccessible(true);
+    method.invoke(handler, ctx);
+
+    // Verify that it requested regular collection
+    verify(mongoDatabase).getCollection(eq("driver_statistics"), eq(DriverStatistics.class));
+    verify(mongoDatabase, never())
+        .getCollection(eq("demo_driver_statistics"), eq(DriverStatistics.class));
+    verify(res).setContentType("application/json");
   }
 }

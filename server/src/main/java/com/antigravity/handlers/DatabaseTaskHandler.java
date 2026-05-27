@@ -4,6 +4,7 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.CustomHeat;
 import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
+import com.antigravity.models.DriverStatistics;
 import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.GroupOptions;
 import com.antigravity.models.HeatRotationType;
@@ -14,6 +15,7 @@ import com.antigravity.models.Race;
 import com.antigravity.models.RaceHistoryRecord;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
+import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
@@ -94,6 +96,7 @@ public class DatabaseTaskHandler {
     app.get("/api/history/races/{id}", this::getRaceHistoryById);
     app.get("/api/history/races/{id}/export", this::exportRaceHistoryCsv);
     app.get("/api/history/stats", this::getGlobalStatistics);
+    app.get("/api/history/drivers/{driverId}/stats", this::getDriverStatistics);
   }
 
   private MongoCollection<Driver> getDriverCollection() {
@@ -1167,10 +1170,15 @@ public class DatabaseTaskHandler {
 
   private void getGlobalStatistics(Context ctx) {
     try {
-      boolean isDemo = "true".equals(ctx.queryParam("demo"));
+      boolean isDemo =
+          "true".equals(ctx.queryParam("demo")) || "true".equals(ctx.queryParam("isDemo"));
+      String raceId = ctx.queryParam("raceId");
+      if (raceId == null || raceId.isEmpty()) {
+        raceId = "global";
+      }
       DatabaseService dbService = DatabaseService.getInstance();
       GlobalStatistics stats =
-          dbService.getGlobalStatistics(databaseContext.getDatabase(), "global", isDemo);
+          dbService.getGlobalStatistics(databaseContext.getDatabase(), raceId, isDemo);
       ctx.json(stats);
     } catch (Exception e) {
       e.printStackTrace();
@@ -1323,5 +1331,40 @@ public class DatabaseTaskHandler {
       result.add(new CustomRotation(numDrivers, heats));
     }
     return result;
+  }
+
+  private void getDriverStatistics(Context ctx) {
+    try {
+      String driverId = ctx.pathParam("driverId");
+      String raceId = ctx.queryParam("raceId");
+      boolean isDemo =
+          "true".equals(ctx.queryParam("demo")) || "true".equals(ctx.queryParam("isDemo"));
+
+      // Auto-detect demo mode from the active running race
+      if (!isDemo) {
+        com.antigravity.race.Race activeRace = // fqn-collision
+            ClientSubscriptionManager.getInstance().getRace();
+        if (activeRace != null && activeRace.getRaceModel() != null) {
+          if (raceId == null
+              || raceId.isEmpty()
+              || activeRace.getRaceModel().getEntityId().equals(raceId)) {
+            isDemo = activeRace.isDemoMode();
+          }
+        }
+      }
+
+      DatabaseService dbService = DatabaseService.getInstance();
+      DriverStatistics stats =
+          dbService.getDriverStatistics(databaseContext.getDatabase(), driverId, raceId, isDemo);
+
+      if (stats == null) {
+        ctx.status(404).result("Driver statistics not found");
+        return;
+      }
+      ctx.json(stats);
+    } catch (Exception e) {
+      logger.error("Error fetching driver statistics", e);
+      ctx.status(500).result("Error fetching driver statistics: " + e.getMessage());
+    }
   }
 }

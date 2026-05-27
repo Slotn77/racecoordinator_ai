@@ -1434,4 +1434,40 @@ export class DataService {
       { userLaps },
     );
   }
+
+  getDriverStatistics(
+    driverId: string,
+    raceId?: string,
+    isDemo?: boolean,
+  ): Observable<any> {
+    let url = `${this.baseUrl}/api/history/drivers/${driverId}/stats`;
+    const params = new URLSearchParams();
+    if (raceId) {
+      params.append("raceId", raceId);
+    }
+    if (isDemo !== undefined) {
+      params.append("isDemo", isDemo.toString());
+    }
+    const queryString = params.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+    return this.http.get<any>(url);
+  }
+
+  getGlobalStatistics(raceId?: string, isDemo?: boolean): Observable<any> {
+    let url = `${this.baseUrl}/api/history/stats`;
+    const params = new URLSearchParams();
+    if (raceId) {
+      params.append("raceId", raceId);
+    }
+    if (isDemo !== undefined) {
+      params.append("isDemo", isDemo.toString());
+    }
+    const queryString = params.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+    return this.http.get<any>(url);
+  }
 }

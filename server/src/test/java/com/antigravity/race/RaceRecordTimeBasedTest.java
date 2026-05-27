@@ -76,7 +76,7 @@ public class RaceRecordTimeBasedTest {
   }
 
   @Test
-  public void testCurrentRaceRecordsUpdateImmediatelyOverallIsDeferred() {
+  public void testCurrentRaceRecordsUpdateImmediately() {
     // 1. Start racing
     race.changeState(new Racing());
 
@@ -91,14 +91,14 @@ public class RaceRecordTimeBasedTest {
     assertEquals(4.5, recordData.getCurrent().getFastestLap().getValue(), 0.001);
     assertEquals("D0", recordData.getCurrent().getFastestLap().getHolderName());
 
-    // 4. Verify Overall Fastest Lap is still 0 (deferred)
-    assertEquals(0.0, recordData.getOverall().getFastestLap().getValue(), 0.001);
+    // 4. Verify Overall Fastest Lap updated immediately
+    assertEquals(4.5, recordData.getOverall().getFastestLap().getValue(), 0.001);
 
     // 5. Verify Current Race Highest Score (which is Fastest Lap in this race) updated immediately
     assertEquals(4.5, recordData.getCurrent().getHighestScore().getValue(), 0.001);
     assertEquals("D0", recordData.getCurrent().getHighestScore().getHolderName());
 
-    // 6. Verify Overall Highest Score is still 0 (deferred)
+    // 6. Verify Overall Highest Score is still 0 (deferred until RaceOver)
     assertEquals(0.0, recordData.getOverall().getHighestScore().getValue(), 0.001);
 
     // 7. End the race

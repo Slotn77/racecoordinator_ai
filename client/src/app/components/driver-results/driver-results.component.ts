@@ -3,12 +3,14 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute, RouterModule } from "@angular/router";
 import { Subscription } from "rxjs";
 import { DriverConverter } from "@app/converters/driver.converter";
+import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { getOverallScoreFormat } from "@app/models/overall_scoring";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { PrintService } from "@app/services/print.service";
@@ -82,6 +84,11 @@ export class DriverResultsComponent implements OnInit, OnDestroy {
     heatId: string;
   } | null = null;
 
+  protected driverStats: any = null;
+  protected raceState: RaceState = RaceState.UNKNOWN_STATE;
+  private loadedDriverId: string = "";
+  private loadedRaceId: string = "";
+
   constructor(
     private route: ActivatedRoute,
     private raceService: RaceService,
@@ -89,10 +96,71 @@ export class DriverResultsComponent implements OnInit, OnDestroy {
     private translationService: TranslationService,
     private printService: PrintService,
     private cdr: ChangeDetectorRef,
+    private dataService: DataService,
   ) {}
+
+  private loadDriverStats(force = false) {
+    if (!this.driverId) {
+      this.driverStats = null;
+      return;
+    }
+    const currentRaceId = this.race?.entity_id;
+    if (!currentRaceId && !force) {
+      // Driver results view needs a saved race context to fetch specific stats.
+      // Do not accidentally request global stats by passing undefined/empty raceId.
+      return;
+    }
+
+    if (
+      !force &&
+      this.driverId === this.loadedDriverId &&
+      currentRaceId === this.loadedRaceId &&
+      this.driverStats !== null
+    ) {
+      return;
+    }
+    this.loadedDriverId = this.driverId;
+    this.loadedRaceId = currentRaceId || "";
+    const isDemo = this.race?.entity_id?.startsWith("demo_") || false;
+    this.dataService
+      .getDriverStatistics(this.driverId, currentRaceId || undefined, isDemo)
+      .subscribe({
+        next: (stats) => {
+          this.driverStats = stats;
+          console.log("DRIVER STATS RECEIVED:", stats);
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.warn("Failed to load driver statistics", err);
+          this.driverStats = null;
+          // Reset cache tracking on error to allow subsequent retries
+          this.loadedDriverId = "";
+          this.loadedRaceId = "";
+          this.cdr.detectChanges();
+        },
+      });
+  }
 
   ngOnInit() {
     this.raceConnectionService.connect();
+
+    this.subscriptions.push(
+      this.raceConnectionService.raceState$.subscribe((state) => {
+        this.raceState = state;
+        if (state === RaceState.RACE_OVER) {
+          // Immediately try to fetch stats (if server completed persistence rapidly)
+          this.loadDriverStats(true);
+          // Also delay a fetch by 500ms to robustly handle database write latency
+          setTimeout(() => {
+            this.loadDriverStats(true);
+          }, 500);
+          // And one more at 1500ms as a robust fallback for slower database writes
+          setTimeout(() => {
+            this.loadDriverStats(true);
+          }, 1500);
+        }
+      }),
+    );
 
     this.subscriptions.push(
       this.raceService.currentHeat$.subscribe(() => {
@@ -199,6 +267,8 @@ export class DriverResultsComponent implements OnInit, OnDestroy {
 
   private recalculateAll() {
     if (!this.driverId) return;
+
+    this.loadDriverStats();
 
     // 1. Resolve Driver Object
     const p = this.participants.find(
@@ -570,5 +640,15 @@ export class DriverResultsComponent implements OnInit, OnDestroy {
       ? this.driver.nickname || this.driver.name
       : "Driver Results";
     this.printService.print(`${driverName} - Driver Results`, true);
+  }
+
+  protected getLanes(): any[] {
+    if (this.race?.track?.lanes) {
+      return this.race.track.lanes;
+    }
+    if (this.driverStats?.lane_best_lap_times) {
+      return this.driverStats.lane_best_lap_times;
+    }
+    return [];
   }
 }

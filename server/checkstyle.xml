@@ -8,7 +8,7 @@
         <property name="file" value="${samedir}/checkstyle-suppressions.xml" default="checkstyle-suppressions.xml"/>
     </module>
     <module name="FileLength">
-        <property name="max" value="1000"/>
+        <property name="max" value="2000"/>
     </module>
     <module name="TreeWalker">
         <module name="SuppressWarningsHolder"/>

@@ -290,6 +290,28 @@ export class TestSetupHelper {
         await route.continue();
       }
     });
+
+    await page.route("**/api/history/drivers/*/stats", async (route) => {
+      const url = route.request().url();
+      const matches = url.match(/\/api\/history\/drivers\/([^\/]+)\/stats/);
+      const driverId = matches ? matches[1] : "d1";
+      const isTeam = driverId.includes("team") || driverId.startsWith("t_");
+
+      const mockStats = {
+        driver_id: driverId,
+        race_id: "race123",
+        best_lap_time: isTeam ? 9.8 : 9.8,
+        best_lap_count: isTeam ? 4.0 : 3.0,
+        lane_best_lap_times: isTeam ? [9.8, 10.2] : [9.8, 10.5],
+        lane_best_lap_counts: isTeam ? [4.0, 3.0] : [3.0, 2.0],
+      };
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockStats),
+      });
+    });
   }
 
   static async setupTeamMocks(page: Page) {

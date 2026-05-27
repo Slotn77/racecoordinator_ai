@@ -56,8 +56,21 @@ public class RaceOver implements IRaceState {
         DatabaseService dbService = DatabaseService.getInstance();
         com.mongodb.client.MongoDatabase db = dbCtx.getDatabase();
         if (db != null) {
-          dbService.saveRaceHistory(db, race);
-          dbService.updateGlobalStatistics(db, race);
+          // The RaceOver state may be entered from a ScheduledExecutorService thread that
+          // has its interrupt flag set when the timer fires. MongoDB's connection pool uses
+          // lockInterruptibly() which throws MongoInterruptedException if interrupted.
+          // Clear the flag before DB operations so saves succeed, and restore it after.
+          boolean wasInterrupted = Thread.interrupted();
+          try {
+            dbService.saveRaceHistory(db, race);
+            dbService.updateGlobalStatistics(db, race);
+            dbService.saveDriverStatistics(db, race);
+            dbService.saveRaceRecords(db, race);
+          } finally {
+            if (wasInterrupted) {
+              Thread.currentThread().interrupt(); // restore the interrupted status
+            }
+          }
         } else {
           logger.warn("Database is null; skipping race history and statistics persistence.");
         }

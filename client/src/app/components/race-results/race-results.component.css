@@ -198,6 +198,9 @@
     background 0.2s ease-in-out,
     box-shadow 0.2s ease-in-out;
   padding: 0 10px;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .driver-row:hover {
@@ -284,14 +287,7 @@
 }
 
 /* Driver Info Block */
-.driver-results-link {
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-  display: block;
-}
-
-.driver-results-link:hover .driver-nickname {
+.driver-row:hover .driver-nickname {
   color: #00e5ff;
   text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
 }

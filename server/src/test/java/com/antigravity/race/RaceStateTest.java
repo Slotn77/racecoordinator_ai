@@ -375,6 +375,10 @@ public class RaceStateTest {
     assertEquals(RaceState.NOT_STARTED, snapshot.getRaceState());
     assertEquals(5.5, snapshot.getRaceTime().getAutoStartRemaining(), 0.001);
     assertEquals(3.3, snapshot.getRaceTime().getAutoAdvanceRemaining(), 0.001);
+
+    // Verify that snapshot includes recordData
+    assertTrue(snapshot.hasRecordData());
+    org.junit.Assert.assertNotNull(snapshot.getRecordData());
   }
 
   @Test

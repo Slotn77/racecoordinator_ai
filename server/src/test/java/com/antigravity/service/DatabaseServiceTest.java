@@ -18,6 +18,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.ReplaceOptions;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.bson.conversions.Bson;
 import org.junit.Before;
@@ -119,6 +120,104 @@ public class DatabaseServiceTest {
     assertEquals(
         10550L, updatedStats.getTotalRaceTimeMs(), 1000L); // Allow some drift for processing time
     assertEquals(2.0, updatedStats.getTotalLaps(), 0.001); // Participant p1 had 2 laps
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testUpdateGlobalStatisticsMerging() {
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
+            .withEntityId("ID_MERGE")
+            .build();
+
+    Race runtimeRace = mock(Race.class);
+    when(runtimeRace.getRaceModel()).thenReturn(model);
+    when(runtimeRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(runtimeRace.getTrack()).thenReturn(dbService.getFactoryTrack());
+    when(runtimeRace.getStatistics()).thenReturn(new com.antigravity.race.RaceStatistics());
+
+    // Set some new records in the runtime race that are a mix of better/worse than existing
+    com.antigravity.proto.RecordData recordData =
+        com.antigravity.proto.RecordData.newBuilder()
+            .setOverall(
+                com.antigravity.proto.OverallRecords.newBuilder()
+                    .setFastestLap(
+                        com.antigravity.proto.RecordEntry.newBuilder()
+                            .setValue(4.5)
+                            .setHolderName("NewFast"))
+                    .setHighestScore(
+                        com.antigravity.proto.RecordEntry.newBuilder()
+                            .setValue(150.0)
+                            .setHolderName("NewHigh"))
+                    // Lane 0: New time is worse (5.0 vs 4.0), New score is better (20 vs 10)
+                    .addLaneFastestLap(
+                        com.antigravity.proto.RecordEntry.newBuilder()
+                            .setValue(5.0)
+                            .setHolderName("NewLane0Time"))
+                    .addLaneHighestScore(
+                        com.antigravity.proto.RecordEntry.newBuilder()
+                            .setValue(20.0)
+                            .setHolderName("NewLane0Score"))
+                    // Lane 1: New time is better (3.0 vs 4.0), New score is worse (5 vs 10)
+                    .addLaneFastestLap(
+                        com.antigravity.proto.RecordEntry.newBuilder()
+                            .setValue(3.0)
+                            .setHolderName("NewLane1Time"))
+                    .addLaneHighestScore(
+                        com.antigravity.proto.RecordEntry.newBuilder()
+                            .setValue(5.0)
+                            .setHolderName("NewLane1Score"))
+                    .build())
+            .build();
+    when(runtimeRace.getRecordData()).thenReturn(recordData);
+
+    FindIterable<GlobalStatistics> findIterable = mock(FindIterable.class);
+    when(statsCollection.find(any(Bson.class))).thenReturn(findIterable);
+
+    GlobalStatistics existingStats = new GlobalStatistics("ID_MERGE");
+    existingStats.setFastestLapTime(4.0); // New (4.5) is worse
+    existingStats.setHighestScore(100.0); // New (150.0) is better
+    existingStats.setLaneFastestLapTimes(new ArrayList<>(Arrays.asList(4.0, 4.0)));
+    existingStats.setLaneFastestLapDriverNames(
+        new ArrayList<>(Arrays.asList("OldLane0Time", "OldLane1Time")));
+    existingStats.setLaneFastestLapDriverNicknames(new ArrayList<>(Arrays.asList("", "")));
+    existingStats.setLaneFastestLapTeamNames(new ArrayList<>(Arrays.asList("", "")));
+    existingStats.setLaneFastestLapDates(new ArrayList<>(Arrays.asList(0L, 0L)));
+
+    existingStats.setLaneHighestScores(new ArrayList<>(Arrays.asList(10.0, 10.0)));
+    existingStats.setLaneHighestScoreHolderNames(
+        new ArrayList<>(Arrays.asList("OldLane0Score", "OldLane1Score")));
+    existingStats.setLaneHighestScoreHolderNicknames(new ArrayList<>(Arrays.asList("", "")));
+    existingStats.setLaneHighestScoreTeamNames(new ArrayList<>(Arrays.asList("", "")));
+    existingStats.setLaneHighestScoreDates(new ArrayList<>(Arrays.asList(0L, 0L)));
+
+    when(findIterable.first()).thenReturn(existingStats);
+
+    dbService.updateGlobalStatistics(mongoDatabase, runtimeRace);
+
+    ArgumentCaptor<com.antigravity.models.GlobalStatistics> recordCaptor =
+        ArgumentCaptor.forClass(com.antigravity.models.GlobalStatistics.class);
+    verify(statsCollection)
+        .replaceOne(any(Bson.class), recordCaptor.capture(), any(ReplaceOptions.class));
+
+    com.antigravity.models.GlobalStatistics updatedStats = recordCaptor.getValue();
+
+    // Check Overall
+    assertEquals(4.0, updatedStats.getFastestLapTime(), 0.001); // Keeps old
+    assertEquals(150.0, updatedStats.getHighestScore(), 0.001); // Updates to new
+
+    // Check Lane 0
+    assertEquals(4.0, updatedStats.getLaneFastestLapTimes().get(0), 0.001); // Keeps old time
+    assertEquals("OldLane0Time", updatedStats.getLaneFastestLapDriverNames().get(0));
+    assertEquals(20.0, updatedStats.getLaneHighestScores().get(0), 0.001); // Updates to new score
+    assertEquals("NewLane0Score", updatedStats.getLaneHighestScoreHolderNames().get(0));
+
+    // Check Lane 1
+    assertEquals(3.0, updatedStats.getLaneFastestLapTimes().get(1), 0.001); // Updates to new time
+    assertEquals("NewLane1Time", updatedStats.getLaneFastestLapDriverNames().get(1));
+    assertEquals(10.0, updatedStats.getLaneHighestScores().get(1), 0.001); // Keeps old score
+    assertEquals("OldLane1Score", updatedStats.getLaneHighestScoreHolderNames().get(1));
   }
 
   @Test

@@ -1,13 +1,14 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ActivatedRoute } from "@angular/router";
-import { BehaviorSubject, Subject } from "rxjs";
+import { BehaviorSubject, of, Subject } from "rxjs";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Team } from "@app/models/team";
+import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { PrintService } from "@app/services/print.service";
@@ -26,6 +27,7 @@ describe("DriverResultsComponent", () => {
   let mockRaceService: any;
   let mockTranslationService: any;
   let mockPrintService: any;
+  let mockDataService: any;
 
   let paramsSubject: BehaviorSubject<any>;
   let participantsSubject: BehaviorSubject<RaceParticipant[]>;
@@ -35,6 +37,7 @@ describe("DriverResultsComponent", () => {
   let standingsUpdateSubject: Subject<any>;
   let overallStandingsUpdateSubject: Subject<any>;
   let lapsSubject: Subject<any>;
+  let raceStateSubject: BehaviorSubject<RaceState>;
 
   const createDriver = (id: string, name: string, nickname: string): Driver => {
     return new Driver(id, name, nickname, "");
@@ -110,6 +113,7 @@ describe("DriverResultsComponent", () => {
     standingsUpdateSubject = new Subject<any>();
     overallStandingsUpdateSubject = new Subject<any>();
     lapsSubject = new Subject<any>();
+    raceStateSubject = new BehaviorSubject<RaceState>(RaceState.UNKNOWN_STATE);
 
     mockRaceConnectionService = {
       connect: jasmine.createSpy("connect"),
@@ -117,6 +121,7 @@ describe("DriverResultsComponent", () => {
       standingsUpdate$: standingsUpdateSubject.asObservable(),
       overallStandingsUpdate$: overallStandingsUpdateSubject.asObservable(),
       laps$: lapsSubject.asObservable(),
+      raceState$: raceStateSubject.asObservable(),
     };
 
     mockRaceService = {
@@ -138,6 +143,13 @@ describe("DriverResultsComponent", () => {
 
     mockPrintService = jasmine.createSpyObj("PrintService", ["print"]);
 
+    mockDataService = {
+      serverUrl: "http://localhost:8080",
+      getDriverStatistics: jasmine
+        .createSpy("getDriverStatistics")
+        .and.returnValue(of(null)),
+    };
+
     await TestBed.configureTestingModule({
       imports: [DriverResultsComponent],
       providers: [
@@ -158,7 +170,7 @@ describe("DriverResultsComponent", () => {
         },
         {
           provide: DataService,
-          useValue: { serverUrl: "http://localhost:8080" },
+          useValue: mockDataService,
         },
       ],
     }).compileComponents();
@@ -467,6 +479,121 @@ describe("DriverResultsComponent", () => {
 
       expect(await harness.hasTooltipDriver()).toBeTrue();
       expect((await harness.getTooltipDriverText()).trim()).toBe("Sarah");
+    });
+  });
+
+  describe("Driver Statistics Features", () => {
+    it("should not call getDriverStatistics if no race is selected", () => {
+      component["loadedDriverId"] = "";
+      component["loadedRaceId"] = "";
+      mockDataService.getDriverStatistics.calls.reset();
+      paramsSubject.next({ driverId: "d1" });
+      fixture.detectChanges();
+      expect(mockDataService.getDriverStatistics).not.toHaveBeenCalled();
+    });
+
+    it("should fetch statistics with specific raceId when race is selected", () => {
+      const mockRace = {
+        entity_id: "race-123",
+        name: "Test Race",
+      } as any;
+
+      mockDataService.getDriverStatistics.calls.reset();
+      paramsSubject.next({ driverId: "d1" });
+      selectedRaceSubject.next(mockRace);
+      fixture.detectChanges();
+
+      expect(mockDataService.getDriverStatistics).toHaveBeenCalledWith(
+        "d1",
+        "race-123",
+        false,
+      );
+    });
+
+    it("should populate driverStats when data is successfully loaded", () => {
+      const mockStats = {
+        driver_id: "d:d1",
+        race_id: "race-123",
+        best_lap_time: 4.85,
+        best_lap_count: 15.0,
+        lane_best_lap_times: [4.9, 4.85],
+        lane_best_lap_counts: [12.0, 15.0],
+      };
+
+      mockDataService.getDriverStatistics.and.returnValue(of(mockStats));
+
+      component["loadedDriverId"] = "";
+      component["loadedRaceId"] = "";
+
+      const mockRace = {
+        entity_id: "race-123",
+        name: "Test Race",
+      } as any;
+
+      paramsSubject.next({ driverId: "d1" });
+      selectedRaceSubject.next(mockRace);
+      fixture.detectChanges();
+
+      expect(component["driverStats"]).toEqual(mockStats);
+    });
+
+    it("should render statistics dashboard when stats are loaded", () => {
+      const mockStats = {
+        driver_id: "d:d1",
+        race_id: "race-123",
+        best_lap_time: 4.85,
+        best_lap_count: 15.0,
+        lane_best_lap_times: [4.9, 4.85],
+        lane_best_lap_counts: [12.0, 15.0],
+      };
+
+      mockDataService.getDriverStatistics.and.returnValue(of(mockStats));
+
+      component["loadedDriverId"] = "";
+      component["loadedRaceId"] = "";
+
+      const mockRace = {
+        entity_id: "race-123",
+        name: "Test Race",
+      } as any;
+
+      paramsSubject.next({ driverId: "d1" });
+      selectedRaceSubject.next(mockRace);
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const container = compiled.querySelector(".stats-dashboard-container");
+      expect(container).toBeTruthy();
+
+      const values = compiled.querySelectorAll(".highlight-value");
+      expect(values.length).toBe(2);
+      expect(values[0].textContent.trim()).toBe("4.850s");
+      expect(values[1].textContent.trim()).toBe("15.00");
+    });
+
+    it("should render statistics dashboard with dashes when stats are empty/null", () => {
+      mockDataService.getDriverStatistics.and.returnValue(of(null));
+
+      component["loadedDriverId"] = "";
+      component["loadedRaceId"] = "";
+
+      const mockRace = {
+        entity_id: "race-123",
+        name: "Test Race",
+      } as any;
+
+      paramsSubject.next({ driverId: "d1" });
+      selectedRaceSubject.next(mockRace);
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const container = compiled.querySelector(".stats-dashboard-container");
+      expect(container).toBeTruthy();
+
+      const values = compiled.querySelectorAll(".highlight-value");
+      expect(values.length).toBe(2);
+      expect(values[0].textContent.trim()).toBe("--.---");
+      expect(values[1].textContent.trim()).toBe("--");
     });
   });
 });

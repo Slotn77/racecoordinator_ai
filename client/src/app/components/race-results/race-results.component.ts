@@ -108,6 +108,16 @@ export class RaceResultsComponent implements OnInit, OnDestroy {
     );
   }
 
+  protected openDriverResults(driverId: string, event: MouseEvent) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (!driverId) return;
+    const url = `/driver-results/${driverId}`;
+    window.open(url, "_blank");
+  }
+
   protected getDriverKey(d: any): string {
     const id = this.getDriverId(d);
     if (id) return id;
