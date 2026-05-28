@@ -918,6 +918,11 @@ describe("DefaultRacedayComponent", () => {
       );
       expect(result).toBe("RD_COL_AVATAR");
     });
+
+    it("should return empty string label key for flag column", () => {
+      const result = (component as any).getLabelKeyForColumn("flag");
+      expect(result).toBe("");
+    });
   });
 
   it("should call loadColumns when loadRaceData is called", () => {

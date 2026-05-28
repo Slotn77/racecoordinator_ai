@@ -2359,6 +2359,7 @@ export class DefaultRacedayComponent
       fph: "RD_COL_FPH",
       segmentTime: "RD_COL_SEGMENT_TIME",
       "driver.avatarUrl": "RD_COL_AVATAR",
+      flag: "",
     };
     return labels[baseKey] ?? "UNKNOWN";
   }
