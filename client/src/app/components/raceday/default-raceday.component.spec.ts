@@ -2680,4 +2680,75 @@ describe("DefaultRacedayComponent", () => {
       expect(mockHd.adjustedLapCount).toBe(10.0);
     });
   });
+
+  describe("Menu option hover and document click behavior", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
+    it("should return correct status from isAnyMenuDropdownOpen", () => {
+      expect(component.isAnyMenuDropdownOpen()).toBeFalse();
+
+      component.isFileMenuOpen = true;
+      expect(component.isAnyMenuDropdownOpen()).toBeTrue();
+
+      component.isFileMenuOpen = false;
+      component.isMenuOpen = true;
+      expect(component.isAnyMenuDropdownOpen()).toBeTrue();
+
+      component.isMenuOpen = false;
+      component.isLanesMenuOpen = true;
+      expect(component.isAnyMenuDropdownOpen()).toBeTrue();
+
+      component.isLanesMenuOpen = false;
+      component.isWindowsMenuOpen = true;
+      expect(component.isAnyMenuDropdownOpen()).toBeTrue();
+    });
+
+    it("should do nothing on hover if no menus are open", () => {
+      component.isFileMenuOpen = false;
+      component.isMenuOpen = false;
+      component.isLanesMenuOpen = false;
+      component.isWindowsMenuOpen = false;
+
+      component.onMenuItemHover("race");
+
+      expect(component.isMenuOpen).toBeFalse();
+      expect(component.isFileMenuOpen).toBeFalse();
+    });
+
+    it("should switch menus on hover if another menu is open", () => {
+      component.isFileMenuOpen = true;
+      component.isMenuOpen = false;
+
+      component.onMenuItemHover("race");
+
+      expect(component.isFileMenuOpen).toBeFalse();
+      expect(component.isMenuOpen).toBeTrue();
+
+      component.onMenuItemHover("lanes");
+      expect(component.isMenuOpen).toBeFalse();
+      expect(component.isLanesMenuOpen).toBeTrue();
+
+      component.onMenuItemHover("windows");
+      expect(component.isLanesMenuOpen).toBeFalse();
+      expect(component.isWindowsMenuOpen).toBeTrue();
+
+      component.onMenuItemHover("file");
+      expect(component.isWindowsMenuOpen).toBeFalse();
+      expect(component.isFileMenuOpen).toBeTrue();
+    });
+
+    it("should close menus when clicking outside the menu wrapper", () => {
+      component.isFileMenuOpen = true;
+
+      const clickEvent = new MouseEvent("click", { bubbles: true });
+      document.dispatchEvent(clickEvent);
+
+      expect(component.isFileMenuOpen).toBeFalse();
+      expect(component.isMenuOpen).toBeFalse();
+      expect(component.isLanesMenuOpen).toBeFalse();
+      expect(component.isWindowsMenuOpen).toBeFalse();
+    });
+  });
 });

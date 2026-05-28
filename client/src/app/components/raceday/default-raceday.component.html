@@ -60,7 +60,11 @@
     <!-- Top Horizontal Menu Bar -->
     <div class="menu-bar no-print">
       <div class="menu-wrapper">
-        <button class="menu-button-top" (click)="toggleFileMenu()">
+        <button
+          class="menu-button-top"
+          (click)="toggleFileMenu()"
+          (mouseenter)="onMenuItemHover('file')"
+        >
           {{ "RD_MENU_FILE" | translate }}
         </button>
         @if (isFileMenuOpen) {
@@ -87,7 +91,11 @@
         }
       </div>
       <div class="menu-wrapper">
-        <button class="menu-button-top" (click)="toggleMenu()">
+        <button
+          class="menu-button-top"
+          (click)="toggleMenu()"
+          (mouseenter)="onMenuItemHover('race')"
+        >
           {{ "RD_MENU_RACE_DIRECTOR" | translate }}
         </button>
         @if (isMenuOpen) {
@@ -168,7 +176,11 @@
       </div>
       @if (track && track.lanes) {
         <div class="menu-wrapper">
-          <button class="menu-button-top" (click)="toggleLanesMenu()">
+          <button
+            class="menu-button-top"
+            (click)="toggleLanesMenu()"
+            (mouseenter)="onMenuItemHover('lanes')"
+          >
             {{ "RD_MENU_LANES" | translate }}
           </button>
           @if (isLanesMenuOpen) {
@@ -198,6 +210,7 @@
           id="windows-menu-button"
           class="menu-button-top"
           (click)="toggleWindowsMenu()"
+          (mouseenter)="onMenuItemHover('windows')"
         >
           {{ "RD_MENU_WINDOWS" | translate }}
         </button>

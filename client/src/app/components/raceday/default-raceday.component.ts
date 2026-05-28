@@ -1254,10 +1254,11 @@ export class DefaultRacedayComponent
   @HostListener("document:click", ["$event"])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
-    if (
-      !target.closest(".menu-wrapper") &&
-      !target.closest(".teammate-select")
-    ) {
+    const isInsideMenu =
+      target &&
+      typeof target.closest === "function" &&
+      (target.closest(".menu-wrapper") || target.closest(".teammate-select"));
+    if (!isInsideMenu) {
       this.isMenuOpen = false;
       this.isFileMenuOpen = false;
       this.isLanesMenuOpen = false;
@@ -1338,6 +1339,41 @@ export class DefaultRacedayComponent
     this.isMenuOpen = false;
     this.isLanesMenuOpen = false;
     this.isDriversStationOpen = false;
+  }
+
+  isAnyMenuDropdownOpen(): boolean {
+    return (
+      this.isFileMenuOpen ||
+      this.isMenuOpen ||
+      this.isLanesMenuOpen ||
+      this.isWindowsMenuOpen
+    );
+  }
+
+  onMenuItemHover(menuName: string) {
+    if (this.isAnyMenuDropdownOpen()) {
+      if (menuName === "file" && this.isFileMenuOpen) return;
+      if (menuName === "race" && this.isMenuOpen) return;
+      if (menuName === "lanes" && this.isLanesMenuOpen) return;
+      if (menuName === "windows" && this.isWindowsMenuOpen) return;
+
+      this.isFileMenuOpen = false;
+      this.isMenuOpen = false;
+      this.isLanesMenuOpen = false;
+      this.isDriversStationOpen = false;
+      this.isWindowsMenuOpen = false;
+
+      if (menuName === "file") {
+        this.isFileMenuOpen = true;
+      } else if (menuName === "race") {
+        this.isMenuOpen = true;
+      } else if (menuName === "lanes") {
+        this.isLanesMenuOpen = true;
+      } else if (menuName === "windows") {
+        this.isWindowsMenuOpen = true;
+      }
+      this.cdr.markForCheck();
+    }
   }
 
   onMenuSelect(action: string) {
