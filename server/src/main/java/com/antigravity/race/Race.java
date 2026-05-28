@@ -710,6 +710,7 @@ public class Race implements ProtocolListener {
       resetHeatRecords();
       broadcastRecords();
       broadcastTime();
+      updateAndBroadcastOverallStandings();
     }
   }
 

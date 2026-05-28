@@ -234,6 +234,27 @@ public class RaceStateTest {
   }
 
   @Test
+  public void testRestartHeatResetsOverallStandings() throws Exception {
+    // Start -> Racing
+    race.startRace();
+    race.changeState(new Racing());
+
+    // Record two laps (first is reaction time, second is counted as lap)
+    race.onLap(0, 1.0, 1, 0);
+    race.onLap(0, 5.0, 1, 0);
+
+    // Verify lap was recorded and overall standings updated
+    assertEquals(1.0, race.getDrivers().get(0).getTotalLaps(), 0.001);
+
+    // Pause and restart heat
+    race.pauseRace();
+    race.restartHeat();
+
+    // Verify overall standings were reset back to 0.0
+    assertEquals(0.0, race.getDrivers().get(0).getTotalLaps(), 0.001);
+  }
+
+  @Test
   public void testSkipHeatFromNotStarted() throws Exception {
     assertTrue(race.getState() instanceof NotStarted);
 
