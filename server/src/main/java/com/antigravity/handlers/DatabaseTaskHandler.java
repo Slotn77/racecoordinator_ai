@@ -807,6 +807,7 @@ public class DatabaseTaskHandler {
             .model(race)
             .drivers(mockDrivers)
             .track(track)
+            .databaseContext(databaseContext)
             .isDemoMode(true) // Use demo mode to avoid protocol initialization
             .build();
 

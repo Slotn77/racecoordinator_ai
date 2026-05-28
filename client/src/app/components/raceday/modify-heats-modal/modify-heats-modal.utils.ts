@@ -121,21 +121,11 @@ export function getParticipantAvatar(
   return participant.driver.avatarUrl;
 }
 
-export function validateGroupSequence(heats: Heat[]): {
+export function validateGroupSequence(_heats: Heat[]): {
   isValid: boolean;
   expected?: number;
   found?: number;
 } {
-  const uniqueGroups = Array.from(new Set(heats.map((h) => h.group))).sort(
-    (a, b) => a - b,
-  );
-  let expected = 0;
-  for (const g of uniqueGroups) {
-    if (g !== expected) {
-      return { isValid: false, expected: expected + 1, found: g + 1 };
-    }
-    expected++;
-  }
   return { isValid: true };
 }
 

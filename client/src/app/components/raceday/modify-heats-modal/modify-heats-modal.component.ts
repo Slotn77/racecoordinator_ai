@@ -331,6 +331,22 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       }),
     );
 
+    this.subscriptions.push(
+      this.raceService.heats$.subscribe((heats) => {
+        if (
+          heats &&
+          heats.length > 0 &&
+          this.localHeats.length === 0 &&
+          !savedState &&
+          !this.hasUnsavedChanges &&
+          !this.undoManager.hasChanges()
+        ) {
+          this.initializeState();
+          this.cdr.detectChanges();
+        }
+      }),
+    );
+
     this.updateDropListConnections();
   }
 
@@ -446,8 +462,8 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       if (
         s === RaceState.STARTING ||
         s === RaceState.RACING ||
-        s === RaceState.PAUSED ||
-        s === RaceState.HEAT_OVER
+        s === RaceState.HEAT_OVER ||
+        s === RaceState.PAUSED
       ) {
         return true;
       }
@@ -568,6 +584,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected onAddHeat() {
+    if (this.isSaving) return;
     const newHeatNumber = this.localHeats.length + 1;
     const newHeat = new Heat(`new-heat-${Date.now()}`, newHeatNumber, [], []);
     this.localHeats.push(newHeat);
@@ -577,6 +594,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected onRemoveHeat(index: number) {
+    if (this.isSaving) return;
     if (this.isHeatStarted(this.localHeats[index])) return;
 
     // Move drivers to pool
@@ -585,6 +603,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     this.localHeats.splice(index, 1);
     // Renumber heats
     this.localHeats.forEach((h, i) => (h.heatNumber = i + 1));
+
     this.updateDriverPool();
     this.updateDropListConnections();
     this.undoManager.captureState();
@@ -596,9 +615,9 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
     this.errorMessage.set(undefined);
     try {
-      // Convert local participants to Proto IRaceParticipant[], filtering out empty drivers
+      // Convert local participants to Proto IRaceParticipant[]
       const protoParticipants: IRaceParticipant[] = convertParticipantsToProto(
-        this.localParticipants.filter((p) => !p.driver.isEmpty()),
+        this.localParticipants,
       );
 
       this.dataService

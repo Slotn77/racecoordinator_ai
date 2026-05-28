@@ -372,6 +372,46 @@ describe("ModifyHeatsModalComponent", () => {
 
       expect(component["localHeats"].length).toBe(1);
     });
+
+    it("should pass all local participants including empty drivers to regenerateHeats", () => {
+      const realDriver = new RaceParticipant(
+        "rp1",
+        new Driver("d1", "Real", "Real"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const emptyDriver = new RaceParticipant(
+        "rp-empty",
+        new Driver("EMPTY_LANE", "Empty", "Empty"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      component["localParticipants"] = [realDriver, emptyDriver];
+
+      component["onRegenerateHeats"]();
+
+      expect(mockDataService.regenerateHeats).toHaveBeenCalled();
+      const calledWith =
+        mockDataService.regenerateHeats.calls.mostRecent().args[0];
+      // Should have 2 items, we are verifying empty drivers are NOT filtered out
+      expect(calledWith.length).toBe(2);
+      expect(calledWith[0].driver.name).toBe("Real");
+      expect(calledWith[1].driver.name).toBe("Empty");
+    });
   });
 
   describe("validation", () => {
@@ -582,7 +622,7 @@ describe("ModifyHeatsModalComponent", () => {
       expect(component["errorMessage"]()).toBeUndefined();
     });
 
-    it("should prevent non-sequential group change", fakeAsync(() => {
+    it("should allow non-sequential group change", fakeAsync(() => {
       const targetHeat = component["localHeats"][1];
       fixture.detectChanges();
       tick();
@@ -591,7 +631,7 @@ describe("ModifyHeatsModalComponent", () => {
       tick();
 
       expect(targetHeat.group).toBe(2);
-      expect(component["errorMessage"]()).toBe("RD_ERR_GROUP_NON_SEQUENTIAL");
+      expect(component["errorMessage"]()).toBeUndefined();
     }));
 
     it("should prevent group change that causes participant to be in multiple groups", fakeAsync(() => {
@@ -669,24 +709,20 @@ describe("ModifyHeatsModalComponent", () => {
       expect(result.isValid).toBeTrue();
     });
 
-    it("should be invalid if starting from non-zero", () => {
+    it("should be valid if starting from non-zero", () => {
       const heat1 = new Heat("h1", 1, []);
       heat1.group = 1;
       const result = component["validateGroupSequence"]([heat1]);
-      expect(result.isValid).toBeFalse();
-      expect(result.expected).toBe(1);
-      expect(result.found).toBe(2);
+      expect(result.isValid).toBeTrue();
     });
 
-    it("should be invalid if there is a gap", () => {
+    it("should be valid if there is a gap", () => {
       const h1 = new Heat("h1", 1, []);
       h1.group = 0;
       const h2 = new Heat("h2", 2, []);
       h2.group = 2;
       const result = component["validateGroupSequence"]([h1, h2]);
-      expect(result.isValid).toBeFalse();
-      expect(result.expected).toBe(2);
-      expect(result.found).toBe(3);
+      expect(result.isValid).toBeTrue();
     });
   });
 

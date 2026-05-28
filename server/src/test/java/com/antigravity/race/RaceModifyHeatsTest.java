@@ -488,7 +488,7 @@ public class RaceModifyHeatsTest {
   }
 
   @Test
-  public void testModifyHeats_NonSequentialGroup_Fails() {
+  public void testModifyHeats_NonSequentialGroup_Succeeds() {
     // 1. Enable groups
     com.antigravity.models.GroupOptions groupOptions =
         new com.antigravity.models.GroupOptions(true, 2, true, false, false, false, 0);
@@ -516,7 +516,6 @@ public class RaceModifyHeatsTest {
     ModifyHeatsRequest request = createRequest(participants, Arrays.asList(heat1, heat2));
     ModifyHeatsResponse response = groupRace.modifyHeats(request);
 
-    assertFalse("Should fail if group sequence has a gap", response.getSuccess());
-    assertEquals("RD_ERR_GROUP_NON_SEQUENTIAL|2|3", response.getErrorMessage());
+    assertTrue("Should succeed if group sequence has a gap", response.getSuccess());
   }
 }

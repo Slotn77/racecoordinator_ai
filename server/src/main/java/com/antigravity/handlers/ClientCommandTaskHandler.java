@@ -1050,6 +1050,7 @@ public class ClientCommandTaskHandler {
               .stateClassName(saveData.getStateClassName())
               .isDemoMode(saveData.isDemoMode())
               .statistics(saveData.getStatistics())
+              .databaseContext(databaseContext)
               .build();
 
       ClientSubscriptionManager.getInstance().setRace(race);

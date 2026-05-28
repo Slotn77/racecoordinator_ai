@@ -86,7 +86,10 @@ public class Race implements ProtocolListener {
     this.track = builder.track;
     this.drivers = builder.drivers != null ? new ArrayList<>(builder.drivers) : new ArrayList<>();
     this.databaseContext = builder.databaseContext;
-    this.customRotations = builder.customRotations;
+    this.customRotations =
+        builder.customRotations != null
+            ? new ArrayList<>(builder.customRotations)
+            : new ArrayList<>();
 
     this.recordsManager = new RaceRecords(this);
     if (this.databaseContext != null && this.model != null && this.model.getEntityId() != null) {
@@ -107,6 +110,15 @@ public class Race implements ProtocolListener {
     this.heatManager = new RaceHeatManager(this);
     this.hardwareManager = new RaceHardwareManager(this);
 
+    if (this.model != null
+        && this.customRotations.isEmpty()
+        && this.model.getHeatRotationType() == HeatRotationType.Custom) {
+      List<CustomRotation> resolved = resolveCustomRotations(this.model.getCustomRotationAssetId());
+      if (resolved != null) {
+        this.customRotations.addAll(resolved);
+      }
+    }
+
     if (builder.heats == null) {
       for (int i = 0; i < this.drivers.size(); i++) {
         this.drivers.get(i).setSeed(i + 1);
@@ -115,11 +127,7 @@ public class Race implements ProtocolListener {
       while (this.drivers.size() < numLanes) {
         this.drivers.add(new RaceParticipant(Driver.EMPTY_DRIVER));
       }
-      List<CustomRotation> rotationsToUse = this.customRotations;
-      if (rotationsToUse == null && this.model.getHeatRotationType() == HeatRotationType.Custom) {
-        rotationsToUse = resolveCustomRotations(this.model.getCustomRotationAssetId());
-      }
-      this.heats = HeatBuilder.buildHeats(this, this.drivers, rotationsToUse);
+      this.heats = HeatBuilder.buildHeats(this, this.drivers, this.customRotations);
       this.currentHeat = this.heats.get(0);
       recordsManager.resetHeatRecords();
     } else {
@@ -201,6 +209,9 @@ public class Race implements ProtocolListener {
 
     public Builder model(com.antigravity.models.Race model) { // fqn-collision
       this.model = model;
+      if (model != null && model.getCustomRotations() != null) {
+        this.customRotations = model.getCustomRotations();
+      }
       return this;
     }
 
@@ -446,7 +457,10 @@ public class Race implements ProtocolListener {
         List<Document> heatList = (List<Document>) rotDoc.get("heats");
         if (heatList != null) {
           for (Document heatDoc : heatList) {
-            heats.add(new CustomHeat((List<Integer>) heatDoc.get("driver_indices")));
+            Integer group = heatDoc.getInteger("group");
+            heats.add(
+                new CustomHeat(
+                    (List<Integer>) heatDoc.get("driver_indices"), group != null ? group : 0));
           }
         }
         result.add(new CustomRotation(numDrivers, heats));

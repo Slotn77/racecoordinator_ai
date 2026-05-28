@@ -53,7 +53,7 @@ public class RaceHeatManagerGroupSequenceTest {
             .build();
 
     String error = manager.validateGroups(request);
-    assertEquals("RD_ERR_GROUP_NON_SEQUENTIAL|2|3", error);
+    assertNull("Should be valid even with a gap", error);
   }
 
   @Test
@@ -65,7 +65,7 @@ public class RaceHeatManagerGroupSequenceTest {
         ModifyHeatsRequest.newBuilder().addHeats(Heat.newBuilder().setGroup(1).build()).build();
 
     String error = manager.validateGroups(request);
-    assertEquals("RD_ERR_GROUP_NON_SEQUENTIAL|1|2", error);
+    assertNull("Should be valid even when starting from non-zero", error);
   }
 
   @Test

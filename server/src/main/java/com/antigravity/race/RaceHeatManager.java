@@ -142,15 +142,6 @@ public class RaceHeatManager {
       }
     }
 
-    // Sequential check
-    int expected = 0;
-    for (int group : uniqueGroups) {
-      if (group != expected) {
-        return "RD_ERR_GROUP_NON_SEQUENTIAL|" + (expected + 1) + "|" + (group + 1);
-      }
-      expected++;
-    }
-
     return null;
   }
 
@@ -355,8 +346,12 @@ public class RaceHeatManager {
   private void finalizeModification() {
     if (this.race.getCurrentHeat() != null) {
       int currentHeatNum = this.race.getCurrentHeat().getHeatNumber();
-      if (currentHeatNum > 0 && currentHeatNum <= this.race.getHeats().size()) {
-        this.race.setCurrentHeat(this.race.getHeats().get(currentHeatNum - 1));
+      if (currentHeatNum > 0) {
+        if (currentHeatNum <= this.race.getHeats().size()) {
+          this.race.setCurrentHeat(this.race.getHeats().get(currentHeatNum - 1));
+        } else if (!this.race.getHeats().isEmpty()) {
+          this.race.setCurrentHeat(this.race.getHeats().get(this.race.getHeats().size() - 1));
+        }
       }
     }
 
