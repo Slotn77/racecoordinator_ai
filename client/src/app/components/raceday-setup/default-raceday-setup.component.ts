@@ -423,9 +423,12 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   addAllParticipants() {
+    const unselectedDrivers = this.unselectedParticipants.filter((p) =>
+      this.isDriver(p),
+    );
     const potentialParticipants = [
       ...this.selectedParticipants,
-      ...this.unselectedParticipants,
+      ...unselectedDrivers,
     ];
     const validationResult = this.validationService.validate(
       potentialParticipants,
@@ -448,7 +451,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.updateListWithRefresh(() => {
       this.selectedParticipants = [
         ...this.selectedParticipants,
-        ...this.unselectedParticipants,
+        ...unselectedDrivers,
       ];
       this.updateUnselectedParticipants();
     });
