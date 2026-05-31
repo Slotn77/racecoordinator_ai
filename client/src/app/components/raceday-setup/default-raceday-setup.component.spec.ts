@@ -604,6 +604,28 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.isHelpDropdownOpen).toBeFalse();
   });
 
+  it("should load demo configuration from settings on init", () => {
+    const customConfig = { minLapTimeMs: 1234 };
+    (mockSettingsService as any).settings.demoConfig = customConfig;
+
+    // Re-initialize to trigger ngOnInit loading
+    component.ngOnInit();
+    expect(component.demoConfig).toEqual(customConfig);
+  });
+
+  it("should save demo configuration to settings when confirmed", () => {
+    const newConfig = { minLapTimeMs: 5678 };
+    mockSettingsService.saveSettings.calls.reset();
+
+    component.onDemoConfigConfirm(newConfig);
+
+    expect(component.demoConfig).toEqual(newConfig);
+    expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+    const savedSettings =
+      mockSettingsService.saveSettings.calls.mostRecent().args[0];
+    expect(savedSettings.demoConfig).toEqual(newConfig);
+  });
+
   it("should load saved races, filter out autosaves, and open modal", () => {
     mockDataService.getSavedRaces.and.callFake((isDemo?: boolean) => {
       if (isDemo) {
