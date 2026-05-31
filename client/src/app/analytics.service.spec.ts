@@ -242,6 +242,56 @@ describe("AnalyticsService", () => {
 
       expect((window as any).gtag).not.toHaveBeenCalled();
     });
+
+    it("should normalize parameterized URLs for driver-results and driver-station", () => {
+      mockSettings.shareAnalytics = true;
+      service.initTracking();
+      spyOn(window as any, "gtag").and.callThrough();
+
+      // Resolve config
+      mockDataService._analyticsConfigSubject.next({
+        clientId: "test-client-id-123",
+        measurementId: "G-TEST12345",
+      });
+
+      // Test driver-results normalization
+      routerEventsSubject.next(
+        new NavigationEnd(1, "/fake-url", "/driver-results/123"),
+      );
+
+      expect((window as any).gtag).toHaveBeenCalledWith("event", "page_view", {
+        page_path: "/driver-results",
+        page_location: jasmine.stringMatching("/driver-results$"),
+        page_title: jasmine.any(String),
+        send_to: "G-TEST12345",
+      });
+
+      (window as any).gtag.calls.reset();
+
+      // Test driver-station normalization
+      routerEventsSubject.next(
+        new NavigationEnd(2, "/fake-url", "/driver-station/4"),
+      );
+
+      expect((window as any).gtag).toHaveBeenCalledWith("event", "page_view", {
+        page_path: "/driver-station",
+        page_location: jasmine.stringMatching("/driver-station$"),
+        page_title: jasmine.any(String),
+        send_to: "G-TEST12345",
+      });
+
+      (window as any).gtag.calls.reset();
+
+      // Test normal route remains unchanged
+      routerEventsSubject.next(new NavigationEnd(3, "/fake-url", "/raceday"));
+
+      expect((window as any).gtag).toHaveBeenCalledWith("event", "page_view", {
+        page_path: "/raceday",
+        page_location: jasmine.stringMatching("/raceday$"),
+        page_title: jasmine.any(String),
+        send_to: "G-TEST12345",
+      });
+    });
   });
 
   describe("trackClick", () => {

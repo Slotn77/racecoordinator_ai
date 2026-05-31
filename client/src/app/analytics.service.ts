@@ -199,27 +199,40 @@ export class AnalyticsService {
       return;
     }
 
+    // Normalize parameterized URLs so they are grouped together in GA4
+    let normalizedUrl = url;
+    normalizedUrl = normalizedUrl.replace(
+      /^\/driver-results\/[^/?]+/,
+      "/driver-results",
+    );
+    normalizedUrl = normalizedUrl.replace(
+      /^\/driver-station\/[^/?]+/,
+      "/driver-station",
+    );
+
     if (!this.configLoaded) {
       this.logger.info(
         "Analytics: Queueing page view event until config is loaded",
-        { url },
+        { url: normalizedUrl },
       );
-      this.eventQueue.push({ type: "page_view", url });
+      this.eventQueue.push({ type: "page_view", url: normalizedUrl });
       return;
     }
 
     try {
       const window = this.document.defaultView as any;
       const title = this.document.title || "Race Coordinator AI";
-      const fullUrl = window ? window.location.origin + url : url;
+      const fullUrl = window
+        ? window.location.origin + normalizedUrl
+        : normalizedUrl;
 
       this.logger.info("Analytics: Tracking page view", {
-        url,
+        url: normalizedUrl,
         title,
         measurementId: this.measurementId,
       });
       gtag("event", "page_view", {
-        page_path: url,
+        page_path: normalizedUrl,
         page_location: fullUrl,
         page_title: title,
         send_to: this.measurementId, // Explicitly send to our measurement ID
