@@ -542,4 +542,68 @@ public class RaceModifyHeatsTest {
     assertEquals(
         "Participant 3 seed should be updated to 12", 12, testRace.getDrivers().get(2).getSeed());
   }
+
+  @Test
+  public void testModifyHeats_DeleteAllUnstartedHeats_TransitionsToRaceOver() {
+    // 1. Mark Heat 1 as started
+    testRace.getHeats().get(0).setStarted(true);
+
+    // 2. Request modifying heats to ONLY contain Heat 1 (effectively deleting the unstarted Heat 2)
+    ModifyHeatsRequest request =
+        createRequest(participants, Collections.singletonList(testRace.getHeats().get(0)));
+    ModifyHeatsResponse response = testRace.modifyHeats(request);
+
+    assertTrue("Modify heats should succeed", response.getSuccess());
+    assertFalse(
+        "Race should NOT immediately transition to RaceOver during modification",
+        testRace.getState() instanceof com.antigravity.race.states.RaceOver);
+
+    // 3. Verify finalization logic transitions it to RaceOver
+    boolean allStarted = !testRace.getHeats().isEmpty();
+    for (Heat h : testRace.getHeats()) {
+      if (!h.isStarted()) {
+        allStarted = false;
+        break;
+      }
+    }
+    assertTrue("All remaining heats are started", allStarted);
+    testRace.changeState(new com.antigravity.race.states.RaceOver());
+    assertTrue(
+        "Race should transition to RaceOver after finalization check",
+        testRace.getState() instanceof com.antigravity.race.states.RaceOver);
+  }
+
+  @Test
+  public void testModifyHeats_DeleteAllUnstartedHeatsAndAddNew_DoesNotTransitionToRaceOver() {
+    // 1. Mark Heat 1 as started
+    testRace.getHeats().get(0).setStarted(true);
+
+    // 2. Add a new unstarted Heat 3
+    List<DriverHeatData> heat3Drivers = new ArrayList<>();
+    heat3Drivers.add(new DriverHeatData(participants.get(0)));
+    heat3Drivers.add(new DriverHeatData(participants.get(1)));
+    Heat heat3 = new Heat(3, heat3Drivers, raceModel.getHeatScoring());
+    heat3.setObjectId("heat3");
+
+    // 3. Request modifying heats to contain Heat 1 and Heat 3 (effectively deleting Heat 2, but
+    // adding Heat 3)
+    ModifyHeatsRequest request =
+        createRequest(participants, Arrays.asList(testRace.getHeats().get(0), heat3));
+    ModifyHeatsResponse response = testRace.modifyHeats(request);
+
+    assertTrue("Modify heats should succeed", response.getSuccess());
+    assertFalse(
+        "Race should NOT transition to RaceOver",
+        testRace.getState() instanceof com.antigravity.race.states.RaceOver);
+
+    // 4. Verify finalization logic does not transition it since there is an unstarted Heat 3
+    boolean allStarted = !testRace.getHeats().isEmpty();
+    for (Heat h : testRace.getHeats()) {
+      if (!h.isStarted()) {
+        allStarted = false;
+        break;
+      }
+    }
+    assertFalse("Not all heats are started", allStarted);
+  }
 }

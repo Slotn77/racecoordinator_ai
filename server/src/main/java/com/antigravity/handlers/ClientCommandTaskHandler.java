@@ -43,6 +43,7 @@ import com.antigravity.race.Heat;
 import com.antigravity.race.OverallStandings;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.RaceSaveData;
+import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import com.antigravity.service.AnalyticsService;
 import com.antigravity.service.DatabaseService;
@@ -118,6 +119,7 @@ public class ClientCommandTaskHandler {
     app.get("/api/analytics/config", this::getAnalyticsConfig, Role.VIEWER);
     app.post("/api/modify-heats", this::modifyHeats, Role.DIRECTOR);
     app.post("/api/regenerate-heats", this::regenerateHeats, Role.DIRECTOR);
+    app.post("/api/finalize-modify-heats", this::finalizeModifyHeats, Role.DIRECTOR);
   }
 
   private void initializeRace(Context ctx) {
@@ -1216,6 +1218,33 @@ public class ClientCommandTaskHandler {
       ctx.contentType("application/octet-stream").result(response.toByteArray());
     } catch (Exception e) {
       logger.error("Error regenerating heats", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  private void finalizeModifyHeats(Context ctx) {
+    try {
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+
+      boolean allStarted = !race.getHeats().isEmpty();
+      for (Heat h : race.getHeats()) {
+        if (!h.isStarted()) {
+          allStarted = false;
+          break;
+        }
+      }
+
+      if (allStarted && !(race.getState() instanceof RaceOver)) {
+        race.changeState(new RaceOver());
+      }
+      ctx.status(200).result("OK");
+    } catch (Exception e) {
+      logger.error("Error finalizing modify heats", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
   }

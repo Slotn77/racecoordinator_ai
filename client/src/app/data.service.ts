@@ -737,6 +737,14 @@ export class DataService {
       );
   }
 
+  finalizeModifyHeats(): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/api/finalize-modify-heats`,
+      {},
+      { responseType: "text" },
+    );
+  }
+
   // --- Database Management ---
 
   getTeams(): Observable<ITeamModel[]> {
