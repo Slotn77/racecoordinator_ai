@@ -10,6 +10,7 @@ import { ParticipantValidationService } from "@app/services/participant-validati
 import { TranslationService } from "@app/services/translation.service";
 
 import {
+  cloneHeat,
   createParticipantFromDriver,
   createParticipantFromTeam,
   getParticipantName,
@@ -466,5 +467,106 @@ export class ModifyHeatsService {
       laneIdx,
     );
     heat.heatDrivers.push(newDhd);
+  }
+
+  handleRemoveFromRacing(
+    participant: RaceParticipant,
+    context: DropContext,
+  ): DropResult {
+    let updatedHeats = context.localHeats.map((h) => cloneHeat(h));
+    let updatedParticipants = [...context.localParticipants];
+
+    if (context.isParticipantInStartedHeat(participant)) {
+      return {
+        updatedHeats: context.localHeats,
+        updatedParticipants: context.localParticipants,
+        actionTaken: false,
+        error: {
+          title: "RDS_ERR_VALIDATION_TITLE",
+          message: this.translationService.translate(
+            "RD_ERR_PARTICIPANT_IN_STARTED_HEAT",
+            {
+              participant: participant.driver.name,
+            },
+          ),
+        },
+      };
+    }
+
+    updatedParticipants = updatedParticipants.filter(
+      (p) => p.objectId !== participant.objectId,
+    );
+    updatedHeats.forEach((h) => {
+      if (!context.isHeatStarted(h)) {
+        h.heatDrivers = h.heatDrivers.filter(
+          (dhd) => dhd.participant.objectId !== participant.objectId,
+        );
+      }
+    });
+
+    return {
+      updatedHeats,
+      updatedParticipants,
+      actionTaken: true,
+    };
+  }
+
+  handleAddFromAvailable(
+    item: Driver | Team,
+    context: DropContext,
+  ): DropResult {
+    let updatedHeats = context.localHeats.map((h) => cloneHeat(h));
+    let updatedParticipants = [...context.localParticipants];
+
+    const isDrv = isDriver(item);
+    const newParticipant = isDrv
+      ? createParticipantFromDriver(item as Driver)
+      : createParticipantFromTeam(item as Team);
+
+    const validationResult = this.validationService.validate(
+      [...updatedParticipants, newParticipant],
+      context.allTeams,
+      context.allDrivers,
+    );
+
+    if (!validationResult.isValid) {
+      return {
+        updatedHeats: context.localHeats,
+        updatedParticipants: context.localParticipants,
+        actionTaken: false,
+        error: {
+          title: "RDS_ERR_VALIDATION_TITLE",
+          message: this.validationService.getErrorMessage(
+            validationResult,
+            this.translationService,
+          ),
+        },
+      };
+    }
+
+    let toIdx = updatedParticipants.length;
+    for (let i = 0; i < updatedParticipants.length; i++) {
+      const p = updatedParticipants[i];
+      const isPlaceholder =
+        (p.driver?.entity_id === "EMPTY_LANE" ||
+          (p.driver as any)?.entityId === "EMPTY_LANE") &&
+        !p.team;
+      if (isPlaceholder) {
+        toIdx = i;
+        break;
+      }
+    }
+
+    if (toIdx !== -1) {
+      updatedParticipants.splice(toIdx, 0, newParticipant);
+    } else {
+      updatedParticipants.push(newParticipant);
+    }
+
+    return {
+      updatedHeats,
+      updatedParticipants,
+      actionTaken: true,
+    };
   }
 }

@@ -412,6 +412,65 @@ describe("ModifyHeatsModalComponent", () => {
       expect(calledWith[0].driver.name).toBe("Real");
       expect(calledWith[1].driver.name).toBe("Empty");
     });
+
+    it("should remove a participant when onRemoveFromRacing is called", () => {
+      const realDriver = new RaceParticipant(
+        "rp1",
+        new Driver("d1", "Real", "Real"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      component["localParticipants"] = [realDriver];
+      component["localHeats"] = [
+        new Heat(
+          "h1",
+          1,
+          [new DriverHeatData("dhd1", realDriver, 0)],
+          [],
+          false,
+        ),
+      ];
+
+      component["onRemoveFromRacing"](realDriver);
+
+      expect(component["localParticipants"]).not.toContain(realDriver);
+      expect(component["localHeats"][0].heatDrivers.length).toBe(0);
+      expect(mockDataService.modifyHeats).toHaveBeenCalled();
+    });
+
+    it("should add an available driver to the bottom of racing participants when onAddFromAvailable is called", () => {
+      const newDriver = new Driver("d2", "New Driver", "New");
+      const placeholder = new RaceParticipant(
+        "rp-empty",
+        new Driver("EMPTY_LANE", "Empty", "Empty"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      component["localParticipants"] = [placeholder];
+      component["allDrivers"] = [newDriver];
+      mockValidationService.validate.and.returnValue({ isValid: true });
+
+      component["onAddFromAvailable"](newDriver);
+
+      expect(component["localParticipants"].length).toBe(2);
+      expect(component["localParticipants"][0].driver.entity_id).toBe("d2");
+      expect(component["localParticipants"][1].objectId).toBe("rp-empty");
+      expect(mockDataService.modifyHeats).toHaveBeenCalled();
+    });
   });
 
   describe("validation", () => {

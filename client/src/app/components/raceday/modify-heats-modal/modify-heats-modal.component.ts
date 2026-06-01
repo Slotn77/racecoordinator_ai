@@ -517,6 +517,64 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     }
   }
 
+  protected onRemoveFromRacing(participant: RaceParticipant) {
+    if (this.isSaving) return;
+    const result = this.modifyHeatsService.handleRemoveFromRacing(participant, {
+      localHeats: this.localHeats,
+      localParticipants: this.localParticipants,
+      allDrivers: this.allDrivers,
+      allTeams: this.allTeams,
+      race: this.race(),
+      isHeatStarted: (h) => this.isHeatStarted(h),
+      isParticipantInStartedHeat: (p) => this.isParticipantInStartedHeat(p),
+    });
+
+    if (result.error) {
+      this.ackModalTitle = result.error.title;
+      this.ackModalMessage = result.error.message;
+      this.showAckModal = true;
+    }
+
+    if (result.actionTaken) {
+      this.localHeats = result.updatedHeats;
+      this.localParticipants = result.updatedParticipants;
+      this.updateSeeds();
+      this.updateDriverPool();
+      this.updateDatabaseParticipants();
+      this.undoManager.captureState();
+      this.autoSave();
+    }
+  }
+
+  protected onAddFromAvailable(item: Driver | Team) {
+    if (this.isSaving) return;
+    const result = this.modifyHeatsService.handleAddFromAvailable(item, {
+      localHeats: this.localHeats,
+      localParticipants: this.localParticipants,
+      allDrivers: this.allDrivers,
+      allTeams: this.allTeams,
+      race: this.race(),
+      isHeatStarted: (h) => this.isHeatStarted(h),
+      isParticipantInStartedHeat: (p) => this.isParticipantInStartedHeat(p),
+    });
+
+    if (result.error) {
+      this.ackModalTitle = result.error.title;
+      this.ackModalMessage = result.error.message;
+      this.showAckModal = true;
+    }
+
+    if (result.actionTaken) {
+      this.localHeats = result.updatedHeats;
+      this.localParticipants = result.updatedParticipants;
+      this.updateSeeds();
+      this.updateDriverPool();
+      this.updateDatabaseParticipants();
+      this.undoManager.captureState();
+      this.autoSave();
+    }
+  }
+
   protected isParticipantInStartedHeat(participant: RaceParticipant): boolean {
     for (const heat of this.localHeats) {
       if (this.isHeatStarted(heat)) {

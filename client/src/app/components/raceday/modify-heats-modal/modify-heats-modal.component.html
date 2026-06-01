@@ -40,7 +40,12 @@
             track participant.objectId;
             let i = $index
           ) {
-            <div class="driver-item" cdkDrag [cdkDragData]="participant">
+            <div
+              class="driver-item"
+              cdkDrag
+              [cdkDragData]="participant"
+              (dblclick)="onRemoveFromRacing(participant)"
+            >
               <div class="driver-seed">({{ i + 1 }})</div>
               <img
                 [src]="getParticipantAvatar(participant) | avatarUrl"
@@ -272,7 +277,12 @@
             track getDatabaseItemTrackId(item);
             let i = $index
           ) {
-            <div class="driver-item" cdkDrag [cdkDragData]="item">
+            <div
+              class="driver-item"
+              cdkDrag
+              [cdkDragData]="item"
+              (dblclick)="onAddFromAvailable(item)"
+            >
               <img [src]="item.avatarUrl | avatarUrl" class="driver-avatar" />
               <div class="driver-details">
                 <div class="driver-name">{{ item.name }}</div>
