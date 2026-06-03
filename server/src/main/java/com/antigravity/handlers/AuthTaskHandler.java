@@ -7,7 +7,7 @@ import com.antigravity.util.NetworkUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
-import java.util.Map;
+import java.util.Collections;
 
 public class AuthTaskHandler {
 
@@ -36,18 +36,18 @@ public class AuthTaskHandler {
       }
     }
 
-    ctx.json(Map.of("role", role.name()));
+    ctx.json(Collections.singletonMap("role", role.name()));
   }
 
   private void handleGetPassword(Context ctx) {
     String password = configService.getDirectorPassword();
-    ctx.json(Map.of("password", password != null ? password : ""));
+    ctx.json(Collections.singletonMap("password", password != null ? password : ""));
   }
 
   private void handleChangePassword(Context ctx) {
     ChangePasswordRequest request = ctx.bodyAsClass(ChangePasswordRequest.class);
     configService.setDirectorPassword(request.newPassword);
-    ctx.status(200).json(Map.of("success", true));
+    ctx.status(200).json(Collections.singletonMap("success", true));
   }
 
   private void handleLogin(Context ctx) {
