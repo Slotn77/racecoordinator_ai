@@ -1,5 +1,6 @@
 package com.antigravity.service;
 
+import com.antigravity.App;
 import com.antigravity.race.Race;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
@@ -147,6 +148,10 @@ public class AnalyticsService {
   /* package */ Map<String, Object> createPayload(String eventName, Map<String, Object> params) {
     Map<String, Object> event = new HashMap<>();
     event.put("name", eventName);
+
+    // Append server version to all backend tracking events
+    params.put("server_version", App.SERVER_VERSION);
+
     event.put("params", params);
 
     Map<String, Object> payload = new HashMap<>();

@@ -39,14 +39,19 @@ describe("AnalyticsService", () => {
     };
 
     const analyticsConfigSubject = new Subject<any>();
+    const serverVersionSubject = new Subject<any>();
     mockDataService = {
       getServerAnalyticsConfig: jasmine
         .createSpy("getServerAnalyticsConfig")
         .and.returnValue(analyticsConfigSubject.asObservable()),
+      getServerVersion: jasmine
+        .createSpy("getServerVersion")
+        .and.returnValue(serverVersionSubject.asObservable()),
       getRecordData: jasmine
         .createSpy("getRecordData")
         .and.returnValue(of(null)),
       _analyticsConfigSubject: analyticsConfigSubject, // Expose for testing control
+      _serverVersionSubject: serverVersionSubject, // Expose for testing control
     };
 
     mockLoggerService = {
@@ -128,11 +133,14 @@ describe("AnalyticsService", () => {
 
       service.initTracking();
 
-      // Resolve config
+      // Resolve config and version
       mockDataService._analyticsConfigSubject.next({
         clientId: "test-client-id-123",
         measurementId: "G-TEST12345",
       });
+      mockDataService._serverVersionSubject.next("1.2.3");
+      mockDataService._analyticsConfigSubject.complete();
+      mockDataService._serverVersionSubject.complete();
 
       // Should have checked settings
       expect(mockSettingsService.getSettings).toHaveBeenCalled();
@@ -147,6 +155,8 @@ describe("AnalyticsService", () => {
         {
           send_page_view: false,
           client_id: "test-client-id-123",
+          client_version: "0.0.0.22",
+          server_version: "1.2.3",
         },
       ]);
 
@@ -164,6 +174,9 @@ describe("AnalyticsService", () => {
         clientId: "test-client-id-123",
         measurementId: "",
       });
+      mockDataService._serverVersionSubject.next("1.2.3");
+      mockDataService._analyticsConfigSubject.complete();
+      mockDataService._serverVersionSubject.complete();
 
       // No script should be appended
       expect(mockDocument.head.appendChild).not.toHaveBeenCalled();
@@ -184,6 +197,9 @@ describe("AnalyticsService", () => {
         clientId: "test-client-id-123",
         measurementId: "G-TEST12345",
       });
+      mockDataService._serverVersionSubject.next("1.2.3");
+      mockDataService._analyticsConfigSubject.complete();
+      mockDataService._serverVersionSubject.complete();
       service.updateOptOutStatus();
       service.updateOptOutStatus();
 
@@ -221,6 +237,9 @@ describe("AnalyticsService", () => {
         clientId: "test-client-id-123",
         measurementId: "G-TEST12345",
       });
+      mockDataService._serverVersionSubject.next("1.2.3");
+      mockDataService._analyticsConfigSubject.complete();
+      mockDataService._serverVersionSubject.complete();
 
       expect((window as any).gtag).toHaveBeenCalledWith("event", "page_view", {
         page_path: "/fake-redirect-url",
@@ -253,6 +272,9 @@ describe("AnalyticsService", () => {
         clientId: "test-client-id-123",
         measurementId: "G-TEST12345",
       });
+      mockDataService._serverVersionSubject.next("1.2.3");
+      mockDataService._analyticsConfigSubject.complete();
+      mockDataService._serverVersionSubject.complete();
 
       // Test driver-results normalization
       routerEventsSubject.next(
@@ -315,6 +337,9 @@ describe("AnalyticsService", () => {
         clientId: "test-client-id-123",
         measurementId: "G-TEST12345",
       });
+      mockDataService._serverVersionSubject.next("1.2.3");
+      mockDataService._analyticsConfigSubject.complete();
+      mockDataService._serverVersionSubject.complete();
 
       expect((window as any).gtag).toHaveBeenCalledWith("event", "btn_demo", {
         is_demo: true,
@@ -357,6 +382,9 @@ describe("AnalyticsService", () => {
         clientId: "test-client-id-123",
         measurementId: "G-TEST12345",
       });
+      mockDataService._serverVersionSubject.next("1.2.3");
+      mockDataService._analyticsConfigSubject.complete();
+      mockDataService._serverVersionSubject.complete();
 
       expect((window as any).gtag).toHaveBeenCalledWith(
         "event",

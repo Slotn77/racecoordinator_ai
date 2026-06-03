@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.antigravity.App;
 import com.antigravity.models.FuelOptions;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
@@ -190,6 +191,10 @@ public class AnalyticsServiceTest {
         "engagement_time_msec should be a Long",
         eventParams.get("engagement_time_msec") instanceof Long);
     assertTrue("session_id should be a Long", eventParams.get("session_id") instanceof Long);
+    assertEquals(
+        "server_version should match App.SERVER_VERSION",
+        App.SERVER_VERSION,
+        eventParams.get("server_version"));
   }
 
   @Test

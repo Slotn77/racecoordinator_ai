@@ -17,6 +17,11 @@ The application separates tracking into Server-Side (Measurement Protocol) and C
 ### Client-Side Tracking (Angular UI)
 The client focuses on UI engagement and navigation, only sending data if the user has analytics enabled within the active application.
 
+**Global Parameters:**
+All client-side events automatically include the following configuration parameters:
+- `client_version`: The version string of the Angular UI (e.g., "0.0.0.22").
+- `server_version`: The version string of the connected Java backend.
+
 1. **`page_view`**: Fired automatically every time the Angular Router navigates to a new route. Tracks standard page visit flow.
 2. **`help_started`**: Fired when a user initiates a Guided Help walkthrough (via the lightbulb icon). Includes the `guide_name` being triggered.
 3. **`help_completed`**: Fired when a user flips through all available steps in the guide and completes it fully. Includes the `guide_name`.
@@ -30,6 +35,10 @@ The client focuses on UI engagement and navigation, only sending data if the use
 
 ### Server-Side Tracking (Java Backend)
 The backend uses Google's specialized Measurement Protocol. Because it uses direct backend HTTP calls instead of browser DOM scripts, this tracking is extremely resilient perfectly suited for application-level lifecycle tracking.
+
+**Global Parameters:**
+All server-side events automatically include the following parameters:
+- `server_version`: The version string of the Java backend processing the event.
 
 1. **`backend_race_started`**: Triggers explicitly when the core `Race` object is initialized. Parameters captured:
    - `number_of_lanes`
@@ -113,6 +122,10 @@ To retain custom strings and metrics into your timeline explorations, register t
 *For example, to map the Authority Level parameters:*
 - Dimension Name: `Authority Level`, Event parameter: `authority_level`
 - Dimension Name: `Connection Type`, Event parameter: `connection_type`
+
+*For example, to map the Application Version parameters:*
+- Dimension Name: `Client Version`, Event parameter: `client_version`
+- Dimension Name: `Server Version`, Event parameter: `server_version`
 
 ### Step 3: Explore and Trend
 Once Dimensions are registered (they take ~24 hours to populate moving forward):

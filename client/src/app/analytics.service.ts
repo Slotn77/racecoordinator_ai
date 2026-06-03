@@ -1,7 +1,7 @@
 import { DOCUMENT } from "@angular/common";
 import { Inject, Injectable } from "@angular/core";
 import { NavigationEnd, Router } from "@angular/router";
-import { Observable, of } from "rxjs";
+import { forkJoin, Observable, of } from "rxjs";
 import { catchError, filter, map } from "rxjs/operators";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
@@ -20,6 +20,9 @@ export class AnalyticsService {
   private scriptLoaded: boolean = false;
   private eventQueue: any[] = [];
   private configLoaded: boolean = false;
+  private clientVersion: string =
+    (window as any).CLIENT_VERSION_OVERRIDE || "0.0.0.22";
+  private serverVersion: string = "unknown";
 
   constructor(
     private router: Router,
@@ -116,8 +119,16 @@ export class AnalyticsService {
     this.logger.info("Analytics: loadGoogleAnalyticsScript called");
     this.scriptLoaded = true;
 
-    this.dataService.getServerAnalyticsConfig().subscribe({
-      next: (config) => {
+    forkJoin({
+      config: this.dataService.getServerAnalyticsConfig(),
+      version: this.dataService
+        .getServerVersion()
+        .pipe(catchError(() => of("unknown"))),
+    }).subscribe({
+      next: (res) => {
+        const config = res.config;
+        this.serverVersion = res.version;
+
         this.logger.info("Analytics: Received config from server", {
           measurementId: !!config.measurementId,
           clientId: !!config.clientId,
@@ -147,6 +158,8 @@ export class AnalyticsService {
           window.gtag("config", this.measurementId, {
             send_page_view: false,
             client_id: clientId, // Linked to the server-generated client ID
+            client_version: this.clientVersion,
+            server_version: this.serverVersion,
           });
         }
 
@@ -182,7 +195,11 @@ export class AnalyticsService {
         const window = this.document.defaultView as any;
         if (window && typeof window.gtag === "function") {
           window.gtag("js", new Date());
-          window.gtag("config", this.measurementId, { send_page_view: false });
+          window.gtag("config", this.measurementId, {
+            send_page_view: false,
+            client_version: this.clientVersion,
+            server_version: this.serverVersion,
+          });
         }
 
         const script1 = this.document.createElement("script");
