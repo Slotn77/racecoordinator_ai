@@ -799,6 +799,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       url: entry.url,
       name: entry.name,
       data: new Uint8Array(),
+      type: entry.type || "preset",
+      text: entry.text || "",
     }));
     this.showAudioSetEditor = true;
     this.cdr.detectChanges();

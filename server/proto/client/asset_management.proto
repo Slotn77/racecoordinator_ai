@@ -51,6 +51,8 @@ message SaveAudioSetEntry {
   float time_seconds = 2;
   string url = 3;   // Used if referencing an already uploaded sound
   bytes data = 4;  // Used if uploading a new sound as part of the set
+  string type = 5;
+  string text = 6;
 }
 
 

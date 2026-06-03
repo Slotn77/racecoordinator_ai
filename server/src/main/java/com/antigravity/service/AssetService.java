@@ -484,6 +484,8 @@ public class AssetService {
       String url = entry.getUrl();
       String entryName = entry.getName();
       float timeSeconds = entry.getTimeSeconds();
+      String type = entry.getType();
+      String text = entry.getText();
       String sizeStr = "";
 
       if (entry.getData() != null && !entry.getData().isEmpty()) {
@@ -517,7 +519,9 @@ public class AssetService {
               .append("url", url)
               .append("time_seconds", timeSeconds)
               .append("name", entryName)
-              .append("size", sizeStr));
+              .append("size", sizeStr)
+              .append("type", type)
+              .append("text", text));
     }
 
     Document doc =
@@ -651,13 +655,15 @@ public class AssetService {
       for (Document audioDoc : audioList) {
         builder.addAudioEntries(
             AudioSetEntry.newBuilder()
-                .setUrl(audioDoc.getString("url"))
+                .setUrl(audioDoc.getString("url") != null ? audioDoc.getString("url") : "")
                 .setTimeSeconds(
                     audioDoc.get("time_seconds") instanceof Double
                         ? ((Double) audioDoc.get("time_seconds")).floatValue()
                         : (float) audioDoc.get("time_seconds"))
-                .setName(audioDoc.getString("name"))
-                .setSize(audioDoc.getString("size"))
+                .setName(audioDoc.getString("name") != null ? audioDoc.getString("name") : "")
+                .setSize(audioDoc.getString("size") != null ? audioDoc.getString("size") : "")
+                .setType(audioDoc.getString("type") != null ? audioDoc.getString("type") : "")
+                .setText(audioDoc.getString("text") != null ? audioDoc.getString("text") : "")
                 .build());
       }
     }

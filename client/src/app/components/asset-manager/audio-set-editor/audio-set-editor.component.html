@@ -78,13 +78,16 @@
             <div class="entry-selector">
               <app-audio-selector
                 [url]="entry.url ?? undefined"
+                [text]="entry.text ?? undefined"
+                [type]="getEntryType(entry)"
                 [fallbackName]="entry.name"
                 [assets]="allAudio()"
                 (urlChange)="
                   entry.url = $event; entry.name = entry.name || entry.url
                 "
+                (textChange)="entry.text = $event"
+                (typeChange)="entry.type = $event"
                 mode="single"
-                type="preset"
                 label=""
               >
               </app-audio-selector>

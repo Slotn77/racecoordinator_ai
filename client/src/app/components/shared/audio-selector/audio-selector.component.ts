@@ -204,6 +204,22 @@ export class AudioSelectorComponent {
     this.cdr.detectChanges();
   }
 
+  private playTTSPromise(text: string | undefined): Promise<void> {
+    return new Promise((resolve) => {
+      if (!text || !window.speechSynthesis) {
+        resolve();
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const playContext = this.context() || mockTTSContext();
+      const interpolatedText = interpolate(text, playContext);
+      const utterance = new SpeechSynthesisUtterance(interpolatedText);
+      utterance.onend = () => resolve();
+      utterance.onerror = () => resolve();
+      window.speechSynthesis.speak(utterance);
+    });
+  }
+
   private async playAudioSet() {
     const asset = this.selectedAsset();
     if (!asset || !asset.audioEntries || asset.audioEntries.length === 0) {
@@ -216,7 +232,12 @@ export class AudioSelectorComponent {
     for (const entry of asset.audioEntries) {
       if (!this.isPlaying) break;
       try {
-        await this.playUrl(entry.url);
+        const entryType = entry.type || "preset";
+        if (entryType === "preset") {
+          await this.playUrl(entry.url);
+        } else if (entryType === "tts") {
+          await this.playTTSPromise(entry.text);
+        }
       } catch (e) {
         this.logger.error("Error playing audio set entry", e);
       }

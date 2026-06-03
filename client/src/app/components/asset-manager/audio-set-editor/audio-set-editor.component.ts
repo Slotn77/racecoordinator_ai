@@ -82,6 +82,8 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
         url: e.url,
         name: e.name,
         data: e.data,
+        type: e.type || "preset",
+        text: e.text || "",
       }));
     } else {
       this.entries = [];
@@ -190,6 +192,8 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
       url: url,
       name: entryName,
       data: new Uint8Array(),
+      type: "preset",
+      text: "",
     });
     this.recalculateTimes();
     this.cdr.detectChanges();
@@ -237,6 +241,8 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
           url: existingAsset ? existingAsset.url : previewUrl,
           name: file.name,
           data: existingAsset ? new Uint8Array() : bytes,
+          type: "preset",
+          text: "",
         };
         processedCount++;
         if (processedCount === fileArray.length) {
@@ -287,8 +293,16 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
       url: "",
       name: "",
       data: new Uint8Array(),
+      type: "preset",
+      text: "",
     });
     this.cdr.detectChanges();
+  }
+
+  getEntryType(
+    entry: ISaveAudioSetEntry,
+  ): "preset" | "tts" | "none" | "audio_set" {
+    return (entry.type as any) || "preset";
   }
 
   removeEntry(index: number) {

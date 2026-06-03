@@ -271,6 +271,72 @@ describe("AudioSelectorComponent", () => {
     expect(audioSpy.calls.argsFor(1)[0]).toContain("2.mp3");
   });
 
+  it("should play audio set sequentially with both preset and TTS entries", async () => {
+    const audioSet = {
+      entity_id: "set-mixed",
+      name: "Mixed Set",
+      type: "audio_set",
+      audioEntries: [
+        { url: "1.mp3", timeSeconds: 1, type: "preset" },
+        { text: "Hello Dave", timeSeconds: 2, type: "tts" },
+      ],
+    };
+    fixture.componentRef.setInput("assets", [audioSet]);
+    fixture.componentRef.setInput("type", "audio_set");
+    fixture.componentRef.setInput("url", "set-mixed");
+    fixture.detectChanges();
+
+    const audioSpy = (window.Audio as unknown as jasmine.Spy).and.callFake(
+      function (_url: string) {
+        setTimeout(() => {
+          if (mockAudioInstance.onended) mockAudioInstance.onended();
+        }, 0);
+        return mockAudioInstance;
+      },
+    );
+
+    const mockUtterance = {
+      onend: null as any,
+      text: "",
+    };
+    spyOn(window, "SpeechSynthesisUtterance").and.callFake(function (
+      this: any,
+      text?: string,
+    ) {
+      (mockUtterance as any).text = text || "";
+      setTimeout(() => {
+        if (mockUtterance.onend) mockUtterance.onend();
+      }, 0);
+      return mockUtterance;
+    } as any);
+
+    if (window.speechSynthesis) {
+      if (!(window.speechSynthesis.speak as any).and) {
+        spyOn(window.speechSynthesis, "speak");
+      }
+      if (!(window.speechSynthesis.cancel as any).and) {
+        spyOn(window.speechSynthesis, "cancel");
+      }
+    } else {
+      (window as any).speechSynthesis = jasmine.createSpyObj(
+        "SpeechSynthesis",
+        ["speak", "cancel"],
+      );
+    }
+
+    component.play();
+    expect(component.isPlaying).toBeTrue();
+
+    // Wait for both preset and TTS playback to complete
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(component.isPlaying).toBeFalse();
+    expect(audioSpy).toHaveBeenCalledTimes(1);
+    expect(audioSpy.calls.argsFor(0)[0]).toContain("1.mp3");
+    expect(window.speechSynthesis.speak).toHaveBeenCalled();
+    expect(mockUtterance.text).toBe("Hello Dave");
+  });
+
   it("should stop playback when stop is called", async () => {
     const audioSet = {
       entity_id: "set-1",

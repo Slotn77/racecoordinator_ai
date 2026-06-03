@@ -2782,15 +2782,18 @@ export class DefaultRacedayComponent
     const entry = asset.audioEntries?.find(
       (e: any) => Math.abs(e.timeSeconds - timeSeconds) < 0.1,
     );
-    if (entry && entry.url) {
-      playSound(
-        "preset",
-        this.getFullUrl(entry.url),
-        undefined,
-        this.dataService.serverUrl,
-        undefined,
-        this.logger,
-      );
+    if (entry) {
+      const entryType = entry.type || "preset";
+      if (entryType !== "none") {
+        playSound(
+          entryType as any,
+          entry.url ? this.getFullUrl(entry.url) : undefined,
+          entry.text || undefined,
+          this.dataService.serverUrl,
+          undefined,
+          this.logger,
+        );
+      }
     }
   }
 
