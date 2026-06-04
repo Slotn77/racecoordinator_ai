@@ -626,6 +626,66 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component.showSkipRaceConfirmation).toBeFalse();
     });
+
+    it("should show restart heat confirmation dialog when RESTART_HEAT selected", () => {
+      fixture.detectChanges();
+      expect(component.showRestartHeatConfirmation).toBeFalse();
+
+      component.onMenuSelect("RESTART_HEAT");
+
+      expect(component.showRestartHeatConfirmation).toBeTrue();
+    });
+
+    it("should call restartHeat on confirm and hide dialog", () => {
+      fixture.detectChanges();
+      component.showRestartHeatConfirmation = true;
+
+      component.onRestartHeatConfirm();
+
+      expect(component.showRestartHeatConfirmation).toBeFalse();
+      expect(mockDataService.restartHeat).toHaveBeenCalled();
+    });
+
+    it("should hide dialog on restart heat cancel without calling restartHeat", () => {
+      fixture.detectChanges();
+      mockDataService.restartHeat.calls.reset();
+      component.showRestartHeatConfirmation = true;
+
+      component.onRestartHeatCancel();
+
+      expect(component.showRestartHeatConfirmation).toBeFalse();
+      expect(mockDataService.restartHeat).not.toHaveBeenCalled();
+    });
+
+    it("should show defer heat confirmation dialog when DEFER_HEAT selected", () => {
+      fixture.detectChanges();
+      expect(component.showDeferHeatConfirmation).toBeFalse();
+
+      component.onMenuSelect("DEFER_HEAT");
+
+      expect(component.showDeferHeatConfirmation).toBeTrue();
+    });
+
+    it("should call deferHeat on confirm and hide dialog", () => {
+      fixture.detectChanges();
+      component.showDeferHeatConfirmation = true;
+
+      component.onDeferHeatConfirm();
+
+      expect(component.showDeferHeatConfirmation).toBeFalse();
+      expect(mockDataService.deferHeat).toHaveBeenCalled();
+    });
+
+    it("should hide dialog on defer heat cancel without calling deferHeat", () => {
+      fixture.detectChanges();
+      mockDataService.deferHeat.calls.reset();
+      component.showDeferHeatConfirmation = true;
+
+      component.onDeferHeatCancel();
+
+      expect(component.showDeferHeatConfirmation).toBeFalse();
+      expect(mockDataService.deferHeat).not.toHaveBeenCalled();
+    });
   });
 
   describe("viewer role restrictions", () => {

@@ -41,6 +41,28 @@
   >
   </app-confirmation-modal>
 
+  <app-confirmation-modal
+    [visible]="showRestartHeatConfirmation"
+    [title]="restartHeatModalTitle"
+    [message]="restartHeatModalMessage"
+    [confirmText]="restartHeatConfirmText"
+    [cancelText]="restartHeatCancelText"
+    (confirm)="onRestartHeatConfirm()"
+    (cancel)="onRestartHeatCancel()"
+  >
+  </app-confirmation-modal>
+
+  <app-confirmation-modal
+    [visible]="showDeferHeatConfirmation"
+    [title]="deferHeatModalTitle"
+    [message]="deferHeatModalMessage"
+    [confirmText]="deferHeatConfirmText"
+    [cancelText]="deferHeatCancelText"
+    (confirm)="onDeferHeatConfirm()"
+    (cancel)="onDeferHeatCancel()"
+  >
+  </app-confirmation-modal>
+
   @if (showCountdownOverlay) {
     <div class="countdown-overlay">
       @if (race) {
