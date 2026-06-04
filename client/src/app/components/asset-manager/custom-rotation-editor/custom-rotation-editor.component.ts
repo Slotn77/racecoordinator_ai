@@ -75,7 +75,6 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
   internalAssetName: string = "";
   internalNumLanes: number = 4;
   internalRotations: LocalRotation[] = [];
-  rc1Icon: string = "unarchive";
   equalityReport: any[] | null = null;
   reportRotationIdx: number = -1;
   importSummary: any[] | null = null;
@@ -905,7 +904,7 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
     this.reportRotationIdx = -1;
   }
 
-  async onImportFiles(event: Event, isRc1: boolean = false) {
+  async onImportFiles(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
@@ -919,7 +918,6 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
 
       const res = await parseAndValidateImportFile(
         file,
-        isRc1,
         this.internalNumLanes,
         existingDriverCounts,
       );
@@ -952,6 +950,7 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
     const fileName = `${this.internalAssetName}_L${numLanes}_D${numDrivers}.json`;
 
     const exportObj = {
+      Version: "1.0",
       NumDrivers: numDrivers,
       NumLanes: numLanes,
       Heats:
@@ -971,6 +970,7 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
     const fileName = `${this.internalAssetName}_L${numLanes}_Asset.json`;
 
     const exportObj = {
+      Version: "1.0",
       IsAsset: true,
       AssetName: this.internalAssetName,
       NumLanes: numLanes,

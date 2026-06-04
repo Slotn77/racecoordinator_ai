@@ -12,9 +12,6 @@
     [showRegenerate]="false"
     [showLaneCheck]="false"
     [showImport]="true"
-    [showImportRc1]="true"
-    [importRc1Icon]="rc1Icon"
-    [importRc1TitleKey]="'AM_BTN_IMPORT_RC1_ROTATION'"
     [showExport]="true"
     [importTitleKey]="'AM_BTN_IMPORT_ROTATION'"
     [exportTitleKey]="'AM_BTN_EXPORT_ROTATION'"
@@ -25,7 +22,6 @@
     (add)="addRotation()"
     (back)="cancel()"
     (import)="fileInput.click()"
-    (importRc1)="rc1FileInput.click()"
     (export)="exportRotations()"
   >
   </app-editor-title>
@@ -160,15 +156,7 @@
         multiple
         accept=".json,.txt"
         style="display: none"
-        (change)="onImportFiles($event, false)"
-      />
-      <input
-        #rc1FileInput
-        type="file"
-        multiple
-        accept=".json,.txt"
-        style="display: none"
-        (change)="onImportFiles($event, true)"
+        (change)="onImportFiles($event)"
       />
 
       <!-- Expanders list -->

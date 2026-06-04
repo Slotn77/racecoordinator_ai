@@ -176,7 +176,6 @@ function importSingleRotation(
 
 export async function parseAndValidateImportFile(
   file: File,
-  isRc1: boolean,
   internalNumLanes: number,
   existingDriverCounts: number[],
 ): Promise<ImportResult> {
@@ -196,6 +195,9 @@ export async function parseAndValidateImportFile(
         throw e;
       }
     }
+
+    const hasVersion = json.Version !== undefined || json.version !== undefined;
+    const isRc1 = !hasVersion;
 
     const isAsset = json.IsAsset !== undefined ? json.IsAsset : json.isAsset;
     const assetName =

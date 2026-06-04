@@ -524,6 +524,7 @@ describe("CustomRotationEditorComponent", () => {
 
   describe("Import Rotation", () => {
     const validJson = JSON.stringify({
+      Version: "1.0",
       NumDrivers: 5,
       NumLanes: 4,
       Heats: [
@@ -536,6 +537,7 @@ describe("CustomRotationEditorComponent", () => {
     });
 
     const lenientJson = `{
+      Version: "1.0",
       NumDrivers: 6,
       'NumLanes': 4,
       Heats: [
@@ -589,7 +591,7 @@ describe("CustomRotationEditorComponent", () => {
       expect(component.importSummary?.[0].success).toBeTrue();
     });
 
-    it("should convert 0-indexed drivers and groups to 1-indexed / 0-indexed internal for RC1 import", async () => {
+    it("should assume RC1 import and convert 0-indexed drivers/groups if there is no version field", async () => {
       fixture.detectChanges();
       component.internalNumLanes = 4;
       const rc1Json = JSON.stringify({
@@ -604,12 +606,40 @@ describe("CustomRotationEditorComponent", () => {
       // Remove default rotation to avoid duplicate error
       component.internalRotations = [];
 
-      await component.onImportFiles(event, true);
+      await component.onImportFiles(event);
 
       expect(component.internalRotations[0].heats?.[0].driverIndices).toEqual([
         4, 1, 2, 3,
       ]);
       expect(component.internalRotations[0].heats?.[0].group).toBe(1);
+    });
+
+    it("should assume standard import and NOT convert 0-indexed drivers if there is a version field", async () => {
+      fixture.detectChanges();
+      component.internalNumLanes = 4;
+      const standardWithVersionJson = JSON.stringify({
+        Version: "1.0",
+        NumDrivers: 4,
+        NumLanes: 4,
+        Heats: [{ Drivers: [3, 0, 1, 2], Group: 1 }],
+      });
+
+      const file = createMockFile(
+        standardWithVersionJson,
+        "standard_versioned.json",
+      );
+      const event = createImportEvent([file]);
+
+      component.internalRotations = [];
+
+      await component.onImportFiles(event);
+
+      // Drivers should remain 0-indexed values unmodified (3 becomes 3, 0 becomes 0, etc.)
+      expect(component.internalRotations[0].heats?.[0].driverIndices).toEqual([
+        3, 0, 1, 2,
+      ]);
+      // Group should be converted 1 -> 0 (standard 1-based to internal 0-based)
+      expect(component.internalRotations[0].heats?.[0].group).toBe(0);
     });
 
     it("should correctly import the user's exact RC1 rotation file with 0-based drivers and groups", async () => {
@@ -631,7 +661,7 @@ describe("CustomRotationEditorComponent", () => {
       // Remove default rotation to avoid duplicate error
       component.internalRotations = [];
 
-      await component.onImportFiles(event, true);
+      await component.onImportFiles(event);
 
       expect(component.internalRotations.length).toBe(1);
       const rot = component.internalRotations[0];
@@ -651,6 +681,7 @@ describe("CustomRotationEditorComponent", () => {
       fixture.detectChanges();
       component.internalNumLanes = 4;
       const standardJson = JSON.stringify({
+        Version: "1.0",
         NumDrivers: 4,
         NumLanes: 4,
         Heats: [{ Drivers: [4, 1, 2, 3], Group: 2 }], // 1-based drivers and groups
@@ -662,7 +693,7 @@ describe("CustomRotationEditorComponent", () => {
       // Remove default rotation to avoid duplicate error
       component.internalRotations = [];
 
-      await component.onImportFiles(event, false);
+      await component.onImportFiles(event);
 
       expect(component.internalRotations[0].heats?.[0].driverIndices).toEqual([
         4, 1, 2, 3,
@@ -686,6 +717,7 @@ describe("CustomRotationEditorComponent", () => {
     it("should report error for missing required fields", async () => {
       fixture.detectChanges();
       const missingFieldsJson = JSON.stringify({
+        Version: "1.0",
         NumDrivers: 4,
         // Missing NumLanes and Heats
       });
@@ -704,6 +736,7 @@ describe("CustomRotationEditorComponent", () => {
       fixture.detectChanges();
       component.internalNumLanes = 4;
       const wrongLanesJson = JSON.stringify({
+        Version: "1.0",
         NumDrivers: 4,
         NumLanes: 6, // Mismatch
         Heats: [],
@@ -724,6 +757,7 @@ describe("CustomRotationEditorComponent", () => {
       component.internalNumLanes = 4;
       component.internalRotations = [{ numDrivers: 4, heats: [] }];
       const duplicateDriversJson = JSON.stringify({
+        Version: "1.0",
         NumDrivers: 4, // Duplicate
         NumLanes: 4,
         Heats: [],
@@ -764,6 +798,7 @@ describe("CustomRotationEditorComponent", () => {
       component.internalNumLanes = 4;
       component.internalRotations = [];
       const combinedAssetJson = JSON.stringify({
+        Version: "1.0",
         IsAsset: true,
         AssetName: "ImportCombined",
         NumLanes: 4,
@@ -788,6 +823,7 @@ describe("CustomRotationEditorComponent", () => {
       fixture.detectChanges();
       component.internalNumLanes = 4;
       const wrongLanesCombinedJson = JSON.stringify({
+        Version: "1.0",
         IsAsset: true,
         AssetName: "WrongLanesCombined",
         NumLanes: 6,
@@ -871,7 +907,7 @@ describe("CustomRotationEditorComponent", () => {
       expect(revokeObjectURLSpy).toHaveBeenCalled();
     }));
 
-    it("should format combined exported JSON with correct property names and 1-based group indices", fakeAsync(() => {
+    it("should format combined exported JSON with correct property names, Version, and 1-based group indices", fakeAsync(() => {
       fixture.detectChanges();
       component.internalAssetName = "FormatTest";
       component.internalNumLanes = 2;
@@ -888,12 +924,40 @@ describe("CustomRotationEditorComponent", () => {
 
       expect(stringifySpy).toHaveBeenCalledWith(
         jasmine.objectContaining({
+          Version: "1.0",
           IsAsset: true,
           AssetName: "FormatTest",
           NumLanes: 2,
           Rotations: [
             { NumDrivers: 2, Heats: [{ Drivers: [1, 2], Group: 2 }] },
           ],
+        }),
+        null,
+        2,
+      );
+
+      tick(5000);
+    }));
+
+    it("should format single exported JSON with Version", fakeAsync(() => {
+      fixture.detectChanges();
+      component.internalAssetName = "FormatTest";
+      component.internalNumLanes = 2;
+      const rot = {
+        numDrivers: 2,
+        heats: [{ driverIndices: [1, 2], group: 1 }],
+      };
+
+      const stringifySpy = spyOn(JSON, "stringify").and.callThrough();
+
+      component.exportSingleRotation(rot);
+
+      expect(stringifySpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          Version: "1.0",
+          NumDrivers: 2,
+          NumLanes: 2,
+          Heats: [{ Drivers: [1, 2], Group: 2 }],
         }),
         null,
         2,
