@@ -431,17 +431,29 @@ export class DefaultRacedayComponent
 
     this.subscriptions.push(
       this.dataService.getSystemState().subscribe((state) => {
-        if (state && state.resourceLockState === "IDLE") {
-          this.raceHasEnded = true;
-          this.showExitConfirmation = false;
-          this.showSkipHeatConfirmation = false;
-          this.showRestartHeatConfirmation = false;
-          this.showDeferHeatConfirmation = false;
-          this.ackModalTitle = "RD_RACE_ENDED_TITLE";
-          this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
-          this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
-          this.showAckModal = true;
-          this.cdr.markForCheck();
+        if (state) {
+          if (state.resourceLockState === "IDLE") {
+            this.raceHasEnded = true;
+            this.showExitConfirmation = false;
+            this.showSkipHeatConfirmation = false;
+            this.showRestartHeatConfirmation = false;
+            this.showDeferHeatConfirmation = false;
+            this.ackModalTitle = "RD_RACE_ENDED_TITLE";
+            this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
+            this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
+            this.showAckModal = true;
+            this.cdr.markForCheck();
+          } else if (state.resourceLockState === "RACE_RUNNING") {
+            if (this.raceHasEnded) {
+              this.raceHasEnded = false;
+              this.ackModalTitle = "RD_RACE_STARTED_TITLE";
+              this.ackModalMessage = "RD_RACE_STARTED_MESSAGE";
+              this.ackModalButtonText = "RD_RACE_STARTED_BTN_OK";
+              this.showAckModal = true;
+              this.dataService.updateRaceSubscription(true);
+              this.cdr.markForCheck();
+            }
+          }
         }
       }),
     );

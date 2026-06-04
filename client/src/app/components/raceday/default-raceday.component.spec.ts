@@ -3034,6 +3034,26 @@ describe("DefaultRacedayComponent", () => {
       expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
     });
 
+    it("should transition from race ended to new race started when resourceLockState becomes RACE_RUNNING", () => {
+      fixture.detectChanges();
+      const systemStateSubject = mockDataService.getSystemState();
+
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+      expect(component.raceHasEnded).toBeTrue();
+      expect(component.showAckModal).toBeTrue();
+
+      mockDataService.updateRaceSubscription.calls.reset();
+
+      systemStateSubject.next({ resourceLockState: "RACE_RUNNING" });
+
+      expect(component.raceHasEnded).toBeFalse();
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_RACE_STARTED_TITLE");
+      expect(component.ackModalMessage).toBe("RD_RACE_STARTED_MESSAGE");
+      expect(component.ackModalButtonText).toBe("RD_RACE_STARTED_BTN_OK");
+      expect(mockDataService.updateRaceSubscription).toHaveBeenCalledWith(true);
+    });
+
     it("should allow deactivation immediately if forceExit is true", () => {
       fixture.detectChanges();
       component.forceExit = true;
