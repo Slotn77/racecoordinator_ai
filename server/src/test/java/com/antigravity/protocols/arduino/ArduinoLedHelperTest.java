@@ -799,6 +799,40 @@ public class ArduinoLedHelperTest {
   }
 
   @Test
+  public void testSetRaceState_RacingGreen_AllLedsOnEvenIfStartingDurationIsLess() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    ledString.leds =
+        new ArrayList<>(
+            Collections.nCopies(5, RgbLedBehavior.RGB_LED_BEHAVIOR_RACE_STATE_BASE_VALUE));
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+
+    // 1. Initial 3s countdown (startingDuration = 3)
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.RED, 3.0);
+
+    // 2. Transition to RACING/GREEN.
+    reset(protocol);
+    setupMocks();
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.RACING, com.antigravity.proto.RaceFlag.GREEN, 0);
+
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+    assertEquals(0x4C, data[0]);
+    assertEquals(5, data[2]); // All 5 LEDs should be updated
+    // All of them should be green
+    for (int i = 0; i < 5; i++) {
+      assertEquals(0, data[4 + i * 4]); // R
+      assertEquals((byte) 0xFF, data[5 + i * 4]); // G
+      assertEquals(0, data[6 + i * 4]); // B
+    }
+  }
+
+  @Test
   public void testSetRaceState_Interleaved() {
     LedString ledString = new LedString();
     ledString.pin = 2;
