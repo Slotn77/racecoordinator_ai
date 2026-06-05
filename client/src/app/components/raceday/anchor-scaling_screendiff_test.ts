@@ -101,7 +101,7 @@ test.describe("Anchor Scaling Visuals", () => {
 
     // Override the mock to provide a "large" image (green square to distinguish from default mock)
     await page.route(
-      "**/api/assets/download?filename=large-image.png",
+      /\/api\/assets\/download\?filename=large-image\.png/,
       async (route) => {
         const largeMockImage = `
           <svg width="1000" height="1000" xmlns="http://www.w3.org/2000/svg">
