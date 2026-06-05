@@ -157,27 +157,11 @@ public class AssetService {
   private static final Set<String> EXCLUDED_AUDIO_IDS = new HashSet<>();
   private static final List<DefaultAsset> DEFAULT_AUDIO_ASSETS = new ArrayList<>();
 
+  // Note: Audio assets added here do not show up in the asset managers main view.
+  // For example:
+  // EXCLUDED_AUDIO_IDS.add("default_countdown_5");
+  // to exclude an asset
   static {
-    // TODO(aufderheide): Figure out how to have assets in a set and visible in the
-    // main section individually.
-    EXCLUDED_AUDIO_IDS.add("default_countdown_5");
-    EXCLUDED_AUDIO_IDS.add("default_countdown_4");
-    EXCLUDED_AUDIO_IDS.add("default_countdown_3");
-    EXCLUDED_AUDIO_IDS.add("default_countdown_2");
-    EXCLUDED_AUDIO_IDS.add("default_countdown_1");
-    EXCLUDED_AUDIO_IDS.add("default_countdown_go");
-    EXCLUDED_AUDIO_IDS.add("default_seconds_left_300");
-    EXCLUDED_AUDIO_IDS.add("default_seconds_left_240");
-    EXCLUDED_AUDIO_IDS.add("default_seconds_left_180");
-    EXCLUDED_AUDIO_IDS.add("default_seconds_left_120");
-    EXCLUDED_AUDIO_IDS.add("default_seconds_left_60");
-    EXCLUDED_AUDIO_IDS.add("default_seconds_left_30");
-    EXCLUDED_AUDIO_IDS.add("default_seconds_left_25");
-    EXCLUDED_AUDIO_IDS.add("default_seconds_left_20");
-    EXCLUDED_AUDIO_IDS.add("default_seconds_left_15");
-    EXCLUDED_AUDIO_IDS.add("default_seconds_left_10");
-    EXCLUDED_AUDIO_IDS.add("default_seconds_left_5");
-
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("default_beep", "beep.wav", "Lap Beep"));
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("default_chimes", "chimes.wav", "Lap Chimes"));
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("default_driveby", "driveby.wav", "Lap Driveby"));
