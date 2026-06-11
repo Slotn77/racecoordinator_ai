@@ -73,19 +73,6 @@ class MockEditorTitleComponent {
 }
 
 @Component({
-  selector: "app-column-preview",
-  standalone: true,
-  template: "",
-  imports: [FormsModule],
-})
-class MockColumnPreviewComponent {
-  columnSlots = input<any[]>([]);
-  columnLayouts = input<any>({});
-
-  columnVisibility = input<any>({});
-}
-
-@Component({
   selector: "app-column-toolbox",
   standalone: true,
   template: "",
@@ -307,7 +294,6 @@ describe("UIEditorComponent", () => {
         UIEditorComponent,
         MockImageSelectorComponent,
         MockEditorTitleComponent,
-        MockColumnPreviewComponent,
         MockColumnToolboxComponent,
 
         MockAssetPreviewComponent,

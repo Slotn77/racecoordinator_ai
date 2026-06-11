@@ -1,7 +1,7 @@
 /* eslint-disable max-lines */
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable, NgZone } from "@angular/core";
-import { Reader } from "protobufjs";
+import { Reader } from "protobufjs/minimal";
 import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
 import { map } from "rxjs/operators";
 import { ArduinoConfig } from "@app/models/track";

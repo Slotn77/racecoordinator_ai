@@ -62,7 +62,8 @@
             "scripts": [],
             "allowedCommonJsDependencies": [
               "protobufjs",
-              "@protobufjs/inquire"
+              "@protobufjs/inquire",
+              "qrcode"
             ]
           },
           "configurations": {
