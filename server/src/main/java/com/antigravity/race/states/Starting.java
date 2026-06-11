@@ -36,7 +36,10 @@ public class Starting implements IRaceState {
             ? race.getRaceModel().getRestartTime()
             : race.getRaceModel().getStartTime();
 
-    double delayLimitVal = race.getRaceModel().getStartDelay();
+    double delayLimitVal =
+        race.hasRacedInCurrentHeat()
+            ? race.getRaceModel().getRestartRandomizer()
+            : race.getRaceModel().getStartRandomizer();
 
     final int randomTicks =
         delayLimitVal > 0 ? new java.util.Random().nextInt((int) (delayLimitVal * 10)) + 1 : 0;

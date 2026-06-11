@@ -1,5 +1,6 @@
 package com.antigravity.service;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
@@ -100,21 +101,21 @@ public class ServerConfigService {
     saveConfig();
   }
 
-  public double getStartDelay() {
-    return config.startDelay;
+  public double getStartRandomizer() {
+    return config.startRandomizer;
   }
 
-  public void setStartDelay(double startDelay) {
-    config.startDelay = startDelay;
+  public void setStartRandomizer(double startRandomizer) {
+    config.startRandomizer = startRandomizer;
     saveConfig();
   }
 
-  public double getRestartDelay() {
-    return config.restartDelay;
+  public double getRestartRandomizer() {
+    return config.restartRandomizer;
   }
 
-  public void setRestartDelay(double restartDelay) {
-    config.restartDelay = restartDelay;
+  public void setRestartRandomizer(double restartRandomizer) {
+    config.restartRandomizer = restartRandomizer;
     saveConfig();
   }
 
@@ -125,8 +126,13 @@ public class ServerConfigService {
     public String analyticsClientId;
     public double startTime = 5.0;
     public double restartTime = 5.0;
-    public double startDelay = 0.0;
-    public double restartDelay = 0.0;
+
+    @JsonAlias({"startDelay", "start_delay"})
+    public double startRandomizer = 0.0;
+
+    @JsonAlias({"restartDelay", "restart_delay"})
+    public double restartRandomizer = 0.0;
+
     public String directorPassword = "RC AI Director";
   }
 }

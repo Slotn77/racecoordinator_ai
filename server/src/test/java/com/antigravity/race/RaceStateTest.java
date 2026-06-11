@@ -48,8 +48,8 @@ public class RaceStateTest {
   @Before
   public void setUp() throws Exception {
     ServerConfigService configService = mock(ServerConfigService.class);
-    when(configService.getStartDelay()).thenReturn(0.0);
-    when(configService.getRestartDelay()).thenReturn(0.0);
+    when(configService.getStartRandomizer()).thenReturn(0.0);
+    when(configService.getRestartRandomizer()).thenReturn(0.0);
 
     DatabaseContext dbContext = mock(DatabaseContext.class);
     when(dbContext.getConfigService()).thenReturn(configService);

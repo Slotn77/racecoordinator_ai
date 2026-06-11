@@ -177,8 +177,16 @@ export class RaceConverter {
           p.minLapTime || p.min_lap_time || 1.5,
           p.startTime || p.start_time || 5.0,
           p.restartTime || p.restart_time || 5.0,
-          p.startDelay || p.start_delay || 0.0,
-          p.restartDelay || p.restart_delay || 0.0,
+          p.startRandomizer ||
+            p.start_randomizer ||
+            p.startDelay ||
+            p.start_delay ||
+            0.0,
+          p.restartRandomizer ||
+            p.restart_randomizer ||
+            p.restartDelay ||
+            p.restart_delay ||
+            0.0,
           proto.soloLaneIndex || 0,
           p.customRotationSequence || p.custom_rotation_sequence || [],
           p.customRotationAssetId || p.custom_rotation_asset_id,

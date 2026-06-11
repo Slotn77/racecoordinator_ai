@@ -26,8 +26,8 @@ public class StartingStateTest {
   @Before
   public void setUp() {
     configService = mock(ServerConfigService.class);
-    when(configService.getStartDelay()).thenReturn(0.0);
-    when(configService.getRestartDelay()).thenReturn(0.0);
+    when(configService.getStartRandomizer()).thenReturn(0.0);
+    when(configService.getRestartRandomizer()).thenReturn(0.0);
 
     Lane lane = new Lane("red", "white", 100);
     Track track = new Track("Test Track", Collections.singletonList(lane));
@@ -106,7 +106,10 @@ public class StartingStateTest {
   @Test
   public void testStartingWaitRandomDelay() throws InterruptedException {
     com.antigravity.models.Race raceModelWithDelay =
-        new com.antigravity.models.Race.Builder().withStartTime(1.0).withStartDelay(1.0).build();
+        new com.antigravity.models.Race.Builder()
+            .withStartTime(1.0)
+            .withStartRandomizer(1.0)
+            .build();
 
     race =
         new Race.Builder()

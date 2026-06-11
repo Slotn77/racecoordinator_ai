@@ -65,8 +65,8 @@ export const MOCK_RACES = [
     drift_time: 0.5,
     start_time: 5.0,
     restart_time: 5.0,
-    start_delay: 0.0,
-    restart_delay: 0.0,
+    start_randomizer: 0.0,
+    restart_randomizer: 0.0,
   },
   {
     entity_id: "r2",
@@ -89,8 +89,8 @@ export const MOCK_RACES = [
     drift_time: 0.5,
     start_time: 5.0,
     restart_time: 5.0,
-    start_delay: 0.0,
-    restart_delay: 0.0,
+    start_randomizer: 0.0,
+    restart_randomizer: 0.0,
   },
   {
     entity_id: "r3",
@@ -113,8 +113,8 @@ export const MOCK_RACES = [
     drift_time: 0.5,
     start_time: 5.0,
     restart_time: 5.0,
-    start_delay: 0.0,
-    restart_delay: 0.0,
+    start_randomizer: 0.0,
+    restart_randomizer: 0.0,
   },
 ];
 
@@ -179,8 +179,8 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
     r.min_lap_time ?? 1.5,
     r.start_time ?? 5.0,
     r.restart_time ?? 5.0,
-    r.start_delay ?? 0.0,
-    r.restart_delay ?? 0.0,
+    r.start_randomizer ?? 0.0,
+    r.restart_randomizer ?? 0.0,
     r.solo_lane_index || 0,
     [], // custom_rotation_sequence
     undefined, // custom_rotation_asset_id

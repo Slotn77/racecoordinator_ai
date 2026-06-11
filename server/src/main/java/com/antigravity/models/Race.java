@@ -74,13 +74,15 @@ public class Race extends Model {
   @JsonProperty("restart_time")
   private final double restartTime;
 
-  @BsonProperty("start_delay")
-  @JsonProperty("start_delay")
-  private final double startDelay;
+  @BsonProperty("start_randomizer")
+  @JsonProperty("start_randomizer")
+  @JsonAlias({"startDelay", "start_delay", "startRandomizer"})
+  private final double startRandomizer;
 
-  @BsonProperty("restart_delay")
-  @JsonProperty("restart_delay")
-  private final double restartDelay;
+  @BsonProperty("restart_randomizer")
+  @JsonProperty("restart_randomizer")
+  @JsonAlias({"restartDelay", "restart_delay", "restartRandomizer"})
+  private final double restartRandomizer;
 
   @BsonProperty("solo_lane_index")
   @JsonProperty("solo_lane_index")
@@ -182,10 +184,14 @@ public class Race extends Model {
           Double startTime,
       @BsonProperty("restart_time") @JsonProperty("restart_time") @JsonAlias("restartTime")
           Double restartTime,
-      @BsonProperty("start_delay") @JsonProperty("start_delay") @JsonAlias("startDelay")
-          Double startDelay,
-      @BsonProperty("restart_delay") @JsonProperty("restart_delay") @JsonAlias("restartDelay")
-          Double restartDelay,
+      @BsonProperty("start_randomizer")
+          @JsonProperty("start_randomizer")
+          @JsonAlias({"startDelay", "start_delay", "startRandomizer"})
+          Double startRandomizer,
+      @BsonProperty("restart_randomizer")
+          @JsonProperty("restart_randomizer")
+          @JsonAlias({"restartDelay", "restart_delay", "restartRandomizer"})
+          Double restartRandomizer,
       @BsonProperty("solo_lane_index") @JsonProperty("solo_lane_index") @JsonAlias("soloLaneIndex")
           Integer soloLaneIndex,
       @BsonProperty("custom_rotation_sequence")
@@ -244,8 +250,8 @@ public class Race extends Model {
     this.driftTime = driftTime != null ? driftTime : 0.5;
     this.startTime = startTime != null ? startTime : 5.0;
     this.restartTime = restartTime != null ? restartTime : 5.0;
-    this.startDelay = startDelay != null ? startDelay : 0.0;
-    this.restartDelay = restartDelay != null ? restartDelay : 0.0;
+    this.startRandomizer = startRandomizer != null ? startRandomizer : 0.0;
+    this.restartRandomizer = restartRandomizer != null ? restartRandomizer : 0.0;
     this.soloLaneIndex = soloLaneIndex != null ? soloLaneIndex : 0;
     this.customRotationSequence =
         customRotationSequence != null ? customRotationSequence : new ArrayList<>();
@@ -278,8 +284,8 @@ public class Race extends Model {
     private double driftTime = 0.5;
     private double startTime = 5.0;
     private double restartTime = 5.0;
-    private double startDelay = 0.0;
-    private double restartDelay = 0.0;
+    private double startRandomizer = 0.0;
+    private double restartRandomizer = 0.0;
     private int soloLaneIndex = 0;
     private List<Integer> customRotationSequence = new ArrayList<>();
     private String customRotationAssetId;
@@ -311,8 +317,8 @@ public class Race extends Model {
       this.driftTime = other.getDriftTime();
       this.startTime = other.getStartTime();
       this.restartTime = other.getRestartTime();
-      this.startDelay = other.getStartDelay();
-      this.restartDelay = other.getRestartDelay();
+      this.startRandomizer = other.getStartRandomizer();
+      this.restartRandomizer = other.getRestartRandomizer();
       this.soloLaneIndex = other.getSoloLaneIndex();
       this.customRotationSequence = other.getCustomRotationSequence();
       this.customRotationAssetId = other.getCustomRotationAssetId();
@@ -409,13 +415,13 @@ public class Race extends Model {
       return this;
     }
 
-    public Builder withStartDelay(double startDelay) {
-      this.startDelay = startDelay;
+    public Builder withStartRandomizer(double startRandomizer) {
+      this.startRandomizer = startRandomizer;
       return this;
     }
 
-    public Builder withRestartDelay(double restartDelay) {
-      this.restartDelay = restartDelay;
+    public Builder withRestartRandomizer(double restartRandomizer) {
+      this.restartRandomizer = restartRandomizer;
       return this;
     }
 
@@ -503,8 +509,8 @@ public class Race extends Model {
           driftTime,
           startTime,
           restartTime,
-          startDelay,
-          restartDelay,
+          startRandomizer,
+          restartRandomizer,
           soloLaneIndex,
           customRotationSequence,
           customRotationAssetId,
@@ -585,12 +591,12 @@ public class Race extends Model {
     return restartTime;
   }
 
-  public double getStartDelay() {
-    return startDelay;
+  public double getStartRandomizer() {
+    return startRandomizer;
   }
 
-  public double getRestartDelay() {
-    return restartDelay;
+  public double getRestartRandomizer() {
+    return restartRandomizer;
   }
 
   public int getSoloLaneIndex() {

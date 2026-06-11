@@ -272,32 +272,32 @@
                 <div class="config-row">
                   <div class="editor-section">
                     <label>
-                      {{ "RE_START_DELAY" | translate }}
+                      {{ "RE_START_RANDOMIZER" | translate }}
                     </label>
                     <input
                       type="number"
-                      [(ngModel)]="editingRace.start_delay"
+                      [(ngModel)]="editingRace.start_randomizer"
                       (ngModelChange)="captureState()"
                       min="0"
                       step="0.1"
                       placeholder="0.0"
-                      class="start-delay-input"
-                      data-testid="start-delay-input"
+                      class="start-randomizer-input"
+                      data-testid="start-randomizer-input"
                     />
                   </div>
                   <div class="editor-section">
                     <label>
-                      {{ "RE_RESTART_DELAY" | translate }}
+                      {{ "RE_RESTART_RANDOMIZER" | translate }}
                     </label>
                     <input
                       type="number"
-                      [(ngModel)]="editingRace.restart_delay"
+                      [(ngModel)]="editingRace.restart_randomizer"
                       (ngModelChange)="captureState()"
                       min="0"
                       step="0.1"
                       placeholder="0.0"
-                      class="restart-delay-input"
-                      data-testid="restart-delay-input"
+                      class="restart-randomizer-input"
+                      data-testid="restart-randomizer-input"
                     />
                   </div>
                 </div>

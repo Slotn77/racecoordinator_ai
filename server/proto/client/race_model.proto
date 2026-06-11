@@ -106,8 +106,8 @@ message RaceModel {
   double drift_time = 14;
   double start_time = 15;
   double restart_time = 16;
-  double start_delay = 17;
-  double restart_delay = 18;
+  double start_randomizer = 17;
+  double restart_randomizer = 18;
   HeatRotationType heat_rotation_type = 19;
   int32 solo_lane_index = 20;
   repeated int32 custom_rotation_sequence = 21;

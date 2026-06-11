@@ -612,8 +612,8 @@ public class DatabaseTaskHandler {
               .withDriftTime(race.getDriftTime())
               .withStartTime(race.getStartTime())
               .withRestartTime(race.getRestartTime())
-              .withStartDelay(race.getStartDelay())
-              .withRestartDelay(race.getRestartDelay())
+              .withStartRandomizer(race.getStartRandomizer())
+              .withRestartRandomizer(race.getRestartRandomizer())
               .withSoloLaneIndex(race.getSoloLaneIndex())
               .withCustomRotationSequence(race.getCustomRotationSequence())
               .withCustomRotationAssetId(race.getCustomRotationAssetId())
@@ -751,8 +751,8 @@ public class DatabaseTaskHandler {
       raceMap.put("drift_time", race.getDriftTime());
       raceMap.put("start_time", race.getStartTime());
       raceMap.put("restart_time", race.getRestartTime());
-      raceMap.put("start_delay", race.getStartDelay());
-      raceMap.put("restart_delay", race.getRestartDelay());
+      raceMap.put("start_randomizer", race.getStartRandomizer());
+      raceMap.put("restart_randomizer", race.getRestartRandomizer());
       raceMap.put("solo_lane_index", race.getSoloLaneIndex());
       raceMap.put("custom_rotation_asset_id", race.getCustomRotationAssetId());
       raceMap.put("custom_rotation_sequence", race.getCustomRotationSequence());

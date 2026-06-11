@@ -134,8 +134,8 @@ public class RaceConverter {
       builder.setDriftTime(race.getDriftTime());
       builder.setStartTime(race.getStartTime());
       builder.setRestartTime(race.getRestartTime());
-      builder.setStartDelay(race.getStartDelay());
-      builder.setRestartDelay(race.getRestartDelay());
+      builder.setStartRandomizer(race.getStartRandomizer());
+      builder.setRestartRandomizer(race.getRestartRandomizer());
       if (race.getHeatRotationType() != null) {
         String rotationName =
             race.getHeatRotationType().name().replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase();

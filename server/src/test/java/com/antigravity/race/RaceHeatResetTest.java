@@ -26,8 +26,8 @@ public class RaceHeatResetTest {
   @Before
   public void setUp() {
     ServerConfigService configService = mock(ServerConfigService.class);
-    when(configService.getStartDelay()).thenReturn(0.0);
-    when(configService.getRestartDelay()).thenReturn(0.0);
+    when(configService.getStartRandomizer()).thenReturn(0.0);
+    when(configService.getRestartRandomizer()).thenReturn(0.0);
 
     DatabaseContext dbContext = mock(DatabaseContext.class);
     when(dbContext.getConfigService()).thenReturn(configService);

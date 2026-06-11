@@ -24,8 +24,8 @@ export class Race implements Model {
   readonly min_lap_time: number;
   readonly start_time: number;
   readonly restart_time: number;
-  readonly start_delay: number;
-  readonly restart_delay: number;
+  readonly start_randomizer: number;
+  readonly restart_randomizer: number;
   readonly heat_times_through: number;
   readonly reverse_heats: boolean;
   readonly hot_start: boolean;
@@ -61,8 +61,8 @@ export class Race implements Model {
     min_lap_time: number = 1.5,
     start_time: number = 5.0,
     restart_time: number = 5.0,
-    start_delay: number = 0.0,
-    restart_delay: number = 0.0,
+    start_randomizer: number = 0.0,
+    restart_randomizer: number = 0.0,
     solo_lane_index: number = 0,
     custom_rotation_sequence: number[] = [],
     custom_rotation_asset_id?: string,
@@ -92,8 +92,8 @@ export class Race implements Model {
     this.min_lap_time = min_lap_time;
     this.start_time = start_time;
     this.restart_time = restart_time;
-    this.start_delay = start_delay;
-    this.restart_delay = restart_delay;
+    this.start_randomizer = start_randomizer;
+    this.restart_randomizer = restart_randomizer;
     this.solo_lane_index = solo_lane_index;
     this.custom_rotation_sequence = custom_rotation_sequence;
     this.custom_rotation_asset_id = custom_rotation_asset_id;
