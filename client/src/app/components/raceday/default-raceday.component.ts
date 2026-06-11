@@ -1,28 +1,25 @@
 /* eslint-disable max-lines */
 /* eslint-disable max-lines-per-function */
-import {
-  CdkDrag,
-  CdkDragDrop,
-  CdkDragHandle,
-  CdkDropList,
-} from "@angular/cdk/drag-drop";
-import { AsyncPipe, DecimalPipe } from "@angular/common";
+import { CdkDragDrop } from "@angular/cdk/drag-drop";
+import { DragDropModule } from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
   Component,
   ElementRef,
   HostListener,
+  input,
+  OnChanges,
   OnDestroy,
   OnInit,
+  output,
+  SimpleChanges,
+  ViewEncapsulation,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterStateSnapshot } from "@angular/router";
 import * as QRCode from "qrcode";
 import { Observable, Subject, Subscription } from "rxjs";
 import { LoginDialogComponent } from "@app/components/login-dialog/login-dialog.component";
-import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
-import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
-import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { HeatConverter } from "@app/converters/heat.converter";
 import { LaneConverter } from "@app/converters/lane.converter";
@@ -41,11 +38,16 @@ import {
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Role } from "@app/models/role";
-import { ColumnVisibility, Settings } from "@app/models/settings";
+import {
+  ColumnVisibility,
+  LayoutConfig,
+  Settings,
+  WidgetType,
+} from "@app/models/settings";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import { LapType, RaceFlag, RaceState } from "@app/proto/antigravity";
+import { LapType, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
@@ -61,6 +63,14 @@ import { createTTSContext, playSound } from "@app/utils/audio";
 
 import { ColumnDefinition } from "./column_definition";
 import { AnchorPoint } from "./column_definition";
+import { RacedayAbsoluteWidgetComponent } from "./components/raceday-absolute-widget/raceday-absolute-widget.component";
+import { RacedayModalsComponent } from "./components/raceday-modals/raceday-modals.component";
+import {
+  FormatContext,
+  RacedayFormatUtils,
+} from "./utils/raceday-format.utils";
+import { RacedayLayoutUtils } from "./utils/raceday-layout.utils";
+import { createMockEditorData } from "./utils/raceday-mock.utils";
 
 /**
  * The raceday component is the main component for the raceday screen.
@@ -70,22 +80,18 @@ import { AnchorPoint } from "./column_definition";
   selector: "app-default-raceday",
   templateUrl: "./default-raceday.component.html",
   styleUrls: ["./default-raceday.component.css"],
+  encapsulation: ViewEncapsulation.None,
   imports: [
-    AcknowledgementModalComponent,
-    ConfirmationModalComponent,
-    CdkDropList,
-    CdkDrag,
+    RacedayModalsComponent,
     FormsModule,
-    CdkDragHandle,
-    DecimalPipe,
-    TranslatePipe,
     LoginDialogComponent,
-    AsyncPipe,
-    LanguageSelectorComponent,
+    RacedayAbsoluteWidgetComponent,
+    DragDropModule,
+    TranslatePipe,
   ],
 })
 export class DefaultRacedayComponent
-  implements OnInit, OnDestroy, CanComponentDeactivate
+  implements OnInit, OnDestroy, OnChanges, CanComponentDeactivate
 {
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
@@ -134,7 +140,14 @@ export class DefaultRacedayComponent
 
   // Stable-order list. DOM order never changes; visual position is from rank.
   protected leaderboardEntries: any[] = [];
+  protected groupLeaderboardEntries: any[] = [];
+  protected groupParticipants: RaceParticipant[] = [];
+  protected currentGroup: number = 0;
   protected qrCodeUrl?: string;
+
+  get groupEnabled(): boolean {
+    return this.race?.group_options?.enabled || false;
+  }
 
   /**
    * Update leaderboard entries while maintaining stable DOM order.
@@ -177,6 +190,49 @@ export class DefaultRacedayComponent
     // Remove entries no longer present
     const incomingIds = new Set(incoming.map((e) => e.entityId));
     this.leaderboardEntries = this.leaderboardEntries.filter((e) =>
+      incomingIds.has(e.entityId),
+    );
+  }
+
+  private updateGroupLeaderboardEntries(): void {
+    const rankingMethod = this.race?.overall_scoring?.rankingMethod;
+    const isTime =
+      rankingMethod && rankingMethod !== OverallRanking.OR_LAP_COUNT;
+
+    const incoming = (this.groupParticipants || [])
+      .filter((p) => p && p.driver && !Driver.isEmpty(p.driver))
+      .map((p) => ({
+        name: p.team?.name || p.driver?.nickname || p.driver?.name || "Unknown",
+        score: p.rankValue || 0,
+        rank: p.rank || 0,
+        entityId: p.driver?.entity_id || p.driver?.name || "",
+        isTime: isTime,
+      }));
+
+    const existingIds = new Set(
+      this.groupLeaderboardEntries.map((e) => e.entityId),
+    );
+
+    // Update existing entries in-place (preserving array/DOM order)
+    for (let i = 0; i < this.groupLeaderboardEntries.length; i++) {
+      const id = this.groupLeaderboardEntries[i].entityId;
+      const updated = incoming.find((e) => e.entityId === id);
+      if (updated) {
+        this.groupLeaderboardEntries[i] = updated;
+      }
+    }
+
+    // Append new entries
+    for (const entry of incoming) {
+      if (!existingIds.has(entry.entityId)) {
+        this.groupLeaderboardEntries.push(entry);
+        existingIds.add(entry.entityId);
+      }
+    }
+
+    // Remove entries no longer present
+    const incomingIds = new Set(incoming.map((e) => e.entityId));
+    this.groupLeaderboardEntries = this.groupLeaderboardEntries.filter((e) =>
       incomingIds.has(e.entityId),
     );
   }
@@ -253,73 +309,33 @@ export class DefaultRacedayComponent
 
   protected get gridTemplateColumns(): string {
     if (!this.columns || this.columns.length === 0) return "1fr";
-    return this.columns.map((c) => `${c.width}px`).join(" ");
+    return this.columns.map((c) => `minmax(0, ${c.width}fr)`).join(" ");
   }
 
   protected getLayoutEntries(
     column: ColumnDefinition,
   ): { anchor: string; property: string }[] {
-    if (!column || !column.layout || Object.keys(column.layout).length === 0) {
-      if (column) {
-        return [
-          {
-            anchor: column.anchor || AnchorPoint.CenterCenter,
-            property: column.propertyName,
-          },
-        ];
-      }
-      return [];
-    }
-    return Object.entries(column.layout).map(([anchor, property]) => ({
-      anchor,
-      property: property!,
-    }));
+    return RacedayLayoutUtils.getLayoutEntries(column);
   }
 
   protected getAnchorClass(anchor: string): string {
-    return `anchor-${anchor.toLowerCase()}`;
+    return RacedayLayoutUtils.getAnchorClass(anchor);
   }
 
   isLapTimeColumn(col: ColumnDefinition): boolean {
-    const property = this.getLayoutEntries(col)[0]?.property || "";
-    const baseKey = property.split("_")[0];
-    const isLap =
-      baseKey === "lastLapTime" ||
-      baseKey === "bestLapTime" ||
-      baseKey === "averageLapTime" ||
-      baseKey === "medianLapTime" ||
-      baseKey === "segmentTime";
-    return isLap;
+    return RacedayLayoutUtils.isLapTimeColumn(col);
   }
 
   protected isImageProperty(prop: string): boolean {
-    if (!prop) return false;
-    const base = prop.split("_")[0];
-    return (
-      base === "driver.avatarUrl" ||
-      base.startsWith("imageset") ||
-      base === "fuel-gauge-builtin" ||
-      base === "flag"
-    );
+    return RacedayLayoutUtils.isImageProperty(prop);
   }
 
   protected isAvatarProperty(prop: string): boolean {
-    if (!prop) return false;
-    return prop.split("_")[0] === "driver.avatarUrl";
+    return RacedayLayoutUtils.isAvatarProperty(prop);
   }
 
   public shouldShowLaneColor(col: ColumnDefinition): boolean {
-    if (!col) return false;
-    const nameKeys = ["driver.name", "driver.nickname"];
-    // Check main property
-    if (nameKeys.includes(col.propertyName.split("_")[0])) return true;
-    // Check layout properties
-    if (col.layout) {
-      return Object.values(col.layout).some(
-        (v) => v && nameKeys.includes(v.split("_")[0]),
-      );
-    }
-    return false;
+    return RacedayLayoutUtils.shouldShowLaneColor(col);
   }
 
   protected get isWarmup(): boolean {
@@ -428,8 +444,160 @@ export class DefaultRacedayComponent
   private dropdownIconCache = new Map<string, string>();
   private deactivateSubject = new Subject<boolean>();
 
+  // Layout customization state
+  isUIEditorMode = input<boolean>(false);
+  uiScale = input<number>(1);
+  editingSettings = input<Settings | undefined>(undefined);
+
+  get visualScale(): number {
+    return this.isUIEditorMode() ? this.uiScale() : this.scale;
+  }
+
+  get toolboxScale(): number {
+    return this.isUIEditorMode() ? this.uiScale() : 1;
+  }
+  layoutChanged = output<LayoutConfig>();
+  isLayoutCustomizing = false;
+  layout!: LayoutConfig;
+  draggedWidgetType: string | null = null;
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (
+      changes["editingSettings"] &&
+      !changes["editingSettings"].firstChange &&
+      this.isUIEditorMode()
+    ) {
+      const settings = this.editingSettings();
+      if (settings?.racedayLayout?.widgets) {
+        this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
+      } else {
+        this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+      }
+      this.loadColumns();
+      if (this.heat) {
+        this.sortHeatDrivers();
+      }
+      this.cdr.markForCheck();
+    }
+  }
+
   ngOnInit() {
+    this.setupInitialState();
+    this.subscribeToAssets();
+    this.detectShortcutKey();
+    this.updateScale();
+
+    if (this.isUIEditorMode()) {
+      this.isLayoutCustomizing = true;
+      this.setupMockDataForEditor();
+      return;
+    }
+
+    this.subscribeToRaceData();
+    this.subscribeToRaceTime();
+    this.subscribeToLapEvents();
+    this.subscribeToLiveUpdates();
+    this.subscribeToUIEvents();
+  }
+
+  private setupInitialState() {
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    if (settings.racedayLayout && settings.racedayLayout.widgets) {
+      this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
+    } else {
+      this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+    }
+
     this.loadColumns();
+
+    // Clear caches to ensure fresh data for new race
+    RaceConverter.clearCache();
+    DriverConverter.clearCache();
+    HeatConverter.clearCache();
+    TrackConverter.clearCache();
+    LaneConverter.clearCache();
+    RaceParticipantConverter.clearCache();
+    TeamConverter.clearCache();
+  }
+
+  private subscribeToAssets() {
+    this.subscriptions.push(
+      this.dataService.socketConnected$.subscribe((connected) => {
+        if (connected) {
+          this.dataService.listAssets().subscribe({
+            next: (assets) => {
+              this.assets = assets || [];
+              this.loadColumns();
+              if (!this.isDestroyed) {
+                this.cdr.markForCheck();
+              }
+            },
+            error: (err) => {
+              this.logger.error(
+                "DefaultRacedayComponent: Failed to fetch assets",
+                err,
+              );
+            },
+          });
+
+          this.dataService.getDrivers().subscribe({
+            next: (drivers) => {
+              this.allDrivers = drivers || [];
+              if (!this.isDestroyed) {
+                this.cdr.markForCheck();
+              }
+            },
+            error: (err) => {
+              this.logger.error(
+                "DefaultRacedayComponent: Failed to fetch drivers",
+                err,
+              );
+            },
+          });
+        }
+      }),
+    );
+  }
+
+  private subscribeToRaceData() {
+    this.subscriptions.push(
+      this.raceService.participants$.subscribe((participants) => {
+        this.participants = participants || [];
+        this.updateLeaderboardEntries();
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
+      }),
+    );
+
+    this.subscriptions.push(
+      this.raceService.groupParticipants$.subscribe((participants) => {
+        this.groupParticipants = participants || [];
+        this.updateGroupLeaderboardEntries();
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
+      }),
+    );
+
+    this.subscriptions.push(
+      this.raceService.currentGroup$.subscribe((group) => {
+        this.currentGroup = group || 0;
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
+      }),
+    );
+
+    this.subscriptions.push(
+      this.raceService.heats$.subscribe((heats) => {
+        this.heats = heats || [];
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
+      }),
+    );
 
     this.subscriptions.push(
       this.dataService.getSystemState().subscribe((state) => {
@@ -484,74 +652,6 @@ export class DefaultRacedayComponent
       }),
     );
 
-    // Clear caches to ensure fresh data for new race
-    RaceConverter.clearCache();
-    DriverConverter.clearCache();
-    HeatConverter.clearCache();
-    TrackConverter.clearCache();
-    LaneConverter.clearCache();
-    RaceParticipantConverter.clearCache();
-    TeamConverter.clearCache();
-
-    this.subscriptions.push(
-      this.dataService.socketConnected$.subscribe((connected) => {
-        if (connected) {
-          this.dataService.listAssets().subscribe({
-            next: (assets) => {
-              this.assets = assets || [];
-              this.loadColumns();
-              if (!this.isDestroyed) {
-                this.cdr.markForCheck();
-              }
-            },
-            error: (err) => {
-              this.logger.error(
-                "DefaultRacedayComponent: Failed to fetch assets",
-                err,
-              );
-            },
-          });
-
-          this.dataService.getDrivers().subscribe({
-            next: (drivers) => {
-              this.allDrivers = drivers || [];
-              if (!this.isDestroyed) {
-                this.cdr.markForCheck();
-              }
-            },
-            error: (err) => {
-              this.logger.error(
-                "DefaultRacedayComponent: Failed to fetch drivers",
-                err,
-              );
-            },
-          });
-        }
-      }),
-    );
-
-    this.subscriptions.push(
-      this.raceService.participants$.subscribe((participants) => {
-        this.participants = participants || [];
-        this.updateLeaderboardEntries();
-        if (!this.isDestroyed) {
-          this.cdr.markForCheck();
-        }
-      }),
-    );
-
-    this.subscriptions.push(
-      this.raceService.heats$.subscribe((heats) => {
-        this.heats = heats || [];
-        if (!this.isDestroyed) {
-          this.cdr.markForCheck();
-        }
-      }),
-    );
-
-    this.detectShortcutKey();
-    this.updateScale();
-
     this.raceConnectionService.connect();
 
     this.subscriptions.push(
@@ -571,7 +671,9 @@ export class DefaultRacedayComponent
         this.handleRaceStateChange(state);
       }),
     );
+  }
 
+  private subscribeToRaceTime() {
     this.subscriptions.push(
       this.raceConnectionService.raceTime$.subscribe((raceTime) => {
         this.autoStartRemaining = raceTime.autoStartRemaining || 0;
@@ -613,7 +715,9 @@ export class DefaultRacedayComponent
         }
       }),
     );
+  }
 
+  private subscribeToLapEvents() {
     this.subscriptions.push(
       this.raceConnectionService.laps$.subscribe((lap) => {
         if (this.heat && this.heat.heatDrivers && lap && lap.objectId) {
@@ -621,116 +725,125 @@ export class DefaultRacedayComponent
             (d) => d.objectId === lap.objectId,
           );
           if (driverData) {
-            if (!this.isDestroyed) {
-              this.cdr.markForCheck();
-            }
-
-            const driver = driverData.driver;
-            const isBestLap = lap.lapTime === lap.bestLapTime;
-            const ttsContext = createTTSContext(
-              driver as any,
-              driverData as any,
-            );
-
-            if (lap.type === LapType.FALSE_START) {
-              if (
-                driver.penaltyAudio?.type &&
-                driver.penaltyAudio.type !== "none" &&
-                (driver.penaltyAudio.url ||
-                  (driver.penaltyAudio.type === "tts" &&
-                    driver.penaltyAudio.text))
-              ) {
-                playSound(
-                  driver.penaltyAudio.type,
-                  driver.penaltyAudio.url,
-                  driver.penaltyAudio.text,
-                  this.dataService.serverUrl,
-                  ttsContext,
-                  this.logger,
-                );
-              } else {
-                this.playThemedSound(THEME_SLOT_KEYS.AUDIO_PENALTY, ttsContext);
-              }
-            }
-
-            if (lap.type === LapType.MIN_LAP_TIME) {
-              this.playThemedSound(
-                THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME,
-                ttsContext,
-              );
-            }
-
-            // Halfway logic for lap-based races
-            const scoring = this.race?.heat_scoring;
-            if (
-              scoring &&
-              scoring.finishMethod === FinishMethod.Lap &&
-              !this.playedHalfway
-            ) {
-              const totalLaps = scoring.finishValue;
-              const halfwayLaps = totalLaps / 2;
-              if (lap.lapNumber != null && lap.lapNumber >= halfwayLaps) {
-                this.playThemedSound(
-                  THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
-                  ttsContext,
-                );
-                this.playedHalfway = true;
-              }
-            }
-
-            if (
-              isBestLap &&
-              driver.bestLapAudio.type !== "none" &&
-              (driver.bestLapAudio.url ||
-                (driver.bestLapAudio.type === "tts" &&
-                  driver.bestLapAudio.text))
-            ) {
-              playSound(
-                driver.bestLapAudio.type,
-                driver.bestLapAudio.url,
-                driver.bestLapAudio.text,
-                this.dataService.serverUrl,
-                ttsContext,
-                this.logger,
-              );
-            } else if (lap.isDrift) {
-              this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
-            } else if (
-              driver.lapAudio.type !== "none" &&
-              (driver.lapAudio.url ||
-                (driver.lapAudio.type === "tts" && driver.lapAudio.text))
-            ) {
-              playSound(
-                driver.lapAudio.type,
-                driver.lapAudio.url,
-                driver.lapAudio.text,
-                this.dataService.serverUrl,
-                ttsContext,
-                this.logger,
-              );
-            }
-
-            const settings = this.settingsService.getSettings();
-            if (settings.highlightRowOnLap) {
-              this.highlightedDrivers.add(lap.objectId!);
-              if (!this.isDestroyed) {
-                this.cdr.markForCheck();
-              }
-              const timer = setTimeout(() => {
-                this.highlightedDrivers.delete(lap.objectId!);
-                if (!this.isDestroyed) {
-                  this.cdr.markForCheck();
-                }
-              }, 400);
-              this.subscriptions.push(
-                new Subscription(() => clearTimeout(timer)),
-              );
-            }
+            this.handleLapEvent(lap, driverData);
           }
         }
       }),
     );
+  }
 
+  private handleLapEvent(lap: any, driverData: DriverHeatData) {
+    if (!this.isDestroyed) {
+      this.cdr.markForCheck();
+    }
+
+    const driver = driverData.driver;
+    const isBestLap = lap.lapTime === lap.bestLapTime;
+    const ttsContext = createTTSContext(driver as any, driverData as any);
+
+    this.handleLapAudio(lap, driver, isBestLap, ttsContext);
+    this.checkHalfwayPoint(lap, ttsContext);
+    this.handleLapHighlight(lap);
+  }
+
+  private handleLapAudio(
+    lap: any,
+    driver: any,
+    isBestLap: boolean,
+    ttsContext: any,
+  ) {
+    if (lap.type === LapType.FALSE_START) {
+      if (
+        driver.penaltyAudio?.type &&
+        driver.penaltyAudio.type !== "none" &&
+        (driver.penaltyAudio.url ||
+          (driver.penaltyAudio.type === "tts" && driver.penaltyAudio.text))
+      ) {
+        playSound(
+          driver.penaltyAudio.type,
+          driver.penaltyAudio.url,
+          driver.penaltyAudio.text,
+          this.dataService.serverUrl,
+          ttsContext,
+          this.logger,
+        );
+      } else {
+        this.playThemedSound(THEME_SLOT_KEYS.AUDIO_PENALTY, ttsContext);
+      }
+    }
+
+    if (lap.type === LapType.MIN_LAP_TIME) {
+      this.playThemedSound(THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME, ttsContext);
+    }
+
+    if (
+      isBestLap &&
+      driver.bestLapAudio.type !== "none" &&
+      (driver.bestLapAudio.url ||
+        (driver.bestLapAudio.type === "tts" && driver.bestLapAudio.text))
+    ) {
+      playSound(
+        driver.bestLapAudio.type,
+        driver.bestLapAudio.url,
+        driver.bestLapAudio.text,
+        this.dataService.serverUrl,
+        ttsContext,
+        this.logger,
+      );
+    } else if (lap.isDrift) {
+      this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
+    } else if (
+      driver.lapAudio.type !== "none" &&
+      (driver.lapAudio.url ||
+        (driver.lapAudio.type === "tts" && driver.lapAudio.text))
+    ) {
+      playSound(
+        driver.lapAudio.type,
+        driver.lapAudio.url,
+        driver.lapAudio.text,
+        this.dataService.serverUrl,
+        ttsContext,
+        this.logger,
+      );
+    }
+  }
+
+  private checkHalfwayPoint(lap: any, ttsContext: any) {
+    const scoring = this.race?.heat_scoring;
+    if (
+      scoring &&
+      scoring.finishMethod === FinishMethod.Lap &&
+      !this.playedHalfway
+    ) {
+      const halfwayLaps = scoring.finishValue / 2;
+      if (lap.lapNumber != null && lap.lapNumber >= halfwayLaps) {
+        this.playThemedSound(
+          THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+          ttsContext,
+        );
+        this.playedHalfway = true;
+      }
+    }
+  }
+
+  private handleLapHighlight(lap: any) {
+    const settings = this.settingsService.getSettings();
+    if (settings.highlightRowOnLap) {
+      this.highlightedDrivers.add(lap.objectId!);
+      if (!this.isDestroyed) {
+        this.cdr.markForCheck();
+      }
+      const timer = setTimeout(() => {
+        this.highlightedDrivers.delete(lap.objectId!);
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
+      }, 400);
+      this.subscriptions.push(new Subscription(() => clearTimeout(timer)));
+    }
+  }
+
+  private subscribeToLiveUpdates() {
     this.subscriptions.push(
       this.raceConnectionService.carData$.subscribe((carData) => {
         if (!this.isDestroyed && carData && carData.lane != null) {
@@ -770,7 +883,9 @@ export class DefaultRacedayComponent
         this.sortHeatDrivers();
       }),
     );
+  }
 
+  private subscribeToUIEvents() {
     this.subscriptions.push(
       this.route.queryParams.subscribe((params: any) => {
         if (params["modifyHeats"] === "true") {
@@ -806,66 +921,7 @@ export class DefaultRacedayComponent
     this.subscriptions.push(
       this.raceConnectionService.recordData$.subscribe((records) => {
         if (records) {
-          const overall = records.overall;
-          const current = records.current;
-
-          if (overall?.fastestLap) {
-            const hasLap =
-              overall.fastestLap.value && overall.fastestLap.value > 0;
-            this.raceRecordLapNickname = hasLap
-              ? overall.fastestLap.holderNickname ||
-                overall.fastestLap.holderName ||
-                "---"
-              : "---";
-            this.raceRecordLapTime = overall.fastestLap.value || 0;
-          } else {
-            this.raceRecordLapNickname = "---";
-            this.raceRecordLapTime = 0;
-          }
-
-          if (overall?.highestScore) {
-            this.raceRecordScoreNickname =
-              overall.highestScore.holderTeamName ||
-              overall.highestScore.holderNickname ||
-              overall.highestScore.holderName ||
-              "---";
-            this.raceRecordScore = overall.highestScore.value || 0;
-          } else {
-            this.raceRecordScoreNickname = "---";
-            this.raceRecordScore = 0;
-          }
-
-          if (current?.fastestLap) {
-            const hasLap =
-              current.fastestLap.value && current.fastestLap.value > 0;
-            this.currentRaceBestNickname = hasLap
-              ? current.fastestLap.holderNickname ||
-                current.fastestLap.holderName ||
-                "---"
-              : "---";
-            this.currentRaceBestTime = current.fastestLap.value || 0;
-          } else {
-            this.currentRaceBestNickname = "---";
-            this.currentRaceBestTime = 0;
-          }
-
-          if (current?.heatFastestLap) {
-            const hasLap =
-              current.heatFastestLap.value && current.heatFastestLap.value > 0;
-            this.heatBestNickname = hasLap
-              ? current.heatFastestLap.holderNickname ||
-                current.heatFastestLap.holderName ||
-                "---"
-              : "---";
-            this.heatBestTime = current.heatFastestLap.value || 0;
-          } else {
-            this.heatBestNickname = "---";
-            this.heatBestTime = 0;
-          }
-
-          if (!this.isDestroyed) {
-            this.cdr.markForCheck();
-          }
+          this.handleRecordDataUpdate(records);
         }
       }),
     );
@@ -879,10 +935,87 @@ export class DefaultRacedayComponent
     );
   }
 
+  private handleRecordDataUpdate(records: any) {
+    const overall = records.overall;
+    const current = records.current;
+
+    if (overall?.fastestLap) {
+      const hasLap = overall.fastestLap.value && overall.fastestLap.value > 0;
+      this.raceRecordLapNickname = hasLap
+        ? overall.fastestLap.holderNickname ||
+          overall.fastestLap.holderName ||
+          "---"
+        : "---";
+      this.raceRecordLapTime = overall.fastestLap.value || 0;
+    } else {
+      this.raceRecordLapNickname = "---";
+      this.raceRecordLapTime = 0;
+    }
+
+    if (overall?.highestScore) {
+      this.raceRecordScoreNickname =
+        overall.highestScore.holderTeamName ||
+        overall.highestScore.holderNickname ||
+        overall.highestScore.holderName ||
+        "---";
+      this.raceRecordScore = overall.highestScore.value || 0;
+    } else {
+      this.raceRecordScoreNickname = "---";
+      this.raceRecordScore = 0;
+    }
+
+    if (current?.fastestLap) {
+      const hasLap = current.fastestLap.value && current.fastestLap.value > 0;
+      this.currentRaceBestNickname = hasLap
+        ? current.fastestLap.holderNickname ||
+          current.fastestLap.holderName ||
+          "---"
+        : "---";
+      this.currentRaceBestTime = current.fastestLap.value || 0;
+    } else {
+      this.currentRaceBestNickname = "---";
+      this.currentRaceBestTime = 0;
+    }
+
+    if (current?.heatFastestLap) {
+      const hasLap =
+        current.heatFastestLap.value && current.heatFastestLap.value > 0;
+      this.heatBestNickname = hasLap
+        ? current.heatFastestLap.holderNickname ||
+          current.heatFastestLap.holderName ||
+          "---"
+        : "---";
+      this.heatBestTime = current.heatFastestLap.value || 0;
+    } else {
+      this.heatBestNickname = "---";
+      this.heatBestTime = 0;
+    }
+
+    if (!this.isDestroyed) {
+      this.cdr.markForCheck();
+    }
+  }
+
   private leaderBoardWindow: Window | null = null;
   private heatResultsWindow: Window | null = null;
   private raceResultsWindow: Window | null = null;
   private driverStationTabs: Window[] = [];
+
+  private setupMockDataForEditor() {
+    const mockData = createMockEditorData();
+    this.raceState = mockData.raceState;
+    this.time = mockData.time;
+    this.race = mockData.race;
+    this.track = mockData.track;
+    this.participants = mockData.participants;
+    this.heat = mockData.heat;
+    this.qrCodeUrl =
+      "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' fill='white'/><rect x='10' y='10' width='20' height='20' fill='black'/><rect x='50' y='10' width='20' height='20' fill='black'/><rect x='10' y='50' width='20' height='20' fill='black'/><rect x='40' y='40' width='10' height='10' fill='black'/><rect x='30' y='30' width='20' height='20' fill='black'/></svg>";
+
+    this.sortHeatDrivers();
+    this.updateLeaderboardEntries();
+    this.cdr.markForCheck();
+  }
 
   ngOnDestroy() {
     this.isDestroyed = true;
@@ -1275,145 +1408,67 @@ export class DefaultRacedayComponent
     return translation;
   }
 
-  // Helper method to get column X position
   getColumnX(columnIndex: number): number {
-    if (!this.columns || this.columns.length === 0) return 0;
-    let x = 0; // Start position
-    const limit = Math.min(columnIndex, this.columns.length);
-    for (let i = 0; i < limit; i++) {
-      x += this.columns[i].width;
-    }
-    return x;
+    return RacedayLayoutUtils.getColumnX(this.columns, columnIndex);
   }
 
-  // Helper method to get column center X position
   getColumnCenterX(columnIndex: number): number {
-    if (!this.columns || !this.columns[columnIndex]) return 0;
-    return this.getColumnX(columnIndex) + this.columns[columnIndex].width / 2;
+    return RacedayLayoutUtils.getColumnCenterX(this.columns, columnIndex);
+  }
+
+  getTableBodyHeight(): number {
+    return RacedayLayoutUtils.getTableBodyHeight(
+      this.layout,
+      this.isLayoutCustomizing,
+    );
   }
 
   getRowHeight(): number {
-    const numLanes = this.track?.lanes?.length || 1;
-    const totalGaps = (numLanes - 1) * 2;
-    return (672 - totalGaps) / numLanes;
+    return RacedayLayoutUtils.getRowHeight(
+      this.layout,
+      this.track?.lanes?.length || 1,
+      this.isLayoutCustomizing,
+    );
   }
 
   getImageMetrics(colIndex: number) {
-    const rowHeight = this.getRowHeight();
-    const column = this.columns ? this.columns[colIndex] : undefined;
-    const colWidth = column ? column.width : 100;
-
-    // Scale to fit both row height (80%) and column width (90%)
-    // Added 0.9 multiplier for column width to give some breathing room
-    const targetSize = Math.min(rowHeight * 0.8, colWidth * 0.9);
-
-    return {
-      width: targetSize,
-      height: targetSize,
-      x: this.getColumnCenterX(colIndex) - targetSize / 2,
-      y: (rowHeight - targetSize) / 2,
-    };
+    return RacedayLayoutUtils.getImageMetrics(
+      this.columns,
+      colIndex,
+      this.getRowHeight(),
+    );
   }
 
-  // Helper method to get column text X position
   getColumnTextX(columnIndex: number, anchor?: any): number {
-    const column = this.columns ? this.columns[columnIndex] : undefined;
-    if (!column) return 0;
-
-    const xBase = this.getColumnX(columnIndex);
-    const width = column.width;
-    const padding = column.padding || 10;
-    const targetAnchor = anchor || column.anchor;
-
-    switch (targetAnchor) {
-      case AnchorPoint.TopLeft:
-      case AnchorPoint.CenterLeft:
-      case AnchorPoint.BottomLeft:
-        return xBase + padding;
-      case AnchorPoint.TopRight:
-      case AnchorPoint.CenterRight:
-      case AnchorPoint.BottomRight:
-        return xBase + width - padding;
-      case AnchorPoint.TopCenter:
-      case AnchorPoint.CenterCenter:
-      case AnchorPoint.BottomCenter:
-      default:
-        return xBase + width / 2;
-    }
+    return RacedayLayoutUtils.getColumnTextX(this.columns, columnIndex, anchor);
   }
 
-  // Helper method to get column text Y position
   getColumnTextY(
     columnIndex: number,
     _hasTeam: boolean = false,
     anchor?: any,
   ): number {
-    const rowHeight = this.getRowHeight();
-    const targetAnchor = anchor || AnchorPoint.CenterCenter;
-
-    switch (targetAnchor) {
-      case AnchorPoint.TopLeft:
-      case AnchorPoint.TopCenter:
-      case AnchorPoint.TopRight:
-        return rowHeight * 0.22; // Adjusted from 0.18 for better spacing
-      case AnchorPoint.BottomLeft:
-      case AnchorPoint.BottomCenter:
-      case AnchorPoint.BottomRight:
-        return rowHeight * 0.78; // Adjusted from 0.82 for better spacing
-      default:
-        return rowHeight * 0.52; // Slightly adjusted from 0.55
-    }
+    return RacedayLayoutUtils.getColumnTextY(this.getRowHeight(), anchor);
   }
 
-  // Helper method to get SVG text-anchor
   getColumnTextAnchor(columnIndex: number, anchor?: any): string {
-    const column = this.columns ? this.columns[columnIndex] : undefined;
-    if (!column) return "middle";
-
-    const targetAnchor = anchor || column.anchor;
-    switch (targetAnchor) {
-      case AnchorPoint.TopLeft:
-      case AnchorPoint.CenterLeft:
-      case AnchorPoint.BottomLeft:
-        return "start";
-      case AnchorPoint.TopRight:
-      case AnchorPoint.CenterRight:
-      case AnchorPoint.BottomRight:
-        return "end";
-      default:
-        return "middle";
-    }
+    return RacedayLayoutUtils.getColumnTextAnchor(
+      this.columns,
+      columnIndex,
+      anchor,
+    );
   }
 
-  // Helper method to get max width for column text
   getColumnMaxWidth(columnIndex: number): number {
-    const column = this.columns ? this.columns[columnIndex] : undefined;
-    if (!column) return 0;
-    return column.width - column.padding * 2;
+    return RacedayLayoutUtils.getColumnMaxWidth(this.columns, columnIndex);
   }
 
-  // Helper method to get font size based on anchor
   getAnchorFontSize(anchor: string): number {
-    switch (anchor) {
-      case AnchorPoint.CenterCenter:
-        return 45;
-      default:
-        return 20;
-    }
+    return RacedayLayoutUtils.getAnchorFontSize(anchor);
   }
 
-  // Helper method to get value from HeatDriver using property path
   getPropertyValue(heatDriver: DriverHeatData, propertyPath: string): any {
-    if (!heatDriver) return undefined;
-
-    // Strip suffixes like _1, _2 from each part if they exist
-    const parts = propertyPath.split(".").map((part) => part.split("_")[0]);
-    let value: any = heatDriver;
-    for (const part of parts) {
-      if (value === undefined || value === null) return undefined;
-      value = value[part];
-    }
-    return value;
+    return RacedayFormatUtils.getPropertyValue(heatDriver, propertyPath);
   }
 
   formatColumnValue(
@@ -1421,17 +1476,22 @@ export class DefaultRacedayComponent
     column: ColumnDefinition,
     propertyName?: string,
   ): string {
-    const prop = propertyName || column.propertyName;
-    // Use column formatter if it's the main property for this column
-    if (prop === column.propertyName && column.formatter) {
-      return column.formatter(
-        this.getPropertyValue(heatDriver, prop),
-        heatDriver,
-        column,
-      );
-    }
-    const value = this.getPropertyValue(heatDriver, prop);
-    return this.formatValue(prop, value, heatDriver, column);
+    const ctx: FormatContext = {
+      translate: (key) => this.translationService.translate(key),
+      getRace: () => this.raceService.getRace(),
+      getTrack: () => this.track,
+      getDriverRanking: (objectId) => this.driverRankings.get(objectId),
+      getFlagType: () => this.raceFlagService.getFlagType(),
+      getFlagUrl: (flag) => this.getFlagUrl(flag),
+      getFullUrl: (url) => this.getFullUrl(url),
+      getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
+    };
+    return RacedayFormatUtils.formatColumnValue(
+      heatDriver,
+      column,
+      propertyName,
+      ctx,
+    );
   }
 
   // Menu logic
@@ -1440,6 +1500,7 @@ export class DefaultRacedayComponent
   isWindowsMenuOpen = false;
   isOptionsMenuOpen = false;
   scale: number = 1;
+  dashboardWidth: number = 1920;
 
   @HostListener("window:resize")
   onResize() {
@@ -1464,17 +1525,29 @@ export class DefaultRacedayComponent
   }
 
   private updateScale() {
-    const targetWidth = 1920;
-    const targetHeight = 1080; // 1080 (Total SVG height including menu)
+    if (this.isUIEditorMode()) {
+      this.scale = 1;
+      if (this.dashboardWidth !== 1920) {
+        this.dashboardWidth = 1920;
+        this.loadColumns();
+      }
+      return;
+    }
+
+    const targetHeight = 1080;
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
-    const scaleX = windowWidth / targetWidth;
-    const scaleY = windowHeight / targetHeight;
+    const newScale = windowHeight / targetHeight;
 
-    const newScale = Math.min(scaleX, scaleY);
     if (Math.abs(this.scale - newScale) > 0.001) {
       this.scale = newScale;
+    }
+
+    const calculatedWidth = this.scale > 0 ? windowWidth / this.scale : 1920;
+    if (Math.abs(this.dashboardWidth - calculatedWidth) > 0.1) {
+      this.dashboardWidth = calculatedWidth;
+      this.loadColumns();
     }
   }
 
@@ -1568,6 +1641,8 @@ export class DefaultRacedayComponent
       this.router.navigate(["/ui-editor"], {
         queryParams: { returnUrl },
       });
+    } else if (action === "CUSTOMIZE_LAYOUT") {
+      this.toggleLayoutCustomize();
     }
   }
 
@@ -1625,17 +1700,19 @@ export class DefaultRacedayComponent
 
     this.isMenuOpen = false;
     this.logger.debug("Menu Action Selected:", action);
+    this.executeMenuAction(action);
+    this.isMenuOpen = false;
+  }
 
+  private executeMenuAction(action: string) {
     if (action === "LOGIN") {
       this.showLoginModal = true;
       return;
     }
-
     if (action === "LOGOUT") {
       this.authService.logout();
       return;
     }
-
     if (action === "START_RESUME") {
       this.dataService.startRace().subscribe(
         (success) => {
@@ -1650,35 +1727,7 @@ export class DefaultRacedayComponent
         },
       );
     } else if (action === "PAUSE" || action === "ABORT_TIMERS") {
-      if (
-        action === "PAUSE" &&
-        (this.autoStartRemaining > 0 || this.autoAdvanceRemaining > 0)
-      ) {
-        action = "ABORT_TIMERS";
-      }
-
-      const obs =
-        action === "ABORT_TIMERS"
-          ? this.dataService.abortTimers()
-          : this.dataService.pauseRace();
-
-      obs.subscribe(
-        (success) => {
-          if (success) {
-            this.logger.debug(`${action} command sent successfully`);
-            // Immediate UI feedback: clear timers if aborting
-            if (action === "ABORT_TIMERS") {
-              this.autoStartRemaining = 0;
-              this.autoAdvanceRemaining = 0;
-            }
-          } else {
-            this.logger.error(`Failed to send ${action} command`);
-          }
-        },
-        (error) => {
-          this.logger.error(`Error processing ${action}:`, error);
-        },
-      );
+      this.executePauseOrAbort(action);
     } else if (action === "NEXT_HEAT") {
       this.dataService.nextHeat().subscribe(
         (success) => {
@@ -1706,11 +1755,38 @@ export class DefaultRacedayComponent
       this.cdr.markForCheck();
     } else if (action === "MODIFY") {
       const returnUrl = this.router.url.split("?")[0];
-      this.router.navigate(["/modify-heats"], {
-        queryParams: { returnUrl },
-      });
+      this.router.navigate(["/modify-heats"], { queryParams: { returnUrl } });
     }
-    this.isMenuOpen = false;
+  }
+
+  private executePauseOrAbort(action: string) {
+    const effectiveAction =
+      action === "PAUSE" &&
+      (this.autoStartRemaining > 0 || this.autoAdvanceRemaining > 0)
+        ? "ABORT_TIMERS"
+        : action;
+
+    const obs =
+      effectiveAction === "ABORT_TIMERS"
+        ? this.dataService.abortTimers()
+        : this.dataService.pauseRace();
+
+    obs.subscribe(
+      (success) => {
+        if (success) {
+          this.logger.debug(`${effectiveAction} command sent successfully`);
+          if (effectiveAction === "ABORT_TIMERS") {
+            this.autoStartRemaining = 0;
+            this.autoAdvanceRemaining = 0;
+          }
+        } else {
+          this.logger.error(`Failed to send ${effectiveAction} command`);
+        }
+      },
+      (error) => {
+        this.logger.error(`Error processing ${effectiveAction}:`, error);
+      },
+    );
   }
 
   onWindowsMenuSelect(action: string) {
@@ -2107,7 +2183,8 @@ export class DefaultRacedayComponent
   }
 
   private loadColumns() {
-    const settings = this.settingsService.getSettings();
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
     let selectedColumns = settings.racedayColumns;
     if (!selectedColumns || selectedColumns.length === 0) {
       selectedColumns = Settings.DEFAULT_COLUMNS;
@@ -2128,13 +2205,86 @@ export class DefaultRacedayComponent
       return true;
     });
 
+    const { resizingColumnKey, remainingWidth, fixedWidths } =
+      this.resolveColumnLayout(selectedColumns, settings);
+
+    this.columns = selectedColumns.map((key) => {
+      const layout = (settings.columnLayouts || {})[key] || {
+        [AnchorPoint.CenterCenter]: key,
+      };
+      const primaryProp =
+        layout[AnchorPoint.CenterCenter] || Object.values(layout)[0] || key;
+      const baseKey = primaryProp.split("_")[0];
+
+      const labelKey = this.getLabelKeyForColumn(key, layout);
+      const isResizing = key === resizingColumnKey;
+      const width = isResizing ? remainingWidth : fixedWidths[baseKey] || 275;
+      const anchor = settings.columnAnchors[key] || AnchorPoint.CenterCenter;
+
+      const renderer = (v: any, hd: DriverHeatData, col: ColumnDefinition) => {
+        return this.formatValue(primaryProp, v, hd, col);
+      };
+
+      if (key.startsWith("imageset_")) {
+        const assetId = key.replace("imageset_", "");
+        const asset = this.findAssetById(assetId);
+        const imageRenderer = (
+          v: any,
+          hd: DriverHeatData,
+          _col: ColumnDefinition,
+        ) => {
+          return this.getSelectedImageFromSet(asset, v, hd);
+        };
+        return new ColumnDefinition(
+          "",
+          key,
+          width,
+          false,
+          "middle",
+          0,
+          anchor,
+          imageRenderer as any,
+          layout,
+        );
+      }
+
+      const finalLayout = this.reindexColumnLayout(layout);
+      if (isResizing) {
+        return new ColumnDefinition(
+          labelKey,
+          key,
+          width,
+          true,
+          "start",
+          30,
+          anchor,
+          renderer as any,
+          finalLayout,
+        );
+      }
+      return new ColumnDefinition(
+        labelKey,
+        key,
+        width,
+        false,
+        "middle",
+        0,
+        anchor,
+        renderer as any,
+        finalLayout,
+      );
+    });
+  }
+
+  private resolveColumnLayout(
+    selectedColumns: string[],
+    settings: any,
+  ): {
+    resizingColumnKey: string | null;
+    remainingWidth: number;
+    fixedWidths: { [key: string]: number };
+  } {
     const nameKeys = ["driver.name", "driver.nickname"];
-
-    // Specific widths as per requirements
-    // Time fields: 275
-    // Lap count: 180
-    // Name/Nickname: Remaining width (1920 - sum(other_widths))
-
     const fixedWidths: { [key: string]: number } = {
       lapCount: 216,
       reactionTime: 330,
@@ -2163,10 +2313,7 @@ export class DefaultRacedayComponent
       imageset: 216,
     };
 
-    let totalFixedWithoutResizingColumn = 0;
     let resizingColumnKey: string | null = null;
-
-    // Find the first column containing name/nickname in its layout to use as resizing column
     for (const key of selectedColumns) {
       const layout = (settings.columnLayouts || {})[key] || {
         [AnchorPoint.CenterCenter]: key,
@@ -2174,19 +2321,16 @@ export class DefaultRacedayComponent
       const containsName = Object.values(layout).some((v) =>
         nameKeys.includes((v as string).split("_")[0]),
       );
-
       if (containsName) {
         resizingColumnKey = key;
         break;
       }
     }
-
-    // Fallback: if no column contains name, resize the first one that has multiple anchors, or the first name key itself
     if (!resizingColumnKey && selectedColumns.length > 0) {
       resizingColumnKey = selectedColumns[0];
     }
 
-    // Sum up widths of all OTHER columns
+    let totalFixed = 0;
     selectedColumns.forEach((key) => {
       if (key === resizingColumnKey) return;
       const layout = (settings.columnLayouts || {})[key] || {
@@ -2194,119 +2338,21 @@ export class DefaultRacedayComponent
       };
       const primaryProp =
         layout[AnchorPoint.CenterCenter] || Object.values(layout)[0] || key;
-      const baseKey = primaryProp.split("_")[0];
-      totalFixedWithoutResizingColumn += fixedWidths[baseKey] || 275;
+      const baseKey = (primaryProp as string).split("_")[0];
+      totalFixed += fixedWidths[baseKey] || 275;
     });
 
     const numColumns = selectedColumns.length;
     const totalGapsWidth = numColumns > 1 ? (numColumns - 1) * 2 : 0;
-    const tableContainerWidth = 1896; // 1920 - 24 (margins)
-    const remainingWidth = Math.max(
-      300,
-      tableContainerWidth - totalFixedWithoutResizingColumn - totalGapsWidth,
-    );
+    const remainingWidth = Math.max(300, 1920 - totalFixed - totalGapsWidth);
 
-    this.columns = selectedColumns.map((key) => {
-      const layout = (settings.columnLayouts || {})[key] || {
-        [AnchorPoint.CenterCenter]: key,
-      };
-      const primaryProp =
-        layout[AnchorPoint.CenterCenter] || Object.values(layout)[0] || key;
-      const baseKey = primaryProp.split("_")[0];
-
-      const labelKey = this.getLabelKeyForColumn(key, layout);
-      const isResizing = key === resizingColumnKey;
-      const width = isResizing ? remainingWidth : fixedWidths[baseKey] || 275;
-      const anchor = settings.columnAnchors[key] || AnchorPoint.CenterCenter;
-
-      const renderer = (v: any, hd: DriverHeatData, col: ColumnDefinition) => {
-        return this.formatValue(primaryProp, v, hd, col);
-      };
-
-      if (key.startsWith("imageset_")) {
-        const assetId = key.replace("imageset_", "");
-        const asset = this.findAssetById(assetId);
-        const label = ""; // Hide label for image set columns on raceday
-
-        const renderer = (
-          v: any,
-          hd: DriverHeatData,
-          _col: ColumnDefinition,
-        ) => {
-          return this.getSelectedImageFromSet(asset, v, hd);
-        };
-
-        return new ColumnDefinition(
-          label,
-          key,
-          width,
-          false,
-          "middle",
-          0,
-          anchor,
-          renderer as any,
-          layout,
-        );
-      }
-
-      const finalLayout = this.reindexColumnLayout(layout);
-      if (isResizing) {
-        return new ColumnDefinition(
-          labelKey,
-          key,
-          width,
-          true,
-          "start",
-          30,
-          anchor,
-          renderer as any,
-          finalLayout,
-        );
-      }
-
-      return new ColumnDefinition(
-        labelKey,
-        key,
-        width,
-        false,
-        "middle",
-        0,
-        anchor,
-        renderer as any,
-        finalLayout,
-      );
-    });
+    return { resizingColumnKey, remainingWidth, fixedWidths };
   }
 
   private reindexColumnLayout(layout: { [A in AnchorPoint]?: string }): {
     [A in AnchorPoint]?: string;
   } {
-    const anchorOrder = [
-      AnchorPoint.TopLeft,
-      AnchorPoint.TopCenter,
-      AnchorPoint.TopRight,
-      AnchorPoint.CenterLeft,
-      AnchorPoint.CenterCenter,
-      AnchorPoint.CenterRight,
-      AnchorPoint.BottomLeft,
-      AnchorPoint.BottomCenter,
-      AnchorPoint.BottomRight,
-    ];
-
-    let segmentCounter = 0;
-    const newLayout = { ...layout };
-    anchorOrder.forEach((anchor) => {
-      const prop = newLayout[anchor];
-      if (prop && prop.split("_")[0] === "segmentTime") {
-        const newProp =
-          segmentCounter === 0
-            ? "segmentTime"
-            : `segmentTime_${segmentCounter}`;
-        newLayout[anchor] = newProp;
-        segmentCounter++;
-      }
-    });
-    return newLayout;
+    return RacedayLayoutUtils.reindexColumnLayout(layout);
   }
 
   // Helper method to get the selected image URL from an image set based on value or fuel percentage
@@ -2420,243 +2466,50 @@ export class DefaultRacedayComponent
     return asset;
   }
 
-  private isEmptyDriver(hd: DriverHeatData | any): boolean {
-    if (!hd) return true;
-
-    // 1. Check actualDriver model
-    if (hd.actualDriver) return Driver.isEmpty(hd.actualDriver);
-
-    // 2. Check nested driver model in participant (common in protos/mocks)
-    const nestedDriver = hd.driver?.driver || hd.participant?.driver;
-    if (nestedDriver) return Driver.isEmpty(nestedDriver);
-
-    // 3. Fallback to checking the driver property itself if it's a model
-    if (hd.driver && !hd.driver.driver) return Driver.isEmpty(hd.driver);
-
-    return true;
+  private getImageUrl(propertyName: string, hd: DriverHeatData): string {
+    const baseKey = propertyName.split("_")[0];
+    if (baseKey === "fuel-gauge-builtin") {
+      const asset = this.findAssetById("fuel-gauge-builtin");
+      const value = RacedayFormatUtils.getPropertyValue(hd, propertyName);
+      return this.getSelectedImageFromSet(asset, value, hd);
+    }
+    if (baseKey.startsWith("imageset")) {
+      const assetId = propertyName.replace("imageset_", "");
+      const asset = this.findAssetById(assetId);
+      const value = RacedayFormatUtils.getPropertyValue(hd, propertyName);
+      return this.getSelectedImageFromSet(asset, value, hd);
+    }
+    return "";
   }
 
-  // Format any value based on property name
+  isEmptyDriver(hd: DriverHeatData | any): boolean {
+    return RacedayFormatUtils.isEmptyDriver(hd);
+  }
+
   formatValue(
     propertyName: string,
     value: any,
     hd: DriverHeatData,
     column?: ColumnDefinition,
   ): string {
-    if (!propertyName) return "";
-    const baseKey = propertyName.split("_")[0];
-
-    if (this.isEmptyDriver(hd)) {
-      // Hide some columns for empty lanes.  All others not in this list should show the default formatting for the colunn.
-      // TODO(aufderheide): Add these into a constant array to make things cleaner.
-      if (
-        baseKey === "seed" ||
-        baseKey === "rankHeat" ||
-        baseKey === "rankOverall"
-      ) {
-        return "";
-      }
-      if (baseKey === "gapLeader" || baseKey === "gapPosition") {
-        return "--.---";
-      }
-    }
-
-    if (
-      baseKey.includes("LapTime") ||
-      baseKey === "reactionTime" ||
-      baseKey === "totalTime"
-    ) {
-      return value > 0 ? value.toFixed(3) : "--.---";
-    } else if (baseKey === "gapLeader" || baseKey === "gapPosition") {
-      if (value === 0) return "--.---";
-      const sign = value > 0 ? "+" : "";
-      return sign + value.toFixed(3);
-    } else if (baseKey === "lapCount") {
-      if (
-        value === null ||
-        value === undefined ||
-        (value === 0 && hd.reactionTime === 0)
-      )
-        return "--";
-      return value.toFixed(2);
-    } else if (baseKey === "driver.name") {
-      if (this.isEmptyDriver(hd)) {
-        return this.translationService.translate("RD_EMPTY_LANE");
-      }
-      const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
-      return d?.name || "";
-    } else if (baseKey === "driver.nickname") {
-      if (this.isEmptyDriver(hd)) {
-        return this.translationService.translate("RD_EMPTY_LANE");
-      }
-      const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
-      return d?.nickname || d?.name || "";
-    } else if (baseKey === "participant.team.name") {
-      if (this.isEmptyDriver(hd)) {
-        // Only show "Empty Lane" for team name if it's the primary (CenterCenter) property
-        if (
-          column &&
-          column.layout[AnchorPoint.CenterCenter] === propertyName
-        ) {
-          return this.translationService.translate("RD_EMPTY_LANE");
-        }
-        return "";
-      }
-      return hd.participant?.team?.name || (hd.driver as any)?.team?.name || "";
-    } else if (baseKey === "participant.fuelLevel") {
-      return value !== undefined ? value.toFixed(1) : "--.-";
-    } else if (baseKey === "fuelCapacity") {
-      const race = this.raceService.getRace();
-      const capacity = this.track?.hasDigitalFuel()
-        ? race?.digital_fuel_options?.capacity
-        : race?.fuel_options?.capacity;
-      return capacity !== undefined ? capacity.toFixed(1) : "--.-";
-    } else if (baseKey === "fuelPercentage") {
-      const level = hd.participant?.fuelLevel ?? (hd.driver as any)?.fuelLevel;
-      const race = this.raceService.getRace();
-      const capacity = this.track?.hasDigitalFuel()
-        ? race?.digital_fuel_options?.capacity
-        : race?.fuel_options?.capacity;
-      if (level !== undefined && capacity !== undefined && capacity > 0) {
-        const percentage = Math.round((level / capacity) * 100);
-        return percentage + "%";
-      }
-      return "--%";
-    } else if (baseKey === "driver.avatarUrl") {
-      return this.getFullUrl(value);
-    } else if (baseKey === "seed") {
-      const seed = hd.participant?.seed ?? (hd.driver as any)?.seed;
-      return seed ? `(${seed})` : "--";
-    } else if (baseKey === "rankHeat") {
-      if (this.isEmptyDriver(hd)) return "";
-      const rank = this.driverRankings.get(hd.objectId);
-      return rank ? `${rank}` : "--";
-    } else if (baseKey === "rankOverall") {
-      if (this.isEmptyDriver(hd)) return "";
-      const rank = hd.participant?.rank ?? (hd.driver as any)?.rank;
-      return rank ? `${rank}` : "--";
-    } else if (baseKey === "flag") {
-      const flag =
-        value === RaceFlag.UNKNOWN_FLAG || value === 0
-          ? this.raceFlagService.getFlagType()
-          : value;
-      return this.getFlagUrl(flag);
-    } else if (baseKey === "segmentTime") {
-      const parts = propertyName.split("_");
-      const index = parts.length > 1 ? parseInt(parts[1], 10) : 0;
-
-      let useIndex = true;
-      let segmentCount = 0;
-      if (column) {
-        // Check if this column has other segments in its layout
-        segmentCount = Object.values(column.layout).filter((v) =>
-          v?.startsWith("segmentTime"),
-        ).length;
-        if (segmentCount <= 1) {
-          useIndex = false;
-        }
-      } else if (index === 0) {
-        // Fallback for when column is missing: default to "most recent" for the base property
-        useIndex = false;
-      }
-
-      if (useIndex) {
-        // If propertyName is the bare 'segmentTime' but useIndex is true, we must re-calculate
-        // its actual relative index in this column's layout to be safe.
-        let actualIndex = index;
-        if (propertyName === "segmentTime" && column) {
-          // Find which anchor has this property
-          const anchorOrder = [
-            AnchorPoint.TopLeft,
-            AnchorPoint.TopCenter,
-            AnchorPoint.TopRight,
-            AnchorPoint.CenterLeft,
-            AnchorPoint.CenterCenter,
-            AnchorPoint.CenterRight,
-            AnchorPoint.BottomLeft,
-            AnchorPoint.BottomCenter,
-            AnchorPoint.BottomRight,
-          ];
-          let counter = 0;
-          for (const anchor of anchorOrder) {
-            const p = column.layout[anchor];
-            if (p && p.split("_")[0] === "segmentTime") {
-              if (p === "segmentTime") {
-                actualIndex = counter;
-                break;
-              }
-              counter++;
-            }
-          }
-        }
-
-        const segmentVal = hd.currentLapSegments[actualIndex];
-        return segmentVal !== undefined && segmentVal > 0
-          ? segmentVal.toFixed(3)
-          : "--.---";
-      } else {
-        // Fallback to "most recent" for single-segment columns or base property
-        return hd.lastSegmentTime > 0
-          ? hd.lastSegmentTime.toFixed(3)
-          : "--.---";
-      }
-    } else if (baseKey === "mph" || baseKey === "kph" || baseKey === "fph") {
-      const lastLapTime = hd.lastLapTime;
-      const lane = this.track?.lanes?.[hd.laneIndex];
-      const length = lane?.length;
-
-      if (lastLapTime > 0 && length !== undefined && length > 0) {
-        const fph = (length / lastLapTime) * 3600;
-        if (baseKey === "fph") return fph.toFixed(0);
-
-        const mph = fph / 5280;
-        if (baseKey === "mph") return mph.toFixed(2);
-
-        const kph = mph * 1.609344;
-        if (baseKey === "kph") return kph.toFixed(2);
-      }
-      return "--.--";
-    }
-    return value?.toString() ?? "";
+    const ctx: FormatContext = {
+      translate: (key) => this.translationService.translate(key),
+      getRace: () => this.raceService.getRace(),
+      getTrack: () => this.track,
+      getDriverRanking: (objectId) => this.driverRankings.get(objectId),
+      getFlagType: () => this.raceFlagService.getFlagType(),
+      getFlagUrl: (flag) => this.getFlagUrl(flag),
+      getFullUrl: (url) => this.getFullUrl(url),
+      getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
+    };
+    return RacedayFormatUtils.formatValue(propertyName, value, hd, column, ctx);
   }
 
   private getLabelKeyForColumn(
     key: string,
     layout?: { [A in AnchorPoint]?: string },
   ): string {
-    const propertyKey =
-      layout?.[AnchorPoint.CenterCenter] ||
-      (layout ? Object.values(layout)[0] : null) ||
-      key;
-
-    const baseKey = propertyKey.split("_")[0];
-    const labels: { [key: string]: string } = {
-      lapCount: "RD_COL_LAP",
-      lastLapTime: "RD_COL_LAP_TIME",
-      medianLapTime: "RD_COL_MEDIAN_LAP",
-      averageLapTime: "RD_COL_AVG_LAP",
-      bestLapTime: "RD_COL_BEST_LAP",
-      totalTime: "RD_COL_TOTAL_TIME",
-      gapLeader: "RD_COL_GAP_LEADER",
-      gapPosition: "RD_COL_GAP_POSITION",
-      reactionTime: "RD_COL_REACTION_TIME",
-      "participant.team.name": "RD_COL_TEAM",
-      "driver.name": "RD_COL_NAME",
-      "driver.nickname": "RD_COL_NICKNAME",
-      "participant.fuelLevel": "RD_COL_FUEL_LEVEL",
-      fuelCapacity: "RD_COL_FUEL_CAPACITY",
-      fuelPercentage: "RD_COL_FUEL_PERCENTAGE",
-      seed: "RD_COL_SEED",
-      rankHeat: "RD_COL_RANK_HEAT",
-      rankOverall: "RD_COL_RANK_OVERALL",
-      mph: "RD_COL_MPH",
-      kph: "RD_COL_KPH",
-      fph: "RD_COL_FPH",
-      segmentTime: "RD_COL_SEGMENT_TIME",
-      "driver.avatarUrl": "RD_COL_AVATAR",
-      flag: "",
-    };
-    return labels[baseKey] ?? "UNKNOWN";
+    return RacedayLayoutUtils.getLabelKeyForColumn(key, layout);
   }
 
   protected trackByIndex(index: number, _item: any): number {
@@ -3123,5 +2976,194 @@ export class DefaultRacedayComponent
       queryParams: { modifyHeats: null },
       queryParamsHandling: "merge",
     });
+  }
+
+  // Layout customization methods
+  toggleLayoutCustomize() {
+    this.isLayoutCustomizing = !this.isLayoutCustomizing;
+    this.cdr.detectChanges();
+  }
+
+  saveLayout() {
+    console.log("saveLayout called");
+    const settings = this.settingsService.getSettings();
+    settings.racedayLayout = this.layout;
+    this.settingsService.saveSettings(settings);
+    this.isLayoutCustomizing = false;
+    this.cdr.detectChanges();
+  }
+
+  cancelLayoutCustomize() {
+    const settings = this.settingsService.getSettings();
+    if (settings.racedayLayout && settings.racedayLayout.widgets) {
+      this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
+    } else {
+      this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+    }
+    this.isLayoutCustomizing = false;
+    this.cdr.detectChanges();
+  }
+
+  resetLayoutToDefaults() {
+    this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+    const settings = this.settingsService.getSettings();
+    settings.racedayLayout = this.layout;
+    this.settingsService.saveSettings(settings);
+    this.isLayoutCustomizing = false;
+    this.cdr.detectChanges();
+  }
+
+  getUnusedWidgets(): WidgetType[] {
+    const allTypes: WidgetType[] = [
+      "menu-bar",
+      "race-name",
+      "heat-info",
+      "track-name",
+      "branding",
+      "qr",
+      "flag",
+      "timer",
+      "records",
+      "leaderboard",
+      "group-leaderboard",
+      "lane-view",
+      "on-deck",
+      "next-heat",
+    ];
+    const used = new Set(this.layout?.widgets?.map((w) => w.widgetType) || []);
+    return allTypes.filter((t) => !used.has(t));
+  }
+
+  onToolboxDragStart(event: DragEvent, type: string) {
+    this.draggedWidgetType = type;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", type);
+    }
+  }
+
+  onCanvasDragOver(event: DragEvent) {
+    if (!this.isLayoutCustomizing || !this.draggedWidgetType) return;
+    event.preventDefault(); // Necessary to allow drop
+  }
+
+  onCanvasDrop(event: DragEvent) {
+    if (!this.isLayoutCustomizing || !this.draggedWidgetType) return;
+    event.preventDefault();
+
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const scale = this.visualScale || 1;
+    let x = (event.clientX - rect.left) / scale;
+    let y = (event.clientY - rect.top) / scale;
+
+    const isLeaderboardOrDeck =
+      this.draggedWidgetType === "leaderboard" ||
+      this.draggedWidgetType === "group-leaderboard" ||
+      this.draggedWidgetType === "on-deck" ||
+      this.draggedWidgetType === "next-heat";
+    const newWidget: any = {
+      id: "widget-" + Date.now(),
+      widgetType: this.draggedWidgetType as any,
+      x: Math.round(x),
+      y: Math.round(y),
+      width: isLeaderboardOrDeck ? 384 : 400,
+      height:
+        this.draggedWidgetType === "leaderboard" ||
+        this.draggedWidgetType === "group-leaderboard"
+          ? 239
+          : 300,
+      zIndex: this.getNextZIndex(),
+    };
+
+    if (!this.layout.widgets) this.layout.widgets = [];
+    this.layout.widgets.push(newWidget);
+
+    this.draggedWidgetType = null;
+    this.cdr.detectChanges();
+    this.layoutChanged.emit(this.layout);
+  }
+
+  getNextZIndex(): number {
+    if (!this.layout?.widgets?.length) return 100;
+    return Math.max(...this.layout.widgets.map((w: any) => w.zIndex || 0)) + 1;
+  }
+
+  bringToFront(id: string) {
+    if (!this.layout?.widgets) return;
+    const w = this.layout.widgets.find((w: any) => w.id === id);
+    if (w) {
+      w.zIndex = this.getNextZIndex();
+    }
+  }
+
+  normalizeZIndices() {
+    if (!this.layout?.widgets) return;
+    const sorted = [...this.layout.widgets].sort(
+      (a, b) => (a.zIndex || 100) - (b.zIndex || 100),
+    );
+    sorted.forEach((w: any, index: number) => {
+      w.zIndex = 100 + index;
+    });
+  }
+
+  moveWidgetForward(id: string) {
+    if (!this.layout?.widgets) return;
+    this.normalizeZIndices();
+    const sorted = [...this.layout.widgets].sort(
+      (a, b) => (a.zIndex || 100) - (b.zIndex || 100),
+    );
+    const idx = sorted.findIndex((w: any) => w.id === id);
+    if (idx !== -1 && idx < sorted.length - 1) {
+      const current = sorted[idx];
+      const next = sorted[idx + 1];
+      const temp = current.zIndex;
+      current.zIndex = next.zIndex;
+      next.zIndex = temp;
+      this.layoutChanged.emit(this.layout);
+      this.cdr.detectChanges();
+    }
+  }
+
+  moveWidgetBackward(id: string) {
+    if (!this.layout?.widgets) return;
+    this.normalizeZIndices();
+    const sorted = [...this.layout.widgets].sort(
+      (a, b) => (a.zIndex || 100) - (b.zIndex || 100),
+    );
+    const idx = sorted.findIndex((w: any) => w.id === id);
+    if (idx > 0) {
+      const current = sorted[idx];
+      const prev = sorted[idx - 1];
+      const temp = current.zIndex;
+      current.zIndex = prev.zIndex;
+      prev.zIndex = temp;
+      this.layoutChanged.emit(this.layout);
+      this.cdr.detectChanges();
+    }
+  }
+
+  removeWidget(id: string) {
+    if (!this.layout?.widgets) return;
+    this.layout.widgets = this.layout.widgets.filter((w: any) => w.id !== id);
+    this.layoutChanged.emit(this.layout);
+  }
+
+  snapToEdges(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    ignoreId: string,
+    handle: string,
+  ): { x: number; y: number; w: number; h: number } {
+    return RacedayLayoutUtils.snapToEdges(
+      this.layout?.widgets || [],
+      x,
+      y,
+      w,
+      h,
+      ignoreId,
+      handle,
+    );
   }
 }

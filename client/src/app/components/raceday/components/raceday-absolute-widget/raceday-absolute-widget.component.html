@@ -1,0 +1,198 @@
+<div
+  class="widget-wrapper"
+  [class.edit-mode]="isCustomizing()"
+  [style.left]="(widget().x / 1920) * 100 + '%'"
+  [style.top]="(widget().y / 1080) * 100 + '%'"
+  [style.width]="(widget().width / 1920) * 100 + '%'"
+  [style.height]="(widget().height / 1080) * 100 + '%'"
+  [style.z-index]="
+    widget().widgetType === 'menu-bar' ? 99999 : widget().zIndex || 100
+  "
+  (pointerdown)="isCustomizing() ? bringToFront() : null"
+  window-id="absolute-widget"
+>
+  <div class="widget-content">
+    @switch (widget().widgetType) {
+      @case ("menu-bar") {
+        <app-raceday-menu-bar
+          [track]="parentComponent().track"
+          [isSaveDisabled]="parentComponent().isSaveDisabled"
+          [isStartResumeDisabled]="parentComponent().isStartResumeDisabled"
+          [isPauseDisabled]="parentComponent().isPauseDisabled"
+          [isNextHeatDisabled]="parentComponent().isNextHeatDisabled"
+          [isRestartHeatDisabled]="parentComponent().isRestartHeatDisabled"
+          [isDeferHeatDisabled]="parentComponent().isDeferHeatDisabled"
+          [isSkipHeatDisabled]="parentComponent().isSkipHeatDisabled"
+          [isSkipRaceDisabled]="parentComponent().isSkipRaceDisabled"
+          [isAddLapDisabled]="parentComponent().isAddLapDisabled"
+          [isModifyDisabled]="parentComponent().isModifyDisabled"
+          [startResumeShortcut]="parentComponent().startResumeShortcut"
+          [pauseShortcut]="parentComponent().pauseShortcut"
+          [nextHeatShortcut]="parentComponent().nextHeatShortcut"
+          [restartHeatShortcut]="parentComponent().restartHeatShortcut"
+          [skipHeatShortcut]="parentComponent().skipHeatShortcut"
+          [deferHeatShortcut]="parentComponent().deferHeatShortcut"
+          (fileMenuSelect)="parentComponent().onFileMenuSelect($event)"
+          (menuSelect)="parentComponent().onMenuSelect($event)"
+          (laneMenuSelect)="parentComponent().onLaneMenuSelect($event)"
+          (windowsMenuSelect)="parentComponent().onWindowsMenuSelect($event)"
+          (optionsMenuSelect)="parentComponent().onOptionsSelect($event)"
+          (languageSelected)="parentComponent().onLanguageSelected()"
+        ></app-raceday-menu-bar>
+      }
+      @case ("race-name") {
+        <app-raceday-race-name
+          [race]="parentComponent().race"
+        ></app-raceday-race-name>
+      }
+      @case ("heat-info") {
+        <app-raceday-heat-info
+          [heat]="parentComponent().heat"
+          [race]="parentComponent().race"
+          [totalHeats]="parentComponent().totalHeats"
+        ></app-raceday-heat-info>
+      }
+      @case ("track-name") {
+        <app-raceday-track-name
+          [track]="parentComponent().track"
+        ></app-raceday-track-name>
+      }
+      @case ("branding") {
+        <app-raceday-branding></app-raceday-branding>
+      }
+      @case ("qr") {
+        <app-raceday-qr
+          [qrCodeUrl]="parentComponent().qrCodeUrl"
+        ></app-raceday-qr>
+      }
+      @case ("flag") {
+        <app-raceday-flag
+          [currentFlagUrl]="parentComponent().getCurrentFlagUrl()"
+        ></app-raceday-flag>
+      }
+      @case ("timer") {
+        <app-raceday-timer
+          [formattedTime]="parentComponent().formattedTime"
+          [autoStatusLabel]="parentComponent().autoStatusLabel"
+          [isWarmup]="parentComponent().isWarmup"
+          [showCountdownOverlay]="parentComponent().showCountdownOverlay"
+        ></app-raceday-timer>
+      }
+      @case ("records") {
+        <app-raceday-records
+          [raceRecordLapNickname]="parentComponent().raceRecordLapNickname"
+          [raceRecordLapTime]="parentComponent().raceRecordLapTime"
+          [raceRecordScoreNickname]="parentComponent().raceRecordScoreNickname"
+          [raceRecordScore]="parentComponent().raceRecordScore"
+          [currentRaceBestNickname]="parentComponent().currentRaceBestNickname"
+          [currentRaceBestTime]="parentComponent().currentRaceBestTime"
+          [heatBestNickname]="parentComponent().heatBestNickname"
+          [heatBestTime]="parentComponent().heatBestTime"
+        ></app-raceday-records>
+      }
+      @case ("leaderboard") {
+        <app-raceday-leaderboard
+          [leaderboardEntries]="parentComponent().leaderboardEntries"
+        ></app-raceday-leaderboard>
+      }
+      @case ("group-leaderboard") {
+        <app-raceday-group-leaderboard
+          [leaderboardEntries]="parentComponent().groupLeaderboardEntries"
+          [groupNumber]="parentComponent().currentGroup"
+          [groupEnabled]="parentComponent().groupEnabled"
+        ></app-raceday-group-leaderboard>
+      }
+      @case ("lane-view") {
+        <app-raceday-lane-view
+          [parent]="parentComponent()"
+        ></app-raceday-lane-view>
+      }
+      @case ("on-deck") {
+        <app-raceday-on-deck
+          [track]="parentComponent().track"
+          [currentHeat]="parentComponent().heat"
+          [heats]="parentComponent().heats"
+        ></app-raceday-on-deck>
+      }
+      @case ("next-heat") {
+        <app-raceday-next-heat
+          [track]="parentComponent().track"
+          [currentHeat]="parentComponent().heat"
+          [heats]="parentComponent().heats"
+        ></app-raceday-next-heat>
+      }
+    }
+  </div>
+
+  @if (isCustomizing()) {
+    <div class="customizing-widget-overlay">
+      <div
+        class="widget-header-drag"
+        (pointerdown)="onDragStart($event)"
+        title="Drag to reposition widget"
+      >
+        <span class="widget-label">{{ widget().widgetType }}</span>
+        <span class="material-icons grab-icon">drag_indicator</span>
+      </div>
+      @if (widget().widgetType !== "menu-bar") {
+        <div class="widget-zorder-buttons">
+          <button
+            class="widget-zorder-btn"
+            (click)="moveBackward($event)"
+            title="Move backward (draw under)"
+          >
+            <span class="material-icons">arrow_downward</span>
+          </button>
+          <button
+            class="widget-zorder-btn"
+            (click)="moveForward($event)"
+            title="Move forward (draw over)"
+          >
+            <span class="material-icons">arrow_upward</span>
+          </button>
+        </div>
+      }
+      <button
+        class="widget-remove-btn"
+        (click)="removeWidget($event)"
+        title="Remove widget"
+      >
+        ×
+      </button>
+    </div>
+
+    <!-- 8-way resize handles -->
+    <div
+      class="resize-handle n"
+      (pointerdown)="onResizeStart($event, 'n')"
+    ></div>
+    <div
+      class="resize-handle e"
+      (pointerdown)="onResizeStart($event, 'e')"
+    ></div>
+    <div
+      class="resize-handle s"
+      (pointerdown)="onResizeStart($event, 's')"
+    ></div>
+    <div
+      class="resize-handle w"
+      (pointerdown)="onResizeStart($event, 'w')"
+    ></div>
+    <div
+      class="resize-handle ne"
+      (pointerdown)="onResizeStart($event, 'ne')"
+    ></div>
+    <div
+      class="resize-handle nw"
+      (pointerdown)="onResizeStart($event, 'nw')"
+    ></div>
+    <div
+      class="resize-handle se"
+      (pointerdown)="onResizeStart($event, 'se')"
+    ></div>
+    <div
+      class="resize-handle sw"
+      (pointerdown)="onResizeStart($event, 'sw')"
+    ></div>
+  }
+</div>

@@ -108,7 +108,6 @@ describe("DefaultRacedayComponent", () => {
   let raceTimeSubject: Subject<IRaceTime>;
   let lapsSubject: Subject<ILap>;
   let standingsUpdateSubject: Subject<IStandingsUpdate>;
-  let _originalAudio: any;
   let mockAudioInstance: any;
   let recordDataSubject: Subject<IRecordData>;
   let participantsSubject: Subject<any[]>;
@@ -1422,6 +1421,8 @@ describe("DefaultRacedayComponent", () => {
       expect(component["leaderboardEntries"][0].isTime).toBeTrue();
     });
 
+    // TODO(aufderheide): Move some of these tests out of here and into the widget tests.
+    // TODO(aufderheide): Use a harness rather than the selector directly.
     it("should update transform when ranks change (animation check)", () => {
       // Initial state:
       // Index 0: D1 (Rank 2) -> translateY(24px)
@@ -1465,14 +1466,6 @@ describe("DefaultRacedayComponent", () => {
       );
       fixture.detectChanges();
       expect(scrollContent.style.height).toBe("240px");
-    });
-
-    it("should be scrollable via overflow-y auto", () => {
-      const container =
-        fixture.nativeElement.querySelector(".leaderboard-list");
-      // In Karma, styles are often applied via the component's encapsulation.
-      // We check class-derived styles by asserting on the element.
-      expect(window.getComputedStyle(container).overflowY).toBe("auto");
     });
 
     it("should calculate a scroll height exceeding typical container height when many items are present", () => {
@@ -3125,6 +3118,161 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBeDefined();
       expect(component.showExitConfirmation).toBeTrue();
       expect(component.exitModalTitle).toBe("RD_CONFIRM_EXIT_TITLE");
+    });
+  });
+  describe("Z-Order Widget Reordering", () => {
+    beforeEach(() => {
+      component.layout = {
+        widgets: [
+          {
+            id: "w1",
+            widgetType: "timer",
+            x: 10,
+            y: 10,
+            width: 100,
+            height: 100,
+            zIndex: 100,
+          },
+          {
+            id: "w2",
+            widgetType: "records",
+            x: 20,
+            y: 20,
+            width: 100,
+            height: 100,
+            zIndex: 105,
+          },
+          {
+            id: "w3",
+            widgetType: "flag",
+            x: 30,
+            y: 30,
+            width: 100,
+            height: 100,
+            zIndex: 102,
+          },
+        ],
+      } as any;
+      spyOn(component.layoutChanged, "emit");
+    });
+
+    it("should normalize z-indices to start at 100 sequentially based on current z-index order", () => {
+      component.normalizeZIndices();
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w1")?.zIndex,
+      ).toBe(100);
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w3")?.zIndex,
+      ).toBe(101);
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w2")?.zIndex,
+      ).toBe(102);
+    });
+
+    it("should move a widget forward in draw order by swapping with the next z-index", () => {
+      component.moveWidgetForward("w3");
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w3")?.zIndex,
+      ).toBe(102);
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w2")?.zIndex,
+      ).toBe(101);
+      expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+        component.layout,
+      );
+    });
+
+    it("should not move a widget forward if it is already at the front", () => {
+      component.moveWidgetForward("w2");
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w2")?.zIndex,
+      ).toBe(102);
+    });
+
+    it("should move a widget backward in draw order by swapping with the previous z-index", () => {
+      component.moveWidgetBackward("w3");
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w3")?.zIndex,
+      ).toBe(100);
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w1")?.zIndex,
+      ).toBe(101);
+      expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+        component.layout,
+      );
+    });
+
+    it("should not move a widget backward if it is already at the back", () => {
+      component.moveWidgetBackward("w1");
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w1")?.zIndex,
+      ).toBe(100);
+    });
+  });
+
+  describe("Dynamic Table Body Height", () => {
+    it("should calculate correct table body height based on lane-view widget height", () => {
+      component.layout = {
+        widgets: [
+          {
+            id: "lane-view-w",
+            widgetType: "lane-view",
+            x: 10,
+            y: 10,
+            width: 800,
+            height: 600,
+          },
+        ],
+      } as any;
+      component.isLayoutCustomizing = false;
+
+      // widget height (600) - edit overlay (0) - margins (10) - header (36) = 554
+      expect(component.getTableBodyHeight()).toBe(554);
+    });
+
+    it("should deduct offset for edit mode overlay when layout customization is active", () => {
+      component.layout = {
+        widgets: [
+          {
+            id: "lane-view-w",
+            widgetType: "lane-view",
+            x: 10,
+            y: 10,
+            width: 800,
+            height: 600,
+          },
+        ],
+      } as any;
+      component.isLayoutCustomizing = true;
+
+      // widget height (600) - edit overlay (28) - margins (10) - header (36) = 526
+      expect(component.getTableBodyHeight()).toBe(526);
+    });
+
+    it("should return default fallback height if lane-view widget is not found", () => {
+      component.layout = {
+        widgets: [],
+      } as any;
+      expect(component.getTableBodyHeight()).toBe(672);
+    });
+  });
+
+  describe("CSS Encapsulation and Leakage", () => {
+    it("should not leak its styles globally due to native CSS nesting", () => {
+      fixture.detectChanges();
+
+      const testElement = document.createElement("div");
+      testElement.className = "dashboard-wrapper";
+      testElement.id = "leak-test-element";
+      document.body.appendChild(testElement);
+
+      const computedStyle = window.getComputedStyle(testElement);
+
+      // If the styles leaked, display would be 'flex'.
+      // If properly scoped by 'app-default-raceday', it should remain 'block'.
+      expect(computedStyle.display).toBe("block");
+
+      document.body.removeChild(testElement);
     });
   });
 });
