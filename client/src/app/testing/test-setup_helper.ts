@@ -752,7 +752,7 @@ export class TestSetupHelper {
         const assets = [
           {
             model: { entityId: "1" },
-            name: "Test Image 1",
+            name: "Test Image 1 with a very long name that should wrap to two lines",
             type: "image",
             size: "150 KB",
             url: "/api/assets/download?filename=img1.png",
