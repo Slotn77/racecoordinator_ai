@@ -1076,6 +1076,7 @@ describe("CustomRotationEditorComponent", () => {
       // Track Change
       captureSpy.calls.reset();
       mockDataService.saveCustomRotation.calls.reset();
+      component.selectedTrackId = "t2";
       component.onTrackChange();
       expect(captureSpy).toHaveBeenCalled();
       expect(mockDataService.saveCustomRotation).toHaveBeenCalled();
@@ -1083,6 +1084,7 @@ describe("CustomRotationEditorComponent", () => {
       // Drivers Count Change
       captureSpy.calls.reset();
       mockDataService.saveCustomRotation.calls.reset();
+      component.internalRotations[0].numDrivers = 99;
       component.onNumDriversChange();
       expect(captureSpy).toHaveBeenCalled();
       expect(mockDataService.saveCustomRotation).toHaveBeenCalled();
@@ -1095,6 +1097,31 @@ describe("CustomRotationEditorComponent", () => {
       component.onHeatGroupChange(rotation, heat, 3);
       expect(captureSpy).toHaveBeenCalled();
       expect(mockDataService.saveCustomRotation).toHaveBeenCalled();
+    }));
+
+    it("should debounce auto-saving during rapid name changes", fakeAsync(() => {
+      fixture.detectChanges();
+      component.addRotation();
+      mockDataService.saveCustomRotation.calls.reset();
+
+      component.onInputFocus();
+
+      component.internalAssetName = "N";
+      component.onInputChange();
+      tick(30);
+
+      component.internalAssetName = "Ne";
+      component.onInputChange();
+      tick(30);
+
+      component.internalAssetName = "New Name";
+      component.onInputChange();
+
+      expect(mockDataService.saveCustomRotation).not.toHaveBeenCalled();
+
+      tick(100);
+
+      expect(mockDataService.saveCustomRotation).toHaveBeenCalledTimes(1);
     }));
 
     it("should revert state if auto-save fails", fakeAsync(() => {

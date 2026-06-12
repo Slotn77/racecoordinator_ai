@@ -252,6 +252,7 @@ describe("TrackEditorComponent", () => {
     expect(dataService.createTrack).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(["/track-editor"], {
       queryParams: { id: "t-new-id", from: null, returnUrl: null },
+      replaceUrl: true,
     });
   });
 

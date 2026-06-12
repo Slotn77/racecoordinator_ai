@@ -320,6 +320,7 @@ describe("TeamEditorComponent", () => {
     expect(dataService.createTeam).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(["/team-editor"], {
       queryParams: { id: "t3", from: "t1", returnUrl: "t1" },
+      replaceUrl: true,
     });
   });
 

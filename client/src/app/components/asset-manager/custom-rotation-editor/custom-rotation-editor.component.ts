@@ -109,6 +109,7 @@ export class CustomRotationEditorComponent
   }
 
   isLoading = false;
+  isAutoSaving = false;
 
   lastSavedAsset?: IAssetMessage;
   scale = 1;
@@ -267,6 +268,19 @@ export class CustomRotationEditorComponent
   }
 
   ngOnInit() {
+    this.subscriptions.push(
+      this.undoManager.stateCommitted$.subscribe((event) => {
+        if (
+          event.type === "undo" ||
+          event.type === "redo" ||
+          event.type === "push"
+        ) {
+          this.autoSave(event.type);
+          this.cdr.detectChanges();
+        }
+      }),
+    );
+
     if (this.route.queryParamMap) {
       this.subscriptions.push(
         this.route.queryParamMap.subscribe((paramMap) => {
@@ -463,14 +477,6 @@ export class CustomRotationEditorComponent
     this.updateScale();
     this.loadTracks();
 
-    this.subscriptions.push(
-      this.undoManager.stateCommitted$.subscribe((event) => {
-        if (event.type === "undo" || event.type === "redo") {
-          this.autoSave(event.type);
-          this.cdr.detectChanges();
-        }
-      }),
-    );
     this.cdr.detectChanges();
   }
 
@@ -542,10 +548,28 @@ export class CustomRotationEditorComponent
     this.updateDropListConnections();
   }
 
+  onInputChange() {
+    this.undoManager.onInputChange();
+    this.cdr.detectChanges();
+  }
+
+  onInputFocus() {
+    this.undoManager.onInputFocus();
+  }
+
+  onInputBlur() {
+    this.undoManager.onInputBlur();
+    this.cdr.detectChanges();
+  }
+
+  captureState() {
+    this.undoManager.captureState();
+    this.cdr.detectChanges();
+  }
+
   onAssetNameChange() {
     if (!this.internalAssetName.trim()) return;
-    this.undoManager.captureState();
-    this.autoSave();
+    this.captureState();
   }
 
   onTrackChange() {
@@ -556,14 +580,12 @@ export class CustomRotationEditorComponent
       this.internalNumLanes = this.selectedTrack.lanes?.length || 0;
       this.onNumLanesChange();
       this.updateDropListConnections();
-      this.undoManager.captureState();
-      this.autoSave();
+      this.captureState();
     }
   }
 
   onNumDriversChange() {
-    this.undoManager.captureState();
-    this.autoSave();
+    this.captureState();
   }
 
   onHeatGroupChange(
@@ -572,8 +594,7 @@ export class CustomRotationEditorComponent
     value: number,
   ) {
     heat.group = value - 1;
-    this.undoManager.captureState();
-    this.autoSave();
+    this.captureState();
   }
 
   addRotation() {
@@ -585,15 +606,13 @@ export class CustomRotationEditorComponent
     this.internalRotations.push(newRot);
     this.addHeat(newRot, false);
     this.updateDropListConnections();
-    this.undoManager.captureState();
-    this.autoSave();
+    this.captureState();
   }
 
   removeRotation(index: number) {
     this.internalRotations.splice(index, 1);
     this.updateDropListConnections();
-    this.undoManager.captureState();
-    this.autoSave();
+    this.captureState();
   }
 
   addHeat(rotation: ICustomRotation, triggerAutoSave = true) {
@@ -606,9 +625,10 @@ export class CustomRotationEditorComponent
       group: 0,
     });
     this.updateDropListConnections();
-    this.undoManager.captureState();
     if (triggerAutoSave) {
-      this.autoSave();
+      this.captureState();
+    } else {
+      this.undoManager.captureState();
     }
   }
 
@@ -616,16 +636,14 @@ export class CustomRotationEditorComponent
     if (rotation.heats) {
       rotation.heats.splice(index, 1);
       this.updateDropListConnections();
-      this.undoManager.captureState();
-      this.autoSave();
+      this.captureState();
     }
   }
 
   dropHeat(rotation: ICustomRotation, event: CdkDragDrop<ICustomHeat[]>) {
     if (rotation.heats) {
       moveItemInArray(rotation.heats, event.previousIndex, event.currentIndex);
-      this.undoManager.captureState();
-      this.autoSave();
+      this.captureState();
     }
   }
 
@@ -660,8 +678,7 @@ export class CustomRotationEditorComponent
       if (heat && heat.driverIndices) {
         const driverId = event.item.data.id;
         heat.driverIndices[laneIdx] = driverId;
-        this.undoManager.captureState();
-        this.autoSave();
+        this.captureState();
       }
     } else if (fromId.startsWith("rot-") && toId.startsWith("rot-")) {
       const fromParts = fromId.split("-");
@@ -688,8 +705,7 @@ export class CustomRotationEditorComponent
           const temp = fromHeat.driverIndices[fromLaneIdx];
           fromHeat.driverIndices[fromLaneIdx] = toHeat.driverIndices[laneIdx];
           toHeat.driverIndices[laneIdx] = temp;
-          this.undoManager.captureState();
-          this.autoSave();
+          this.captureState();
         }
       }
     } else if (fromId.startsWith("rot-") && toId === "driver-pool") {
@@ -702,8 +718,7 @@ export class CustomRotationEditorComponent
       const heat = rotation.heats?.[fromHeatIdx];
       if (heat && heat.driverIndices) {
         heat.driverIndices[fromLaneIdx] = 0;
-        this.undoManager.captureState();
-        this.autoSave();
+        this.captureState();
       }
     }
   }
@@ -738,6 +753,7 @@ export class CustomRotationEditorComponent
       return;
     }
 
+    this.isAutoSaving = false;
     this.savingCount++;
     this.cdr.detectChanges();
     this.dataService
@@ -789,6 +805,7 @@ export class CustomRotationEditorComponent
       return;
     }
 
+    this.isAutoSaving = true;
     this.savingCount++;
     this.cdr.detectChanges();
 
@@ -1027,9 +1044,7 @@ export class CustomRotationEditorComponent
     this.importSummary = results;
     input.value = "";
     this.updateDropListConnections();
-    this.undoManager.captureState();
-    this.autoSave();
-    this.cdr.detectChanges();
+    this.captureState();
   }
 
   closeImportSummary() {

@@ -32,8 +32,9 @@
           <input
             type="text"
             [(ngModel)]="internalAssetName"
-            (change)="onAssetNameChange()"
-            (blur)="onAssetNameChange()"
+            (ngModelChange)="onInputChange()"
+            (focus)="onInputFocus()"
+            (blur)="onInputBlur()"
             [placeholder]="'AM_PLACEHOLDER_ASSET_NAME' | translate"
           />
         </div>
@@ -561,7 +562,7 @@
   }
 
   <!-- Background saving loader overlay -->
-  @if (isSaving || isLoading) {
+  @if ((isSaving && !isAutoSaving) || isLoading) {
     <div class="loader-overlay">
       <div class="spinner"></div>
     </div>

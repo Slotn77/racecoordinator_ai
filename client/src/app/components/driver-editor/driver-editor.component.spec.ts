@@ -278,6 +278,7 @@ describe("DriverEditorComponent", () => {
     expect(dataService.createDriver).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(["/driver-editor"], {
       queryParams: { id: "new_id", from: null, returnUrl: null },
+      replaceUrl: true,
     });
   });
 
