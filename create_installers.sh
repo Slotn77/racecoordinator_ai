@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-# Ensure PROTO_DEST_DIR is unset so protobuf files compile into target_dist correctly
-unset PROTO_DEST_DIR
+# Use a separate build directory for release builds to avoid the IDE's background
+# Java compiler racing with Maven (the IDE watches target_dist from pom.xml).
+RELEASE_BUILD_DIR="target_release"
 
 echo "Building Race Coordinator Release..."
 
@@ -25,10 +26,10 @@ cd ..
 # 2. Clean and Build Server (Modern and Legacy versions)
 echo "Building Server (Modern - Java 11)..."
 cd server
-mvn clean -Dbuild.dist.dir=target_dist
+mvn clean -Dbuild.dist.dir=$RELEASE_BUILD_DIR
 chmod +x generate_protos.sh
-./generate_protos.sh
-mvn package -Dmaven.test.skip=true -Dbuild.dist.dir=target_dist
+PROTO_DEST_DIR="$(pwd)/$RELEASE_BUILD_DIR" ./generate_protos.sh
+mvn package -Dmaven.test.skip=true -Dbuild.dist.dir=$RELEASE_BUILD_DIR -DskipProtobuf=true
 cd ..
 
 # Initialize Release Structure
@@ -41,19 +42,19 @@ mkdir -p release/RaceCoordinator/mongodb32
 mkdir -p release/RaceCoordinator_Offline/web
 
 # Copy Modern Artifacts
-cp server/target_dist/server-1.0-SNAPSHOT.jar release/RaceCoordinator/RaceCoordinator.jar
+cp server/$RELEASE_BUILD_DIR/server-1.0-SNAPSHOT.jar release/RaceCoordinator/RaceCoordinator.jar
 cp -r client/dist/client/* release/RaceCoordinator/web/
 cp -r server/src/main/resources/arduino release/RaceCoordinator/
 
 echo "Building Server (Legacy - Java 1.8 Profile)..."
 cd server
-mvn clean -Dbuild.dist.dir=target_dist
-./generate_protos.sh
-mvn package -Plegacy -Dmaven.test.skip=true -Dbuild.dist.dir=target_dist
+mvn clean -Dbuild.dist.dir=$RELEASE_BUILD_DIR
+PROTO_DEST_DIR="$(pwd)/$RELEASE_BUILD_DIR" ./generate_protos.sh
+mvn package -Plegacy -Dmaven.test.skip=true -Dbuild.dist.dir=$RELEASE_BUILD_DIR -DskipProtobuf=true
 cd ..
 
 # Copy Legacy Artifacts
-cp server/target_dist/server-1.0-SNAPSHOT.jar release/RaceCoordinator_Offline/RaceCoordinator.jar
+cp server/$RELEASE_BUILD_DIR/server-1.0-SNAPSHOT.jar release/RaceCoordinator_Offline/RaceCoordinator.jar
 cp -r client/dist/client/* release/RaceCoordinator_Offline/web/
 cp -r server/src/main/resources/arduino release/RaceCoordinator_Offline/
 
@@ -354,7 +355,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     mkdir -p release/dmg_content/web
     
     echo "Copying core application files..."
-    cp server/target_dist/server-1.0-SNAPSHOT.jar release/dmg_content/RaceCoordinator.jar
+    cp server/$RELEASE_BUILD_DIR/server-1.0-SNAPSHOT.jar release/dmg_content/RaceCoordinator.jar
     cp -r client/dist/client/* release/dmg_content/web/
     if [ -d "server/src/main/resources/arduino" ]; then
         cp -r server/src/main/resources/arduino release/dmg_content/

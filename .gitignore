@@ -82,6 +82,7 @@ server/build_output/
 server/target_dist/
 server/target_dev/
 server/target_exec/
+server/target_release/
 client/tmp-karma/
 server/generated-sources/
 server/target_generated/
