@@ -73,57 +73,6 @@ test.describe("Driver Editor Visuals", () => {
     });
   });
 
-  test("should confirm discarding unsaved changes on back", async ({
-    page,
-  }) => {
-    // Load the page FIRST, then set up the fail mock
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/driver-editor?id=d1"),
-    );
-    await page.locator(".page-container").waitFor();
-    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
-
-    // Now intercept save requests to fail with 409 so autoSave doesn't clear isDirty
-    await page.route("**/api/drivers/*", async (route) => {
-      await route.fulfill({
-        status: 409,
-        contentType: "application/json",
-        body: JSON.stringify({ error: "Driver name already exists" }),
-      });
-    });
-
-    const container = page.locator(".page-container");
-    const harness = new DriverEditorHarnessE2e(container);
-
-    // Make a change — fill triggers ngModelChange, then blur commits
-    await page.locator("#driver-name-input").focus();
-    await page.locator("#driver-name-input").fill("Duplicate Name");
-    await page.locator("#driver-name-input").blur();
-    await page.waitForTimeout(300); // Allow Angular change detection and UndoManager debounce
-
-    // Click back button — should trigger the discard confirmation modal
-    await harness.clickBack();
-
-    // Wait for the confirmation modal to be visible
-    await page.waitForSelector(
-      "app-back-button app-confirmation-modal .modal-content",
-      { timeout: 5000 },
-    );
-
-    // Disable animations and wait for final settling
-    await TestSetupHelper.disableAnimations(page);
-    await page.waitForTimeout(100);
-
-    // Screenshot ONLY the modal box for maximum isolation
-    const modalContent = page.locator("#confirmation-modal-content");
-    await expect(modalContent).toHaveScreenshot(
-      "driver-editor-discard-changes-modal.png",
-      { animations: "disabled", maxDiffPixelRatio: 0.05 },
-    );
-  });
-
   test("should show validation error on duplicate name", async ({ page }) => {
     // 1. We mock that another driver exists with name 'Duplicate Name'
     await page.route("**/api/drivers", async (route) => {

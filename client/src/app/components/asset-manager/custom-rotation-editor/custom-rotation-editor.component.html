@@ -16,11 +16,7 @@
     [importTitleKey]="'AM_BTN_IMPORT_ROTATION'"
     [exportTitleKey]="'AM_BTN_EXPORT_ROTATION'"
     [isSaving]="isSaving"
-    [backConfirm]="!isConfigValid() || isDirtyState()"
-    backConfirmTitle="AM_CONFIRM_DISCARD_TITLE"
-    backConfirmMessage="AM_CONFIRM_DISCARD_MESSAGE"
     (add)="addRotation()"
-    (back)="cancel()"
     (import)="fileInput.click()"
     (export)="exportRotations()"
   >

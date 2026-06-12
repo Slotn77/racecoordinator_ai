@@ -22,6 +22,7 @@ import {
 import { DynamicComponentService } from "@app/services/dynamic-component.service";
 import { FileSystemService } from "@app/services/file-system.service";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -41,11 +42,17 @@ describe("RacedaySetupComponent", () => {
   let mockLoggerService: jasmine.SpyObj<LoggerService>;
   let mockAuthService: jasmine.SpyObj<AuthService>;
   let mockRouter: jasmine.SpyObj<Router>;
+  let mockNavigationService: jasmine.SpyObj<NavigationService>;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
 
   beforeEach(() => {
     sessionStorage.clear();
     mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
+    mockNavigationService = jasmine.createSpyObj("NavigationService", [
+      "getPreviousUrl",
+      "getDirection",
+    ]);
+    mockNavigationService.getPreviousUrl.and.returnValue(null);
     mockFileSystemService = jasmine.createSpyObj("FileSystemService", [
       "selectCustomFolder",
       "hasCustomFiles",
@@ -185,6 +192,7 @@ describe("RacedaySetupComponent", () => {
         { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: LoggerService, useValue: mockLoggerService },
         { provide: AuthService, useValue: mockAuthService },
+        { provide: NavigationService, useValue: mockNavigationService },
       ],
       imports: [RacedaySetupComponent],
     }).compileComponents();
@@ -214,6 +222,25 @@ describe("RacedaySetupComponent", () => {
       expect(component.minTimeElapsed).toBeFalse();
       expect(component.connectionVerified).toBeFalse();
     });
+
+    it("should bypass splash screen if returning from a non-race screen", fakeAsync(() => {
+      mockNavigationService.getPreviousUrl.and.returnValue("/driver-manager");
+      component.ngOnInit();
+      tick(100);
+      expect(component.showSplash).toBeFalse();
+      expect(component.minTimeElapsed).toBeTrue();
+      expect(component.connectionVerified).toBeTrue();
+    }));
+
+    it("should NOT bypass splash screen if returning from a race screen", fakeAsync(() => {
+      mockNavigationService.getPreviousUrl.and.returnValue("/raceday");
+      component.ngOnInit();
+      tick(100);
+      expect(component.showSplash).toBeTrue();
+      expect(component.minTimeElapsed).toBeFalse();
+      tick(5000);
+      expect(component.showSplash).toBeFalse();
+    }));
 
     it("should fetch and update server IP address on init", fakeAsync(() => {
       component.ngOnInit();

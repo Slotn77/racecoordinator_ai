@@ -2,12 +2,7 @@
   class="page-container ue-container"
   [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
 >
-  <app-editor-title
-    titleKey="UE_TITLE"
-    [backRoute]="backTargetUrl()"
-    [backQueryParams]="backQueryParams()"
-    [undoManager]="undoManager"
-  >
+  <app-editor-title titleKey="UE_TITLE" [undoManager]="undoManager">
   </app-editor-title>
 
   @if (!isLoading) {

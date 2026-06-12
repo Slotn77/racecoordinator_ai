@@ -1,14 +1,10 @@
-import { Locator, Page } from "@playwright/test";
+import { Locator } from "@playwright/test";
 
-import { BackButtonHarnessE2e } from "../../back-button/testing/back-button.harness.e2e";
 import { ToolbarHarnessE2e } from "../../toolbar/testing/toolbar.harness.e2e";
 import { ManagerHeaderHarnessBase } from "./manager-header.harness.base";
 
 export class ManagerHeaderHarnessE2e implements ManagerHeaderHarnessBase {
-  constructor(
-    private locator: Locator,
-    private page?: Page,
-  ) {}
+  constructor(private locator: Locator) {}
 
   private get base() {
     return ManagerHeaderHarnessBase;
@@ -19,21 +15,9 @@ export class ManagerHeaderHarnessE2e implements ManagerHeaderHarnessBase {
     return (await title.innerText()).trim();
   }
 
-  async hasBackButton(): Promise<boolean> {
-    const btn = this.locator.locator(this.base.selectors.backButton);
-    return await btn.isVisible();
-  }
-
   async hasToolbar(): Promise<boolean> {
     const toolbar = this.locator.locator(this.base.selectors.toolbar);
     return await toolbar.isVisible();
-  }
-
-  async getBackButton(): Promise<BackButtonHarnessE2e> {
-    return new BackButtonHarnessE2e(
-      this.locator.locator(this.base.selectors.backButton),
-      this.page,
-    );
   }
 
   async getToolbar(): Promise<ToolbarHarnessE2e> {

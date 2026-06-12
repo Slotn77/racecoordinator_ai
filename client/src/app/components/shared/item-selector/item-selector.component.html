@@ -2,14 +2,6 @@
   <div class="modal-backdrop" (click)="onClose()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        @if (backButtonRoute()) {
-          <app-back-button
-            [route]="backButtonRoute()!"
-            [queryParams]="backButtonQueryParams()"
-            [label]="backButtonLabel() || 'IS_BTN_BACK'"
-            (back)="onBack()"
-          ></app-back-button>
-        }
         <div class="modal-title">
           {{ title() || ("IS_TITLE_SELECT_ITEM" | translate) }}
         </div>

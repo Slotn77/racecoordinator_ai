@@ -79,10 +79,6 @@ describe("ManagerHeaderComponent", () => {
     expect(await harness.getTitle()).toBe("TEST_MANAGER");
   });
 
-  it("should display back button", async () => {
-    expect(await harness.hasBackButton()).toBeTrue();
-  });
-
   it("should toggle toolbar based on showActions", async () => {
     fixture.componentRef.setInput("showActions", true);
     fixture.detectChanges();

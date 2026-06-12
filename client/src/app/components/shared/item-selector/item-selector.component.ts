@@ -2,7 +2,6 @@ import { Component, computed, input, output, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { AssetPreviewComponent } from "@app/components/shared/asset-preview/asset-preview.component";
-import { BackButtonComponent } from "@app/components/shared/back-button/back-button.component";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
@@ -10,12 +9,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   selector: "app-item-selector",
   templateUrl: "./item-selector.component.html",
   styleUrls: ["./item-selector.component.css"],
-  imports: [
-    BackButtonComponent,
-    FormsModule,
-    AssetPreviewComponent,
-    TranslatePipe,
-  ],
+  imports: [FormsModule, AssetPreviewComponent, TranslatePipe],
 })
 export class ItemSelectorComponent {
   visible = input(false);
@@ -26,10 +20,6 @@ export class ItemSelectorComponent {
   itemType = input<"image" | "sound" | "image_set" | "audio" | "audio_set">(
     "image",
   );
-
-  backButtonRoute = input<string | null>(null);
-  backButtonQueryParams = input<any>({});
-  backButtonLabel = input<string>();
 
   filteredItems = computed(() => {
     let results = this.items();
@@ -62,16 +52,6 @@ export class ItemSelectorComponent {
   close = output<void>();
 
   constructor(private router: Router) {}
-
-  onBack() {
-    const route = this.backButtonRoute();
-    if (route) {
-      this.router.navigate([route], {
-        queryParams: this.backButtonQueryParams(),
-      });
-    }
-    this.close.emit();
-  }
 
   onSelect(item: any) {
     this.select.emit(item);

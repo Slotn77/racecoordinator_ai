@@ -58,4 +58,20 @@ describe("NavigationService", () => {
     routerEvents.next(new NavigationEnd(4, "/page2", "/page2")); // Forward to 2 again
     expect(service.getDirection()).toBe("forward");
   });
+
+  it("should track previous URL correctly during navigation", () => {
+    expect(service.getPreviousUrl()).toBeNull();
+
+    // 1. Move to Page 1
+    routerEvents.next(new NavigationEnd(1, "/page1", "/page1"));
+    expect(service.getPreviousUrl()).toBeNull();
+
+    // 2. Move to Page 2
+    routerEvents.next(new NavigationEnd(2, "/page2", "/page2"));
+    expect(service.getPreviousUrl()).toBe("/page1");
+
+    // 3. Move back to Page 1
+    routerEvents.next(new NavigationEnd(3, "/page1", "/page1"));
+    expect(service.getPreviousUrl()).toBe("/page2");
+  });
 });

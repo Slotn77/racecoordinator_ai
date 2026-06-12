@@ -1,24 +1,29 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { EditorTitleHarnessBase } from './editor-title.harness.base';
+import { EditorTitleHarnessBase } from "./editor-title.harness.base";
 
-export class EditorTitleHarness extends ComponentHarness implements EditorTitleHarnessBase {
+export class EditorTitleHarness
+  extends ComponentHarness
+  implements EditorTitleHarnessBase
+{
   static hostSelector = EditorTitleHarnessBase.hostSelector;
 
-  protected getTitleElement = this.locatorForOptional(EditorTitleHarnessBase.selectors.title);
-  protected getBackButtonElement = this.locatorFor(EditorTitleHarnessBase.selectors.backButton);
-  protected getUndoButtonElement = this.locatorForOptional(EditorTitleHarnessBase.selectors.undoButton);
-  protected getRedoButtonElement = this.locatorForOptional(EditorTitleHarnessBase.selectors.redoButton);
-  protected getHelpButtonElement = this.locatorForOptional(EditorTitleHarnessBase.selectors.helpButton);
+  protected getTitleElement = this.locatorForOptional(
+    EditorTitleHarnessBase.selectors.title,
+  );
+  protected getUndoButtonElement = this.locatorForOptional(
+    EditorTitleHarnessBase.selectors.undoButton,
+  );
+  protected getRedoButtonElement = this.locatorForOptional(
+    EditorTitleHarnessBase.selectors.redoButton,
+  );
+  protected getHelpButtonElement = this.locatorForOptional(
+    EditorTitleHarnessBase.selectors.helpButton,
+  );
 
   async getTitle(): Promise<string | null> {
     const el = await this.getTitleElement();
     return el ? await el.text() : null;
-  }
-
-  async clickBackButton(): Promise<void> {
-    const btn = await this.getBackButtonElement();
-    await btn.click();
   }
 
   async clickUndo(): Promise<void> {
@@ -39,12 +44,12 @@ export class EditorTitleHarness extends ComponentHarness implements EditorTitleH
   async isUndoDisabled(): Promise<boolean> {
     const btn = await this.getUndoButtonElement();
     if (!btn) return true;
-    return (await btn.getAttribute('disabled')) !== null;
+    return (await btn.getAttribute("disabled")) !== null;
   }
 
   async isRedoDisabled(): Promise<boolean> {
     const btn = await this.getRedoButtonElement();
     if (!btn) return true;
-    return (await btn.getAttribute('disabled')) !== null;
+    return (await btn.getAttribute("disabled")) !== null;
   }
 }

@@ -2054,9 +2054,7 @@ export class DefaultRacedayComponent
     // The original `this.isFileMenuOpen = false;` is removed as per the instruction's snippet.
     this.activeMenu = null;
     this.isFileMenuOpen = false;
-    if (action === "EXIT") {
-      this.router.navigate(["/raceday-setup"]);
-    } else if (action === "EXPORT_CSV") {
+    if (action === "EXPORT_CSV") {
       this.exportToCsv();
     } else if (action === "EXPORT_PDF") {
       this.printService.print("RaceDay"); // Screen View only as requested

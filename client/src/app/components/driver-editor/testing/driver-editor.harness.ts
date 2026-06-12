@@ -1,21 +1,31 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { ConfirmationModalHarness } from '../../shared/confirmation-modal/testing/confirmation-modal.harness';
-import { DriverEditorHarnessBase } from './driver-editor.harness.base';
+import { ConfirmationModalHarness } from "../../shared/confirmation-modal/testing/confirmation-modal.harness";
+import { DriverEditorHarnessBase } from "./driver-editor.harness.base";
 
-export class DriverEditorHarness extends ComponentHarness implements DriverEditorHarnessBase {
+export class DriverEditorHarness
+  extends ComponentHarness
+  implements DriverEditorHarnessBase
+{
   static hostSelector = DriverEditorHarnessBase.hostSelector;
 
-  protected getNameEl = this.locatorFor(DriverEditorHarnessBase.selectors.nameInput);
-  protected getNicknameEl = this.locatorFor(DriverEditorHarnessBase.selectors.nicknameInput);
-  protected getUndoBtn = this.locatorFor(DriverEditorHarnessBase.selectors.undoBtn);
-  protected getRedoBtn = this.locatorFor(DriverEditorHarnessBase.selectors.redoBtn);
-  protected getBackBtn = this.locatorFor(DriverEditorHarnessBase.selectors.backBtn);
+  protected getNameEl = this.locatorFor(
+    DriverEditorHarnessBase.selectors.nameInput,
+  );
+  protected getNicknameEl = this.locatorFor(
+    DriverEditorHarnessBase.selectors.nicknameInput,
+  );
+  protected getUndoBtn = this.locatorFor(
+    DriverEditorHarnessBase.selectors.undoBtn,
+  );
+  protected getRedoBtn = this.locatorFor(
+    DriverEditorHarnessBase.selectors.redoBtn,
+  );
   protected getModal = this.locatorFor(ConfirmationModalHarness);
 
   async getName(): Promise<string> {
     const input = await this.getNameEl();
-    return await input.getProperty('value');
+    return await input.getProperty("value");
   }
 
   async setName(name: string): Promise<void> {
@@ -26,7 +36,7 @@ export class DriverEditorHarness extends ComponentHarness implements DriverEdito
 
   async getNickname(): Promise<string> {
     const input = await this.getNicknameEl();
-    return await input.getProperty('value');
+    return await input.getProperty("value");
   }
 
   async setNickname(nickname: string): Promise<void> {
@@ -42,11 +52,6 @@ export class DriverEditorHarness extends ComponentHarness implements DriverEdito
 
   async clickRedo(): Promise<void> {
     const btn = await this.getRedoBtn();
-    await btn.click();
-  }
-
-  async clickBack(): Promise<void> {
-    const btn = await this.getBackBtn();
     await btn.click();
   }
 

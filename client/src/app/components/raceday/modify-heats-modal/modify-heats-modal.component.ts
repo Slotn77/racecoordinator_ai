@@ -773,17 +773,6 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     this.showAckModal = false;
   }
 
-  protected onBack() {
-    if (this.undoManager.hasChanges()) {
-      this.showExitConfirmation = true;
-    } else {
-      this.close.emit(true);
-      const returnUrl =
-        this.route.snapshot.queryParamMap.get("returnUrl") || "/raceday";
-      this.router.navigateByUrl(returnUrl);
-    }
-  }
-
   onManageTeams() {
     this.modifyHeatsService.saveState(this.localHeats, this.localParticipants);
     const returnUrl =

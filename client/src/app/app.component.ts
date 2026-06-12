@@ -63,6 +63,9 @@ export class AppComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    if ((window as any).isPlaywright) {
+      (window as any).angularRouter = this.router;
+    }
     this.logger.info("AppComponent: Initializing application...");
 
     // Initialize file logging if a handle is available

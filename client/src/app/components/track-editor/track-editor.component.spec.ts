@@ -39,21 +39,6 @@ import {
 import { createTrackManagerDataServiceMock } from "../track-manager/testing/track-manager_helper";
 
 @Component({
-  selector: "app-back-button",
-  standalone: true,
-  template: "",
-  imports: [FormsModule, DragDropModule],
-})
-class MockBackButtonComponent {
-  targetUrl = input<string | undefined>();
-  route = input<string | undefined>();
-  confirm = input<boolean | undefined>();
-  queryParams = input<any | undefined>();
-  confirmTitle = input<string | undefined>();
-  confirmMessage = input<string | undefined>();
-}
-
-@Component({
   selector: "app-editor-title",
   standalone: true,
   template: "",
@@ -146,7 +131,6 @@ describe("TrackEditorComponent", () => {
         DragDropModule,
         TrackEditorComponent,
         TranslatePipe,
-        MockBackButtonComponent,
         MockEditorTitleComponent,
       ],
       schemas: [NO_ERRORS_SCHEMA],

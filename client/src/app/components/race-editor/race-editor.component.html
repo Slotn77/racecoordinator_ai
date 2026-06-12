@@ -12,11 +12,6 @@
 >
   <app-editor-title
     titleKey="RE_TITLE"
-    backRoute="/race-manager"
-    [backConfirm]="!isConfigValid() || isDirtyState()"
-    [backQueryParams]="{ id: editingRace?.entity_id, driverCount: driverCount }"
-    backConfirmTitle="RE_CONFIRM_DISCARD_TITLE"
-    backConfirmMessage="RE_CONFIRM_DISCARD_MESSAGE"
     [undoManager]="undoManager"
     [showCopy]="true"
     [isSaving]="isSaving"

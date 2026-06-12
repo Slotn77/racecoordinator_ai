@@ -651,10 +651,6 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  onBack() {
-    // Raceday Setup is the landing page. Back does nothing (button hidden by CSS)
-  }
-
   // --- Race Logic ---
 
   toggleDropdown(event: Event) {

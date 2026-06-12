@@ -6,8 +6,6 @@ import {
   output,
   ViewChild,
 } from "@angular/core";
-import { Router } from "@angular/router";
-import { BackButtonComponent } from "@app/components/shared/back-button/back-button.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { Settings } from "@app/models/settings";
@@ -19,20 +17,14 @@ import { GuideStep } from "@app/services/help.service";
   selector: "app-editor-title",
   templateUrl: "./editor-title.component.html",
   styleUrls: ["./editor-title.component.css"],
-  imports: [BackButtonComponent, ToolbarComponent, TranslatePipe],
+  imports: [ToolbarComponent, TranslatePipe],
 })
 export class EditorTitleComponent implements AfterViewChecked {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
   titleKey = input("");
-  backRoute = input("");
-  backQueryParams = input<any>({});
-  backConfirm = input(false);
-  backConfirmTitle = input("");
-  backConfirmMessage = input("");
   undoManager = input<UndoManager<any>>();
   showUndo = input(true);
   showRedo = input(true);
-  showBack = input(true);
   showHelp = input(true);
   showCopy = input(false);
   showAdd = input(false);
@@ -59,7 +51,6 @@ export class EditorTitleComponent implements AfterViewChecked {
   helpTitle = input("");
   helpRecordName = input<keyof Settings>();
 
-  back = output<void>();
   help = output<void>();
   copy = output<void>();
   add = output<void>();
@@ -70,10 +61,7 @@ export class EditorTitleComponent implements AfterViewChecked {
   importRc1 = output<void>();
   export = output<void>();
 
-  constructor(
-    private router: Router,
-    private cdr: ChangeDetectorRef,
-  ) {}
+  constructor(private cdr: ChangeDetectorRef) {}
 
   ngAfterViewChecked() {
     // This can help with NG0100 when translations load late
@@ -102,10 +90,6 @@ export class EditorTitleComponent implements AfterViewChecked {
 
   onLaneCheck() {
     this.laneCheck.emit();
-  }
-
-  onBack() {
-    this.back.emit();
   }
 
   onImport() {

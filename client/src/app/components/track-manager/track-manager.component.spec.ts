@@ -1,4 +1,4 @@
-import { Component, input, NO_ERRORS_SCHEMA } from "@angular/core";
+import { NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
@@ -27,20 +27,6 @@ import { deepCopy } from "@app/utils/clone.utils";
 
 import { createTrackManagerDataServiceMock } from "./testing/track-manager_helper";
 import { TrackManagerComponent } from "./track-manager.component";
-
-@Component({
-  selector: "app-back-button",
-  standalone: true,
-  template: "",
-})
-class MockBackButtonComponent {
-  targetUrl = input<string | undefined>();
-  route = input<string | undefined>();
-  confirm = input<boolean | undefined>();
-  queryParams = input<any | undefined>();
-  confirmTitle = input<string | undefined>();
-  confirmMessage = input<string | undefined>();
-}
 
 describe("TrackManagerComponent", () => {
   let component: TrackManagerComponent;
@@ -74,7 +60,7 @@ describe("TrackManagerComponent", () => {
     );
 
     await TestBed.configureTestingModule({
-      imports: [TrackManagerComponent, TranslatePipe, MockBackButtonComponent],
+      imports: [TrackManagerComponent, TranslatePipe],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
         { provide: DataService, useValue: createTrackManagerDataServiceMock() },

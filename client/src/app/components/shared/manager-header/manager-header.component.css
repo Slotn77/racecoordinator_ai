@@ -41,13 +41,4 @@
   align-items: center;
 }
 
-::ng-deep .header-left app-back-button .back-btn {
-  color: #ffffff;
-  border-color: #ffffff;
-}
-
-::ng-deep .header-left app-back-button .back-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-}
 

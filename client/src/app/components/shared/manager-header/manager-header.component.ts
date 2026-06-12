@@ -1,5 +1,4 @@
 import { Component, input, output, ViewChild } from "@angular/core";
-import { BackButtonComponent } from "@app/components/shared/back-button/back-button.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
 import { ToolbarComponent as ToolbarComponent_1 } from "@app/components/shared/toolbar/toolbar.component";
 import { Settings } from "@app/models/settings";
@@ -11,13 +10,11 @@ import { GuideStep } from "@app/services/help.service";
   selector: "app-manager-header",
   templateUrl: "./manager-header.component.html",
   styleUrls: ["./manager-header.component.css"],
-  imports: [BackButtonComponent, ToolbarComponent_1, TranslatePipe],
+  imports: [ToolbarComponent_1, TranslatePipe],
 })
 export class ManagerHeaderComponent {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
   title = input("");
-  backTargetUrl = input("/raceday-setup");
-  backQueryParams = input<any>({});
   showActions = input(true);
   showAdd = input(true);
   showEdit = input(true);

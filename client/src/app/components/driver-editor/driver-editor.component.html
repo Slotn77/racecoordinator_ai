@@ -5,15 +5,6 @@
 >
   <app-editor-title
     titleKey="DE_TITLE"
-    backRoute="/driver-manager"
-    [backConfirm]="!isConfigValid() || isDirtyState()"
-    [backQueryParams]="{
-      id: editingDriver?.entity_id,
-      from: route.snapshot.queryParamMap.get('from'),
-      returnUrl: route.snapshot.queryParamMap.get('returnUrl'),
-    }"
-    backConfirmTitle="DE_CONFIRM_DISCARD_TITLE"
-    backConfirmMessage="DE_CONFIRM_DISCARD_MESSAGE"
     [undoManager]="undoManager"
     [showCopy]="true"
     [isSaving]="isSaving"
@@ -118,8 +109,6 @@
                       (textChange)="
                         onInputChange(); editingDriver.lapAudio.text = $event
                       "
-                      [backButtonRoute]="'/driver-editor'"
-                      [backButtonQueryParams]="{ id: editingDriver.entity_id }"
                       [context]="ttsContext"
                     >
                     </app-audio-selector>
@@ -143,8 +132,6 @@
                         onInputChange();
                         editingDriver.bestLapAudio.text = $event
                       "
-                      [backButtonRoute]="'/driver-editor'"
-                      [backButtonQueryParams]="{ id: editingDriver.entity_id }"
                       [context]="ttsContext"
                     >
                     </app-audio-selector>
@@ -168,8 +155,6 @@
                         onInputChange();
                         editingDriver.penaltyAudio.text = $event
                       "
-                      [backButtonRoute]="'/driver-editor'"
-                      [backButtonQueryParams]="{ id: editingDriver.entity_id }"
                       [context]="ttsContext"
                     >
                     </app-audio-selector>

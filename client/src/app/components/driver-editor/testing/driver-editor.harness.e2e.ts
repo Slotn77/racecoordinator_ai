@@ -1,19 +1,30 @@
-import { Locator } from '@playwright/test';
+import { Locator } from "@playwright/test";
 
-import { ConfirmationModalHarnessE2e } from '../../shared/confirmation-modal/testing/confirmation-modal.harness.e2e';
-import { DriverEditorHarnessBase } from './driver-editor.harness.base';
+import { ConfirmationModalHarnessE2e } from "../../shared/confirmation-modal/testing/confirmation-modal.harness.e2e";
+import { DriverEditorHarnessBase } from "./driver-editor.harness.base";
 
 export class DriverEditorHarnessE2e implements DriverEditorHarnessBase {
   constructor(private locator: Locator) {}
 
-  private get base() { return DriverEditorHarnessBase; }
+  private get base() {
+    return DriverEditorHarnessBase;
+  }
 
-  private get nameInput() { return this.locator.locator(this.base.selectors.nameInput); }
-  private get nicknameInput() { return this.locator.locator(this.base.selectors.nicknameInput); }
-  private get undoBtn() { return this.locator.locator(this.base.selectors.undoBtn); }
-  private get redoBtn() { return this.locator.locator(this.base.selectors.redoBtn); }
-  private get backBtn() { return this.locator.locator(this.base.selectors.backBtn); }
-  private get modal() { return this.locator.locator('app-confirmation-modal'); }
+  private get nameInput() {
+    return this.locator.locator(this.base.selectors.nameInput);
+  }
+  private get nicknameInput() {
+    return this.locator.locator(this.base.selectors.nicknameInput);
+  }
+  private get undoBtn() {
+    return this.locator.locator(this.base.selectors.undoBtn);
+  }
+  private get redoBtn() {
+    return this.locator.locator(this.base.selectors.redoBtn);
+  }
+  private get modal() {
+    return this.locator.locator("app-confirmation-modal");
+  }
 
   async getName(): Promise<string> {
     return await this.nameInput.inputValue();
@@ -37,10 +48,6 @@ export class DriverEditorHarnessE2e implements DriverEditorHarnessBase {
 
   async clickRedo(): Promise<void> {
     await this.redoBtn.click();
-  }
-
-  async clickBack(): Promise<void> {
-    await this.backBtn.click();
   }
 
   async getConfirmationModal(): Promise<ConfirmationModalHarnessE2e> {

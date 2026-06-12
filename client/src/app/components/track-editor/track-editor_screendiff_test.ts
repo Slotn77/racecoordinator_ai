@@ -64,39 +64,6 @@ test.describe("Track Editor Visuals", () => {
     });
   });
 
-  test("should show unsaved changes confirmation", async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/track-editor?id=t1"),
-    );
-
-    // Intercept and fail track update so autoSave doesn't clear isDirty
-    await page.route("**/api/tracks/*", async (route) => {
-      await route.fulfill({
-        status: 400,
-        contentType: "application/json",
-        body: JSON.stringify({ error: "Duplicate track name" }),
-      });
-    });
-
-    const editor = page.locator("app-track-editor");
-    const harness = new TrackEditorHarnessE2e(editor);
-
-    await harness.setTrackName("Modified Track");
-    // Click back button
-    await harness.clickBackButton();
-
-    // Confirmation modal should appear
-    await harness.waitForConfirmationModalVisible(5000);
-
-    await page.waitForTimeout(500);
-    await expect(page).toHaveScreenshot(
-      "track-editor-unsaved-changes-modal.png",
-      { maxDiffPixelRatio: 0.1, animations: "disabled" },
-    );
-  });
-
   test("should display digital pins grid", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

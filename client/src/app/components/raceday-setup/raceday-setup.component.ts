@@ -26,6 +26,7 @@ import { DynamicComponentService } from "@app/services/dynamic-component.service
 import { FileSystemService } from "@app/services/file-system.service";
 import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { ParticipantValidationService } from "@app/services/participant-validation.service";
 import { RaceService } from "@app/services/race.service";
 import { SettingsService } from "@app/services/settings.service";
@@ -122,6 +123,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     private logger: LoggerService,
     public authService: AuthService,
     private router: Router,
+    private navigationService: NavigationService,
   ) {
     // Initialize quote keys
     for (let i = 1; i <= 29; i++) {
@@ -189,8 +191,30 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       this.dataService.setServerAddress(settings.serverIp, settings.serverPort);
     }
 
-    // Check if we should skip the splash screen (e.g. after UI switch)
-    const skipIntro = sessionStorage.getItem("skipIntro") === "true";
+    // Check if we should skip the splash screen (e.g. after UI switch or when returning from a non-race manager/editor screen)
+    const prevUrl = this.navigationService.getPreviousUrl();
+    let isReturningFromNonRaceScreen = false;
+    if (prevUrl) {
+      const raceScreens = [
+        "/raceday",
+        "/default-raceday",
+        "/driver-station",
+        "/heat-results",
+        "/race-results",
+        "/driver-results",
+      ];
+      const normalizedPrevUrl = prevUrl.split("?")[0];
+      const isRaceScreen = raceScreens.some((screen) =>
+        normalizedPrevUrl.startsWith(screen),
+      );
+      if (!isRaceScreen) {
+        isReturningFromNonRaceScreen = true;
+      }
+    }
+
+    const skipIntro =
+      sessionStorage.getItem("skipIntro") === "true" ||
+      isReturningFromNonRaceScreen;
     if (skipIntro) {
       sessionStorage.removeItem("skipIntro");
       this.showSplash = false;

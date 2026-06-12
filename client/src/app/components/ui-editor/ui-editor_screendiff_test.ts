@@ -84,8 +84,11 @@ test.describe("UI Editor Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/raceday-setup"),
     );
+    await page.evaluate(async () => {
+      await (window as any).angularRouter.navigateByUrl("/ui-editor");
+    });
     await page.locator(".ue-container").waitFor({ state: "visible" });
 
     // Expand Custom Theme
@@ -110,7 +113,7 @@ test.describe("UI Editor Visuals", () => {
     );
 
     // Try to navigate back
-    await page.locator("app-editor-title .back-btn").click();
+    await page.evaluate(() => window.history.back());
 
     // Wait for confirmation modal backdrop and content to be visible
     const modal = page.locator(

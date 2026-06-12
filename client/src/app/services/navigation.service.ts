@@ -8,6 +8,7 @@ import { filter } from "rxjs/operators";
 export class NavigationService {
   private history: string[] = [];
   private direction: "forward" | "backward" = "forward";
+  private previousUrl: string | null = null;
 
   constructor(private router: Router) {
     // We use a simple stack to detect if we're going backward.
@@ -16,6 +17,7 @@ export class NavigationService {
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((event: any) => {
         const url = event.urlAfterRedirects;
+        const prev = this.history[this.history.length - 1] || null;
 
         if (
           this.history.length > 1 &&
@@ -29,10 +31,15 @@ export class NavigationService {
           this.direction = "forward";
           this.history.push(url);
         }
+        this.previousUrl = prev;
       });
   }
 
   getDirection(): "forward" | "backward" {
     return this.direction;
+  }
+
+  getPreviousUrl(): string | null {
+    return this.previousUrl;
   }
 }

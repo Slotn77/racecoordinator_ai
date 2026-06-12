@@ -16,16 +16,16 @@ test.describe("Raceday Modals Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/default-raceday"),
+      page.goto("/raceday-setup"),
     );
+    await page.evaluate(async () => {
+      await (window as any).angularRouter.navigateByUrl("/default-raceday");
+    });
 
     await page.locator(".dashboard-wrapper").waitFor();
 
-    // Open File Menu and click Exit to trigger the exit modal
-    await page.locator(".menu-button-top:has-text('File')").click();
-    const exitItem = page.locator(".menu-dropdown .menu-item:has-text('Exit')");
-    await expect(exitItem).toBeVisible();
-    await exitItem.click();
+    // Trigger exit modal via browser back button
+    await page.evaluate(() => window.history.back());
 
     // Locate the first confirmation modal (which is Exit confirmation)
     const modalContent = page

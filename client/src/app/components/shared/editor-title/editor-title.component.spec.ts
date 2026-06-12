@@ -9,20 +9,6 @@ import { EditorTitleComponent } from "./editor-title.component";
 import { EditorTitleHarness } from "./testing/editor-title.harness";
 
 @Component({
-  selector: "app-back-button",
-  standalone: true,
-  template: "",
-})
-class MockBackButtonComponent {
-  route = input<string>("");
-  queryParams = input<any>({});
-  label = input<string>("");
-  confirm = input<boolean>(false);
-  confirmTitle = input<string>("");
-  confirmMessage = input<string>("");
-}
-
-@Component({
   selector: "app-toolbar",
   standalone: true,
   template: '<button id="help-track-btn" (click)="help.emit()">Help</button>',
@@ -69,12 +55,7 @@ describe("EditorTitleComponent", () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
-      imports: [
-        EditorTitleComponent,
-        MockBackButtonComponent,
-        MockToolbarComponent,
-        MockTranslatePipe,
-      ],
+      imports: [EditorTitleComponent, MockToolbarComponent, MockTranslatePipe],
       providers: [
         { provide: Router, useValue: mockRouter },
         { provide: TranslationService, useValue: mockTranslationService },

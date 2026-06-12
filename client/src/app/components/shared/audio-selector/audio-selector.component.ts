@@ -40,10 +40,6 @@ export class AudioSelectorComponent {
 
   assets = input<any[]>([]);
 
-  // Back button configuration passed through to Item Selector
-  backButtonRoute = input<string | null>(null);
-  backButtonQueryParams = input<any>({});
-  backButtonLabel = input<string>();
   context = input<any>();
 
   showItemSelector = false;

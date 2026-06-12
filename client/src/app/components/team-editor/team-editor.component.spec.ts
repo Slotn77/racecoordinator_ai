@@ -42,19 +42,6 @@ import { deepCopy } from "@app/utils/clone.utils";
 import { createTeamManagerDataServiceMock } from "../team-manager/testing/team-manager_helper";
 import { TeamEditorComponent } from "./team-editor.component";
 
-// Mock Child Components
-@Component({
-  selector: "app-back-button",
-  standalone: true,
-  template: "",
-  imports: [FormsModule, DragDropModule],
-})
-class MockBackButtonComponent {
-  route = input<string | null>(null);
-  queryParams = input<any>({});
-  label = input<string>("");
-}
-
 @Component({
   selector: "app-image-selector",
   standalone: true,
@@ -196,7 +183,6 @@ describe("TeamEditorComponent", () => {
         FormsModule,
         DragDropModule,
         TeamEditorComponent,
-        MockBackButtonComponent,
         MockItemSelectorComponent,
         MockImageSelectorComponent,
         MockEditorTitleComponent,

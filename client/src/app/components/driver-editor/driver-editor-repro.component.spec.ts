@@ -19,22 +19,6 @@ import { TranslationService } from "@app/services/translation.service";
 import { createDriverManagerDataServiceMock } from "../driver-manager/testing/driver-manager_helper";
 import { DriverEditorComponent } from "./driver-editor.component";
 
-// Mock Child Components
-@Component({
-  selector: "app-back-button",
-  standalone: true,
-  template: "",
-  imports: [FormsModule],
-})
-class MockBackButtonComponent {
-  route = input<string | null>(null);
-  queryParams = input<any>({});
-  label = input<string>("");
-  confirm = input<boolean>(false);
-  confirmTitle = input<string>("");
-  confirmMessage = input<string>("");
-}
-
 @Component({
   selector: "app-audio-selector",
   standalone: true,
@@ -208,7 +192,6 @@ describe("DriverEditorComponent Reproduction", () => {
       imports: [
         FormsModule,
         DriverEditorComponent,
-        MockBackButtonComponent,
         MockAudioSelectorComponent,
         MockItemSelectorComponent,
         MockImageSelectorComponent,

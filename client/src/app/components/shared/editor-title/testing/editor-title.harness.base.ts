@@ -1,19 +1,15 @@
 export abstract class EditorTitleHarnessBase {
-  static readonly hostSelector = 'app-editor-title';
+  static readonly hostSelector = "app-editor-title";
 
   static readonly selectors = {
-    backButton: 'app-back-button',
-    title: '.page-title',
-    undoButton: 'app-toolbar .undo',
-    redoButton: 'app-toolbar .redo',
-    helpButton: 'app-toolbar #help-track-btn'
+    title: ".page-title",
+    undoButton: "app-toolbar .undo",
+    redoButton: "app-toolbar .redo",
+    helpButton: "app-toolbar #help-track-btn",
   };
 
   /** Gets the title text */
   abstract getTitle(): Promise<string | null>;
-
-  /** Clicks the back button */
-  abstract clickBackButton(): Promise<void>;
 
   /** Clicks the undo button */
   abstract clickUndo(): Promise<void>;

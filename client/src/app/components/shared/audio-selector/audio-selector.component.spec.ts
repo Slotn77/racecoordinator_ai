@@ -20,8 +20,6 @@ class MockItemSelectorComponent {
   select = output<any>();
   close = output<void>();
   itemType = input<string>("image");
-  backButtonRoute = input<string | null>(null);
-  backButtonQueryParams = input<any>({});
 }
 
 import { Pipe, PipeTransform } from "@angular/core";
