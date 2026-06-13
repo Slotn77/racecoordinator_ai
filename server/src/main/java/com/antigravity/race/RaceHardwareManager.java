@@ -32,7 +32,9 @@ public class RaceHardwareManager {
       boolean isFuelRace =
           race.getRaceModel().getFuelOptions() != null
               && race.getRaceModel().getFuelOptions().isEnabled();
-      Demo protocol = new Demo(race.getTrack().getLanes().size(), isFuelRace, demoConfig);
+      boolean startBehindSensor = race.getRaceModel().isStartBehindSensor();
+      Demo protocol =
+          new Demo(race.getTrack().getLanes().size(), isFuelRace, demoConfig, startBehindSensor);
       protocol.setInterfaceIndex(0);
       protocols_list.add(protocol);
     } else {

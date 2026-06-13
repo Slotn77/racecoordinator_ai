@@ -795,6 +795,7 @@
   "RE_HELP_TRACK_CONTENT": "Select the track where this race will be held. The track configuration will determine lane count and interface settings for the race.",
   "RE_HELP_WELCOME_CONTENT": "This guide will help you set up your race configuration step by step.",
   "RE_HELP_WELCOME_TITLE": "Welcome to Race Editor",
+  "RE_START_BEHIND_SENSOR": "Start Behind Sensor",
   "RE_HOT_START": "Hot Start",
   "RE_LABEL_DRIVER_COUNT": "Driver Count",
   "RE_LAP_COUNT": "Lap Count",

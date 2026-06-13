@@ -282,6 +282,7 @@ public class DatabaseService {
             .withAutoStartTime(0.0)
             .withAutoAdvanceWarmupTime(0.0)
             .withAutoStartWarmupTime(0.0)
+            .withStartBehindSensor(true)
             .withEntityId(getNextSequence(database, "races"))
             .build();
 
@@ -304,12 +305,23 @@ public class DatabaseService {
             .withAutoStartTime(0.0)
             .withAutoAdvanceWarmupTime(0.0)
             .withAutoStartWarmupTime(0.0)
+            .withStartBehindSensor(true)
             .withEntityId(getNextSequence(database, "races"))
             .build();
 
     raceCollection.insertOne(race);
 
     logger.info("Races reset.");
+  }
+
+  public void backfillRaces(MongoDatabase database) {
+    MongoCollection<Document> raceDocs = database.getCollection("races");
+    for (Document doc : raceDocs.find()) {
+      if (!doc.containsKey("start_behind_sensor")) {
+        raceDocs.updateOne(
+            Filters.eq("_id", doc.getObjectId("_id")), Updates.set("start_behind_sensor", true));
+      }
+    }
   }
 
   private void resetTeams(DatabaseContext context, MongoDatabase database) {

@@ -795,6 +795,7 @@
   "RE_HELP_TRACK_CONTENT": "Seleziona il percorso dove si terrà questa gara. La configurazione del percorso determinerà il numero di corsie e le impostazioni dell'interfaccia per la gara.",
   "RE_HELP_WELCOME_CONTENT": "Questa guida ti aiuterà a configurare la tua gara passo dopo passo.",
   "RE_HELP_WELCOME_TITLE": "Benvenuto nell'Editor Gara",
+  "RE_START_BEHIND_SENSOR": "Parti Dietro il Sensore",
   "RE_HOT_START": "Partenza Rapida",
   "RE_LABEL_DRIVER_COUNT": "Numero di Piloti",
   "RE_LAP_COUNT": "Numero di Giri",

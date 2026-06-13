@@ -303,6 +303,21 @@
                     <label class="checkbox-container">
                       <input
                         type="checkbox"
+                        [(ngModel)]="editingRace.start_behind_sensor"
+                        (ngModelChange)="captureState()"
+                      />
+                      <span class="checkmark"></span>
+                      <span class="checkbox-label">
+                        {{ "RE_START_BEHIND_SENSOR" | translate }}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+                <div class="config-row">
+                  <div class="config-section checkbox-section">
+                    <label class="checkbox-container">
+                      <input
+                        type="checkbox"
                         [(ngModel)]="editingRace.hot_start"
                         (ngModelChange)="captureState()"
                       />

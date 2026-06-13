@@ -573,6 +573,12 @@ public class HeatExecutionManager {
 
   private boolean handleReactionTime(
       DriverHeatData driverData, double lapTime, int lane, int interfaceId) {
+    if (!race.getRaceModel().isStartBehindSensor()) {
+      if (driverData.getReactionTime() < 0) {
+        driverData.setReactionTime(0.0);
+      }
+      return false;
+    }
     if (driverData.getReactionTime() < 0) {
       double totalReactionTime = lapTime + driverData.getPendingLapTime();
       driverData.setPendingLapTime(0.0);

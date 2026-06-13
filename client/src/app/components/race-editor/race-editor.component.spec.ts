@@ -203,6 +203,20 @@ describe("RaceEditorComponent", () => {
     expect(component.editingRace.drift_time).toBe(0.5);
   }));
 
+  it("should initialize start_behind_sensor to true for new race", fakeAsync(() => {
+    activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
+      if (key === "id") return "new";
+      return null;
+    });
+    dataService.getTracks.and.returnValue(of(MOCK_TRACKS));
+    dataService.getRaces.and.returnValue(of([]));
+
+    component.ngOnInit();
+    tick();
+
+    expect(component.editingRace.start_behind_sensor).toBeTrue();
+  }));
+
   it("should fallback to 0.5 drift_time when loading race without it", fakeAsync(() => {
     const raceWithoutDrift: any = deepCopy(MOCK_RACES[0]);
     delete raceWithoutDrift.drift_time; // Ensure it's missing
@@ -1523,6 +1537,15 @@ describe("RaceEditorComponent", () => {
       );
       expect(payload.heat_times_through).toBe(5);
       expect(payload.reverse_heats).toBe(true);
+    });
+
+    it("should include start_behind_sensor in the payload", () => {
+      component.editingRace.start_behind_sensor = false;
+
+      const payload = (component as any).buildRacePayload(
+        component.editingRace,
+      );
+      expect(payload.start_behind_sensor).toBe(false);
     });
   });
 });

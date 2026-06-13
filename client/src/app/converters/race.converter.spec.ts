@@ -72,4 +72,27 @@ describe("RaceConverter", () => {
     const result = RaceConverter.fromProto(mockProto);
     expect(result.heat_rotation_type).toBe("SingleHeatSolo");
   });
+
+  it("should map start_behind_sensor from proto", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r6" },
+      name: "Test Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      startBehindSensor: false,
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.start_behind_sensor).toBeFalse();
+  });
+
+  it("should default start_behind_sensor to true if missing in proto", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r7" },
+      name: "Test Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.start_behind_sensor).toBeTrue();
+  });
 });

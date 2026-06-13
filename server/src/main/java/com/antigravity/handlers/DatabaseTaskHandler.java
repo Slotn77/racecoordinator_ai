@@ -622,6 +622,7 @@ public class DatabaseTaskHandler {
               .withReverseHeats(race.isReverseHeats())
               .withHotStart(race.isHotStart())
               .withRestartOnFalseStart(race.isRestartOnFalseStart())
+              .withStartBehindSensor(race.isStartBehindSensor())
               .withFalseStartLapPenalty(race.getFalseStartLapPenalty())
               .withFalseStartTimePenalty(race.getFalseStartTimePenalty())
               .withGroupOptions(race.getGroupOptions())
@@ -761,6 +762,7 @@ public class DatabaseTaskHandler {
       raceMap.put("reverse_heats", race.isReverseHeats());
       raceMap.put("hot_start", race.isHotStart());
       raceMap.put("restart_on_false_start", race.isRestartOnFalseStart());
+      raceMap.put("start_behind_sensor", race.isStartBehindSensor());
       raceMap.put("false_start_lap_penalty", race.getFalseStartLapPenalty());
       raceMap.put("false_start_time_penalty", race.getFalseStartTimePenalty());
       raceMap.put("group_options", race.getGroupOptions());

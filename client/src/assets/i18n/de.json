@@ -795,6 +795,7 @@
   "RE_HELP_TRACK_CONTENT": "Wählen Sie die Strecke, auf der dieses Rennen stattfinden soll. Die Streckenkonfiguration bestimmt die Spuranzahl und die Interface-Einstellungen für das Rennen.",
   "RE_HELP_WELCOME_CONTENT": "Dieser Leitfaden hilft Ihnen dabei, Ihre Rennkonfiguration Schritt für Schritt einzurichten.",
   "RE_HELP_WELCOME_TITLE": "Willkommen im Renn-Editor",
+  "RE_START_BEHIND_SENSOR": "Hinter Sensor starten",
   "RE_HOT_START": "Hot Start",
   "RE_LABEL_DRIVER_COUNT": "Anzahl der Fahrer",
   "RE_LAP_COUNT": "Rundenanzahl",

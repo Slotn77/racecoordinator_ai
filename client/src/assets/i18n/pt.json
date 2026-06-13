@@ -795,6 +795,7 @@
   "RE_HELP_TRACK_CONTENT": "Selecione a pista onde esta corrida será realizada. A configuração da pista determinará o número de pistas e as configurações de interface para a corrida.",
   "RE_HELP_WELCOME_CONTENT": "Este guia irá ajudá-lo a configurar sua corrida passo a passo.",
   "RE_HELP_WELCOME_TITLE": "Bem-vindo ao Editor de Corrida",
+  "RE_START_BEHIND_SENSOR": "Iniciar Atrás do Sensor",
   "RE_HOT_START": "Início Rápido",
   "RE_LABEL_DRIVER_COUNT": "Número de Pilotos",
   "RE_LAP_COUNT": "Número de Voltas",

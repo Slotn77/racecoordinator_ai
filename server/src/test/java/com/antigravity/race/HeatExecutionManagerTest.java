@@ -673,4 +673,36 @@ public class HeatExecutionManagerTest {
     assertTrue(
         "Heat should be over because only 1 driver is active", race.getState() instanceof HeatOver);
   }
+
+  @Test
+  public void testStartBehindSensorFalseBypassesReactionTime() {
+    Race raceModel =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withStartBehindSensor(false)
+            .withEntityId("race1")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+
+    DriverHeatData dhd = race.getCurrentHeat().getDrivers().get(0);
+
+    // First crossing should immediately record a lap (not a reaction time)
+    boolean counted = executionManager.onLap(0, 5.0, 1, false, true, false);
+
+    assertTrue("First lap should be counted when startBehindSensor is false", counted);
+    assertEquals(1, dhd.getLapCount());
+    assertEquals(0.0, dhd.getReactionTime(), 0.001);
+    assertEquals(5.0, dhd.getLaps().get(0).getLapTime(), 0.001);
+  }
 }

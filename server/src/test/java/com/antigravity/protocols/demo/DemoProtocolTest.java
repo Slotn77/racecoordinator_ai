@@ -28,7 +28,16 @@ public class DemoProtocolTest {
 
     public TestableDemo(
         int numLanes, MockScheduler scheduler, MockRandom random, boolean isFuelRace) {
-      this(numLanes, scheduler, random, isFuelRace, null);
+      this(numLanes, scheduler, random, isFuelRace, null, true);
+    }
+
+    public TestableDemo(
+        int numLanes,
+        MockScheduler scheduler,
+        MockRandom random,
+        boolean isFuelRace,
+        boolean startBehindSensor) {
+      this(numLanes, scheduler, random, isFuelRace, null, startBehindSensor);
     }
 
     public TestableDemo(
@@ -37,7 +46,17 @@ public class DemoProtocolTest {
         MockRandom random,
         boolean isFuelRace,
         DemoConfig config) {
-      super(numLanes, random, isFuelRace, config);
+      this(numLanes, scheduler, random, isFuelRace, config, true);
+    }
+
+    public TestableDemo(
+        int numLanes,
+        MockScheduler scheduler,
+        MockRandom random,
+        boolean isFuelRace,
+        DemoConfig config,
+        boolean startBehindSensor) {
+      super(numLanes, random, isFuelRace, config, startBehindSensor);
       this.mockScheduler = scheduler;
     }
 
@@ -601,5 +620,36 @@ public class DemoProtocolTest {
     assertEquals("Should have 2 segment hits total", 2, segmentListener.segments.size());
     assertEquals(
         1.0, segmentListener.segments.get(1).time, 0.001); // 2000 - 1000 = 1000ms offset trigger
+  }
+
+  @Test
+  public void testStartBehindSensorFalseBypassesReactionTime() {
+    MockRandom random = new MockRandom();
+    // Regular lap 1 (target 3000 + 1000 = 4000ms)
+    random.addNextInt(1000);
+    // Regular lap 2 (target 3000 + 2000 = 5000ms)
+    random.addNextInt(2000);
+
+    TestableDemo testDemo = new TestableDemo(1, scheduler, random, false, false);
+    MockProtocolListener testListener = new MockProtocolListener();
+    testDemo.setListener(testListener);
+    testDemo.startTimer();
+
+    // With startBehindSensor = false, first lap should be a regular lap (target 4000ms)
+    // segments should be calculated for a 4000ms lap.
+    // Let's verify that after advancing 200ms, no lap is generated (since it is regular lap, not
+    // reaction time which is max 501ms)
+    testDemo.advanceTime(200);
+    scheduler.tick();
+    assertEquals(
+        "Should not complete lap yet (200ms elapsed vs 4000ms target)",
+        0,
+        testListener.laps.size());
+
+    // Advance total 4100ms
+    testDemo.advanceTime(3900);
+    scheduler.tick();
+    assertEquals("Should complete regular lap 1", 1, testListener.laps.size());
+    assertEquals(4.1, testListener.laps.get(0), 0.001);
   }
 }

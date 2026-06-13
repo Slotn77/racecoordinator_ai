@@ -189,6 +189,7 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
     false, // reverse_heats
     false, // hot_start
     false, // restart_on_false_start
+    true, // start_behind_sensor
     0, // false_start_lap_penalty
     0, // false_start_time_penalty
     r.group_options || {

@@ -195,6 +195,7 @@ export class RaceConverter {
           p.reverseHeats || p.reverse_heats || false,
           p.hotStart || p.hot_start || false,
           p.restartOnFalseStart || p.restart_on_false_start || false,
+          p.startBehindSensor ?? p.start_behind_sensor ?? true,
           p.falseStartLapPenalty || p.false_start_lap_penalty || 0,
           p.falseStartTimePenalty || p.false_start_time_penalty || 0,
           p.groupOptions || p.group_options

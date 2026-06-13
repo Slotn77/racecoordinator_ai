@@ -29,6 +29,7 @@ public class Demo extends DefaultProtocol {
   private final Random random;
   private final boolean isFuelRace;
   private final DemoConfig config;
+  final boolean startBehindSensor;
 
   class LaneState {
 
@@ -57,7 +58,7 @@ public class Demo extends DefaultProtocol {
       for (int i = 0; i < segmentSent.length; i++) {
         segmentSent[i] = false;
       }
-      if (isFirstLap) {
+      if (isFirstLap && startBehindSensor) {
         // First lap is reaction time
         long minReaction = (long) config.getMinReactionTimeMs();
         long maxReaction = (long) config.getMaxReactionTimeMs();
@@ -69,57 +70,61 @@ public class Demo extends DefaultProtocol {
           int maxLaps = config.getMaxLapsBetweenPits();
           lapsUntilNextPit = minLaps + random.nextInt(Math.max(1, maxLaps - minLaps + 1));
         }
-      } else {
-        // Regular lap time
-        long minLap = (long) config.getMinLapTimeMs();
-        long maxLap = (long) config.getMaxLapTimeMs();
-        long lapDuration = minLap + random.nextInt((int) Math.max(1, maxLap - minLap + 1));
+        return;
+      }
 
-        if (isFuelRace) {
-          if (lapsUntilNextPit <= 0) {
-            isPitLap = true;
-            long minRefuel = (long) config.getMinRefuelTimeMs();
-            long maxRefuel = (long) config.getMaxRefuelTimeMs();
-            long pitDuration =
-                minRefuel + random.nextInt((int) Math.max(1, maxRefuel - minRefuel + 1));
-            targetLapDuration = lapDuration + pitDuration;
+      if (isFirstLap) {
+        isFirstLap = false;
+      }
 
-            long minPitOffset = (long) config.getMinPitEntryOffsetMs();
-            long maxPitOffset = (long) config.getMaxPitEntryOffsetMs();
-            pitEntryOffset =
-                minPitOffset + random.nextInt((int) Math.max(1, maxPitOffset - minPitOffset + 1));
-            pitExitOffset = pitEntryOffset + pitDuration;
+      // Regular lap time
+      long minLap = (long) config.getMinLapTimeMs();
+      long maxLap = (long) config.getMaxLapTimeMs();
+      long lapDuration = minLap + random.nextInt((int) Math.max(1, maxLap - minLap + 1));
 
-            int minLaps = config.getMinLapsBetweenPits();
-            int maxLaps = config.getMaxLapsBetweenPits();
-            lapsUntilNextPit = minLaps + random.nextInt(Math.max(1, maxLaps - minLaps + 1));
-            logger.info(
-                "Demo: Lane scheduled for pit stop. Duration: {}ms, Lap Total: {}ms",
-                pitDuration,
-                targetLapDuration);
-          } else {
-            isPitLap = false;
-            targetLapDuration = lapDuration;
-            lapsUntilNextPit--;
-          }
+      if (isFuelRace) {
+        if (lapsUntilNextPit <= 0) {
+          isPitLap = true;
+          long minRefuel = (long) config.getMinRefuelTimeMs();
+          long maxRefuel = (long) config.getMaxRefuelTimeMs();
+          long pitDuration =
+              minRefuel + random.nextInt((int) Math.max(1, maxRefuel - minRefuel + 1));
+          targetLapDuration = lapDuration + pitDuration;
+
+          long minPitOffset = (long) config.getMinPitEntryOffsetMs();
+          long maxPitOffset = (long) config.getMaxPitEntryOffsetMs();
+          pitEntryOffset =
+              minPitOffset + random.nextInt((int) Math.max(1, maxPitOffset - minPitOffset + 1));
+          pitExitOffset = pitEntryOffset + pitDuration;
+
+          int minLaps = config.getMinLapsBetweenPits();
+          int maxLaps = config.getMaxLapsBetweenPits();
+          lapsUntilNextPit = minLaps + random.nextInt(Math.max(1, maxLaps - minLaps + 1));
+          logger.info(
+              "Demo: Lane scheduled for pit stop. Duration: {}ms, Lap Total: {}ms",
+              pitDuration,
+              targetLapDuration);
         } else {
           isPitLap = false;
           targetLapDuration = lapDuration;
+          lapsUntilNextPit--;
         }
-
-        // Calculate segment offsets
-        int numSegments = config.getNumSegments();
-        if (numSegments == 4) {
-          // Keep legacy distribution for 4 segments
-          double[] percentages = {0.15, 0.40, 0.60, 0.85};
-          for (int i = 0; i < segmentOffsets.length; i++) {
-            segmentOffsets[i] = (long) (targetLapDuration * percentages[i]);
-          }
-        } else if (numSegments > 0) {
-          // Linear distribution for other counts
-          for (int i = 0; i < numSegments; i++) {
-            segmentOffsets[i] = (long) (targetLapDuration * (i + 1.0) / (numSegments + 1.0));
-          }
+      } else {
+        isPitLap = false;
+        targetLapDuration = lapDuration;
+      }
+      // Calculate segment offsets
+      int numSegments = config.getNumSegments();
+      if (numSegments == 4) {
+        // Keep legacy distribution for 4 segments
+        double[] percentages = {0.15, 0.40, 0.60, 0.85};
+        for (int i = 0; i < segmentOffsets.length; i++) {
+          segmentOffsets[i] = (long) (targetLapDuration * percentages[i]);
+        }
+      } else if (numSegments > 0) {
+        // Linear distribution for other counts
+        for (int i = 0; i < numSegments; i++) {
+          segmentOffsets[i] = (long) (targetLapDuration * (i + 1.0) / (numSegments + 1.0));
         }
       }
     }
@@ -141,18 +146,28 @@ public class Demo extends DefaultProtocol {
   final LaneState[] laneStates;
 
   public Demo(int numLanes, boolean isFuelRace) {
-    this(numLanes, new Random(), isFuelRace, null);
+    this(numLanes, new Random(), isFuelRace, null, true);
   }
 
   public Demo(int numLanes, boolean isFuelRace, DemoConfig config) {
-    this(numLanes, new Random(), isFuelRace, config);
+    this(numLanes, new Random(), isFuelRace, config, true);
   }
 
-  protected Demo(int numLanes, Random random, boolean isFuelRace, DemoConfig config) {
+  public Demo(int numLanes, boolean isFuelRace, DemoConfig config, boolean startBehindSensor) {
+    this(numLanes, new Random(), isFuelRace, config, startBehindSensor);
+  }
+
+  protected Demo(
+      int numLanes,
+      Random random,
+      boolean isFuelRace,
+      DemoConfig config,
+      boolean startBehindSensor) {
     super(numLanes);
     this.random = random;
     this.isFuelRace = isFuelRace;
     this.config = config != null ? config : createDefaultConfig();
+    this.startBehindSensor = startBehindSensor;
     laneStates = new LaneState[numLanes];
     for (int i = 0; i < numLanes; i++) {
       laneStates[i] = new LaneState();

@@ -795,6 +795,7 @@
   "RE_HELP_TRACK_CONTENT": "Sélectionnez le circuit où cette course aura lieu. La configuration du circuit déterminera le nombre de voies et les paramètres d'interface pour la course.",
   "RE_HELP_WELCOME_CONTENT": "Ce guide vous aidera à configurer votre course étape par étape.",
   "RE_HELP_WELCOME_TITLE": "Bienvenue dans l'Éditeur de Course",
+  "RE_START_BEHIND_SENSOR": "Démarrer Derrière le Capteur",
   "RE_HOT_START": "Départ Rapide",
   "RE_LABEL_DRIVER_COUNT": "Nombre de Pilotes",
   "RE_LAP_COUNT": "Nombre de Tours",

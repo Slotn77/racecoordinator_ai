@@ -795,6 +795,7 @@
   "RE_HELP_TRACK_CONTENT": "Selecteer de baan waar deze race zal plaatsvinden. De baanconfiguratie bepaalt het aantal banen en de interface-instellingen voor de race.",
   "RE_HELP_WELCOME_CONTENT": "Deze gids helpt u bij het instellen van uw raceconfiguratie stap voor stap.",
   "RE_HELP_WELCOME_TITLE": "Welkom bij Race Editor",
+  "RE_START_BEHIND_SENSOR": "Starten Achter de Sensor",
   "RE_HOT_START": "Snelstart",
   "RE_LABEL_DRIVER_COUNT": "Aantal Coureurs",
   "RE_LAP_COUNT": "Aantal Rondes",

@@ -399,6 +399,7 @@ public class App {
         MongoDatabase db = mongoClient.getDatabase(dbName);
         new AssetService(db, appDataDir + File.separator + dbName + File.separator + "assets")
             .backfillDefaults();
+        DatabaseService.getInstance().backfillRaces(db);
       }
 
       // Determine client path once
