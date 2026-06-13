@@ -176,6 +176,57 @@ export class TestSetupHelper {
       });
     });
 
+    const fs = require("fs");
+    const path = require("path");
+
+    // Helper to find the fonts directory in both source and isolated test runner path
+    const getFontFilePath = (filename: string) => {
+      const paths = [
+        path.resolve(process.cwd(), "src/app/testing/fonts", filename),
+        path.resolve(process.cwd(), "client/src/app/testing/fonts", filename),
+        path.resolve(__dirname, "fonts", filename),
+      ];
+      for (const p of paths) {
+        if (fs.existsSync(p)) return p;
+      }
+      return "";
+    };
+
+    // Serve local Material Icons font file from testing/fonts directory
+    await page.route("**/s/materialicons/**/*.woff2", async (route) => {
+      const filePath = getFontFilePath("materialicons.woff2");
+      if (filePath) {
+        await route.fulfill({
+          status: 200,
+          contentType: "font/woff2",
+          body: fs.readFileSync(filePath),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    // Serve local Rajdhani font files from testing/fonts directory
+    await page.route("**/s/rajdhani/**/*.woff2", async (route) => {
+      const url = route.request().url();
+      let filename = "rajdhani-500.woff2";
+      if (url.includes("L0x5DFM4tM2s7KCDQIm32C5yXg")) {
+        filename = "rajdhani-300.woff2";
+      } else if (url.includes("L0x5DFM4tM2s7KCDQIm3Bx5yXg")) {
+        filename = "rajdhani-700.woff2";
+      }
+      const filePath = getFontFilePath(filename);
+      if (filePath) {
+        await route.fulfill({
+          status: 200,
+          contentType: "font/woff2",
+          body: fs.readFileSync(filePath),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
     // Mock Google Fonts and Material Icons CSS requests to return local fallbacks and original URLs
     // to avoid hitting external networks that block/hang visual tests, but allowing real fonts when online.
     await page.route("**/icon?family=Material+Icons*", async (route) => {
@@ -237,7 +288,7 @@ export class TestSetupHelper {
           src: local('Rajdhani'),
                local('Rajdhani-Bold'),
                url('https://fonts.gstatic.com/s/rajdhani/v15/L0x5DFM4tM2s7KCDQIm3Bx5yXg.woff2') format('woff2'),
-               local('sans-serif');
+                local('sans-serif');
         }`,
       });
     });
