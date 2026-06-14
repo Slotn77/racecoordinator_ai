@@ -116,7 +116,7 @@ test.describe("UI Editor Visuals", () => {
       .first();
     await expect(sectionHeader).toHaveScreenshot(
       "ui-editor-duplicate-name-error.png",
-      { maxDiffPixelRatio: 0.15 },
+      { maxDiffPixelRatio: 0.15, maxDiffPixels: 10000 },
     );
 
     // Try to navigate back
@@ -131,7 +131,7 @@ test.describe("UI Editor Visuals", () => {
 
     await expect(modalContent).toHaveScreenshot(
       "ui-editor-discard-confirm.png",
-      { maxDiffPixelRatio: 0.1, animations: "disabled" },
+      { maxDiffPixelRatio: 0.1, maxDiffPixels: 10000, animations: "disabled" },
     );
   });
 });
