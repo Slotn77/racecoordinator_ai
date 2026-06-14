@@ -106,7 +106,7 @@ public class HeatExecutionManager {
 
     if (!ignoreTeamLimits && checkTeamLimits(driverData, lapTime)) {
       logger.info("Lane {} lap rejected due to team limits", lane);
-      handleAnalogFuelLapTime(driverData, lapTime - driverData.getReactionTime(), lane);
+      handleAnalogFuelLapTime(driverData, lapTime, lane);
       return false;
     }
 
@@ -649,7 +649,7 @@ public class HeatExecutionManager {
 
     // Handle analog fuel usage, but exclude reaction time as it could be extremely
     // high if the driver has technical issues at the start of the heat.
-    handleAnalogFuelLapTime(driverData, effectiveLapTime - driverData.getReactionTime(), lane);
+    handleAnalogFuelLapTime(driverData, lapTime, lane);
 
     Lap lapMsg =
         Lap.newBuilder()

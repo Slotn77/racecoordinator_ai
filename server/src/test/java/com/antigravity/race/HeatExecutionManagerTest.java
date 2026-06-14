@@ -288,6 +288,75 @@ public class HeatExecutionManagerTest {
   }
 
   @Test
+  public void testFuelConsumption_SubsequentLaps() {
+    AnalogFuelOptions fuelOptions =
+        new AnalogFuelOptions(
+            true,
+            false,
+            false,
+            100.0,
+            AnalogFuelOptions.FuelUsageType.LINEAR,
+            4.0, // usageRate (at reference time)
+            100.0,
+            10.0,
+            2.0,
+            5.0 // referenceTime
+            );
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track1")
+            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withFuelOptions(fuelOptions)
+            .withEntityId("race1")
+            .withStartBehindSensor(true)
+            .build();
+
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+
+    // Set initial fuel level
+    RaceParticipant driver = race.getCurrentHeat().getDrivers().get(0).getDriver();
+    driver.setFuelLevel(100.0);
+
+    // 1. Reaction time crossing (e.g., 8.0s)
+    executionManager.onLap(0, 8.0, 1, false, true, false);
+    // No fuel should be consumed during reaction time crossing
+    assertEquals(100.0, driver.getFuelLevel(), 0.001);
+
+    // 2. First actual lap after reaction time (e.g., 5.0s lap duration)
+    // Formula for LINEAR:
+    // refL = 5.0
+    // x1 = refL * 2 = 10.0
+    // y1 = usageRate / 2 = 2.0
+    // x2 = refL = 5.0
+    // y2 = usageRate = 4.0
+    // slope m = (4.0 - 2.0) / (5.0 - 10.0) = -0.4
+    // b = 2.0 - (-0.4) * 10.0 = 6.0
+    // lapFuelUsed = m * racingTime + b
+    // For 5.0s, lapFuelUsed = -0.4 * 5.0 + 6.0 = 4.0
+    executionManager.onLap(0, 5.0, 1, false, true, false);
+    assertEquals(96.0, driver.getFuelLevel(), 0.001);
+
+    // 3. Second lap (e.g., 5.0s lap duration)
+    // If the reaction time (8.0s) was incorrectly subtracted, racingTime would be 5.0 - 8.0 = -3.0
+    // -> Math.max(0.1, -3.0) = 0.1s
+    // With the fix, the racingTime is 5.0s, so fuel used should be exactly 4.0 again.
+    executionManager.onLap(0, 5.0, 1, false, true, false);
+    assertEquals(92.0, driver.getFuelLevel(), 0.001);
+  }
+
+  @Test
   public void testOnSegmentHandling() {
     DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(0);
 
