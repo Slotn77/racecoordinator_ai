@@ -34,6 +34,7 @@ public class HeatExecutionManager {
   private boolean[] isRefueling;
   private double[] accumulatedRefuelTime;
   private double[] timeSinceLastLap;
+  private double[] excludedPendingLapTime;
 
   public HeatExecutionManager(Race race) {
     this.race = race;
@@ -59,11 +60,13 @@ public class HeatExecutionManager {
     this.isRefueling = new boolean[laneCount];
     this.accumulatedRefuelTime = new double[laneCount];
     this.timeSinceLastLap = new double[laneCount];
+    this.excludedPendingLapTime = new double[laneCount];
     for (int i = 0; i < laneCount; i++) {
       this.refuelDelayRemaining[i] = -1.0;
       this.isRefueling[i] = false;
       this.accumulatedRefuelTime[i] = 0.0;
       this.timeSinceLastLap[i] = 0.0;
+      this.excludedPendingLapTime[i] = 0.0;
     }
   }
 
@@ -90,6 +93,47 @@ public class HeatExecutionManager {
    * @return {@code true} if the hit was counted as a legitimate lap (eligible for records), {@code
    *     false} if it was a reaction time hit or was rejected.
    */
+  private enum RejectionReason {
+    OUT_OF_FUEL(true, false, true),
+    TEAM_LIMITS(true, true, true),
+    MIN_LAP_TIME(true, false, false);
+
+    private final boolean accumulateTime;
+    private final boolean consumeFuel;
+    private final boolean excludeFromFinalFuel;
+
+    RejectionReason(boolean accumulateTime, boolean consumeFuel, boolean excludeFromFinalFuel) {
+      this.accumulateTime = accumulateTime;
+      this.consumeFuel = consumeFuel;
+      this.excludeFromFinalFuel = excludeFromFinalFuel;
+    }
+
+    public boolean shouldAccumulateTime() {
+      return accumulateTime;
+    }
+
+    public boolean shouldConsumeFuel() {
+      return consumeFuel;
+    }
+
+    public boolean shouldExcludeFromFinalFuel() {
+      return excludeFromFinalFuel;
+    }
+  }
+
+  private void handleRejection(
+      DriverHeatData driverData, int lane, double lapTime, RejectionReason reason) {
+    if (reason.shouldAccumulateTime()) {
+      driverData.addPendingLapTime(lapTime);
+      if (reason.shouldExcludeFromFinalFuel()) {
+        excludedPendingLapTime[lane] += lapTime;
+      }
+    }
+    if (reason.shouldConsumeFuel()) {
+      handleAnalogFuelLapTime(driverData, lapTime, lane);
+    }
+  }
+
   public boolean onLap(
       int lane,
       double lapTime,
@@ -104,22 +148,16 @@ public class HeatExecutionManager {
       return false;
     }
 
-    if (!ignoreTeamLimits && checkTeamLimits(driverData, lapTime)) {
-      logger.info("Lane {} lap rejected due to team limits", lane);
-      handleAnalogFuelLapTime(driverData, lapTime, lane);
-      return false;
-    }
-
     if (handleReactionTime(driverData, lapTime, lane, interfaceId)) {
       timeSinceLastLap[lane] = 0.0;
       return false;
     }
 
-    boolean lapCounted = false;
     double minLapTime = this.race.getRaceModel().getMinLapTime();
     if (minLapTime > 0) {
-      driverData.addPendingLapTime(lapTime);
-      if (driverData.getPendingLapTime() < minLapTime) {
+      double minCheckTime = driverData.getPendingLapTime() - excludedPendingLapTime[lane] + lapTime;
+      if (minCheckTime < minLapTime) {
+        handleRejection(driverData, lane, lapTime, RejectionReason.MIN_LAP_TIME);
         Lap minLapMsg =
             Lap.newBuilder()
                 .setObjectId(driverData.getObjectId())
@@ -132,14 +170,29 @@ public class HeatExecutionManager {
         race.broadcast(RaceData.newBuilder().setLap(minLapMsg).build());
         return false;
       }
-      double finalLapTime = driverData.getPendingLapTime();
-      driverData.setPendingLapTime(0.0);
-      lapCounted = handleLapTime(driverData, finalLapTime, lane, interfaceId, isDrift);
-    } else {
-      double finalLapTime = lapTime + driverData.getPendingLapTime();
-      driverData.setPendingLapTime(0.0);
-      lapCounted = handleLapTime(driverData, finalLapTime, lane, interfaceId, isDrift);
     }
+
+    AnalogFuelOptions fuelOptions = this.race.getRaceModel().getFuelOptions();
+    boolean outOfFuel =
+        fuelOptions != null
+            && fuelOptions.isEnabled()
+            && driverData.getDriver().getFuelLevel() <= 0;
+    if (outOfFuel) {
+      logger.info("Lane {} lap rejected due to out of fuel", lane);
+      handleRejection(driverData, lane, lapTime, RejectionReason.OUT_OF_FUEL);
+      return false;
+    }
+
+    if (!ignoreTeamLimits && checkTeamLimits(driverData, lapTime)) {
+      logger.info("Lane {} lap rejected due to team limits", lane);
+      handleRejection(driverData, lane, lapTime, RejectionReason.TEAM_LIMITS);
+      return false;
+    }
+
+    boolean lapCounted = false;
+    double finalLapTime = lapTime + driverData.getPendingLapTime();
+    driverData.setPendingLapTime(0.0);
+    lapCounted = handleLapTime(driverData, finalLapTime, lane, interfaceId, isDrift);
 
     if (lapCounted) {
       timeSinceLastLap[lane] = 0.0;
@@ -197,6 +250,14 @@ public class HeatExecutionManager {
 
     DriverHeatData driverData = validateInput(lane);
     if (driverData == null) {
+      return;
+    }
+
+    AnalogFuelOptions fuelOptions = this.race.getRaceModel().getFuelOptions();
+    if (fuelOptions != null
+        && fuelOptions.isEnabled()
+        && driverData.getDriver().getFuelLevel() <= 0) {
+      logger.debug("Ignored onSegment - Driver on lane {} is out of fuel", lane);
       return;
     }
 
@@ -346,6 +407,10 @@ public class HeatExecutionManager {
     timeSinceLastLap[from] = timeSinceLastLap[to];
     timeSinceLastLap[to] = tempTimeSinceLastLap;
 
+    double tempExcludedPending = excludedPendingLapTime[from];
+    excludedPendingLapTime[from] = excludedPendingLapTime[to];
+    excludedPendingLapTime[to] = tempExcludedPending;
+
     logger.info("Swapped transient lane state for lanes {} and {}", from, to);
   }
 
@@ -465,18 +530,6 @@ public class HeatExecutionManager {
     if (finishedLanes.contains(lane)) {
       logger.debug("Ignored onLap/onSegment - Driver on lane {} already finished", lane);
       return null;
-    }
-
-    AnalogFuelOptions fuelOptions = this.race.getRaceModel().getFuelOptions();
-    if (fuelOptions != null && fuelOptions.isEnabled()) {
-      Heat heat = this.race.getCurrentHeat();
-      if (heat != null && lane >= 0 && lane < heat.getDrivers().size()) {
-        DriverHeatData driverData = heat.getDrivers().get(lane);
-        if (driverData.getDriver().getFuelLevel() <= 0) {
-          logger.debug("Ignored onLap/onSegment - Driver on lane {} is out of fuel", lane);
-          return null;
-        }
-      }
     }
 
     Heat currentHeat = this.race.getCurrentHeat();
@@ -648,8 +701,11 @@ public class HeatExecutionManager {
     driverData.addLap(effectiveLapTime, isDrift);
 
     // Handle analog fuel usage, but exclude reaction time as it could be extremely
-    // high if the driver has technical issues at the start of the heat.
-    handleAnalogFuelLapTime(driverData, lapTime, lane);
+    // high if the driver has technical issues at the start of the heat. Also exclude
+    // any pending times that are flagged for exclusion from final fuel calculation.
+    double fuelLapTime = Math.max(0.0, lapTime - excludedPendingLapTime[lane]);
+    excludedPendingLapTime[lane] = 0.0;
+    handleAnalogFuelLapTime(driverData, fuelLapTime, lane);
 
     Lap lapMsg =
         Lap.newBuilder()
