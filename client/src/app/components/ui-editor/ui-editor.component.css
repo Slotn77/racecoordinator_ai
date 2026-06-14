@@ -174,6 +174,11 @@
   margin-bottom: 15px;
 }
 
+.theme-sub-section .section-header {
+  height: 50px;
+  box-sizing: border-box;
+}
+
 .theme-sub-section .section-header h1,
 .theme-sub-section .theme-label {
   font-size: 1.6rem;
