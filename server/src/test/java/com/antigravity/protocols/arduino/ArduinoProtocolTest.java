@@ -11,6 +11,8 @@ import com.antigravity.mocks.MockScheduler;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
+import com.antigravity.proto.RaceFlag;
+import com.antigravity.proto.RaceState;
 import com.antigravity.proto.RgbLedBehavior;
 import com.antigravity.proto.RgbLedState;
 import com.antigravity.protocols.CarData;
@@ -1975,5 +1977,159 @@ public class ArduinoProtocolTest {
     assertTrue(
         "Should have clamped percentage to 100%",
         serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg7, d)));
+  }
+
+  @Test
+  public void testSetRaceState_SendsCorrectMessages() {
+    protocol.open();
+    // Verify version to allow sending commands
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    serialConnection.allWrittenData.clear();
+
+    // 1. NotStarted, no auto-start, no warmup -> State 0, Value 0
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.RED, 0.0);
+    byte[] expectedMsg1 = {0x45, 0x00, 0, 0, 0x3B};
+    assertTrue(
+        "Should send NotStarted state message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg1, d)));
+
+    // Verify duplicate is cached
+    serialConnection.allWrittenData.clear();
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.RED, 0.0);
+    assertEquals("Should not send duplicate message", 0, serialConnection.allWrittenData.size());
+
+    // 2. NotStarted, auto-starting but no warmup -> State 0, Value 1
+    serialConnection.allWrittenData.clear();
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.RED, 10.0);
+    byte[] expectedMsg2 = {0x45, 0x00, 0, 1, 0x3B};
+    assertTrue(
+        "Should send NotStarted auto-starting message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg2, d)));
+
+    // 3. NotStarted, warmup but no auto-start countdown -> State 0, Value 2
+    serialConnection.allWrittenData.clear();
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.GREEN_YELLOW, 0.0);
+    byte[] expectedMsg3 = {0x45, 0x00, 0, 2, 0x3B};
+    assertTrue(
+        "Should send NotStarted warmup message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg3, d)));
+
+    // 4. NotStarted, auto-starting and warmup -> State 0, Value 3
+    serialConnection.allWrittenData.clear();
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.GREEN_YELLOW, 10.0);
+    byte[] expectedMsg4 = {0x45, 0x00, 0, 3, 0x3B};
+    assertTrue(
+        "Should send NotStarted auto-starting warmup message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg4, d)));
+
+    // 5. Starting countdown at 5s -> State 2, Value 5
+    serialConnection.allWrittenData.clear();
+    protocol.setRaceState(RaceState.STARTING, RaceFlag.RED, 4.2);
+    byte[] expectedMsg5 = {0x45, 0x00, 2, 5, 0x3B};
+    assertTrue(
+        "Should send Starting countdown message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg5, d)));
+
+    // Verify duplicate starting countdown at 4.2 doesn't send
+    serialConnection.allWrittenData.clear();
+    protocol.setRaceState(RaceState.STARTING, RaceFlag.RED, 4.1);
+    assertEquals(
+        "Should not send duplicate count since rounded value is still 5",
+        0,
+        serialConnection.allWrittenData.size());
+
+    // Countdown changes to 4 -> State 2, Value 4
+    serialConnection.allWrittenData.clear();
+    protocol.setRaceState(RaceState.STARTING, RaceFlag.RED, 3.8);
+    byte[] expectedMsg5_2 = {0x45, 0x00, 2, 4, 0x3B};
+    assertTrue(
+        "Should send updated Starting countdown message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg5_2, d)));
+
+    // 6. Restarting countdown at 3s -> State 3, Value 3
+    serialConnection.allWrittenData.clear();
+    protocol.setRaceState(RaceState.STARTING, RaceFlag.YELLOW, 2.5);
+    byte[] expectedMsg6 = {0x45, 0x00, 3, 3, 0x3B};
+    assertTrue(
+        "Should send Restarting countdown message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg6, d)));
+
+    // 7. Racing -> State 4, Value 0
+    serialConnection.allWrittenData.clear();
+    protocol.setRaceState(RaceState.RACING, RaceFlag.GREEN, 0.0);
+    byte[] expectedMsg7 = {0x45, 0x00, 4, 0, 0x3B};
+    assertTrue(
+        "Should send Racing state message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg7, d)));
+
+    // 8. Paused -> State 5, Value 0
+    serialConnection.allWrittenData.clear();
+    protocol.setRaceState(RaceState.PAUSED, RaceFlag.RED, 0.0);
+    byte[] expectedMsg8 = {0x45, 0x00, 5, 0, 0x3B};
+    assertTrue(
+        "Should send Paused state message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg8, d)));
+
+    // 9. HeatOver, auto-advancing and warmup -> State 6, Value 3
+    serialConnection.allWrittenData.clear();
+    protocol.setRaceState(RaceState.HEAT_OVER, RaceFlag.GREEN_YELLOW, 15.0);
+    byte[] expectedMsg9 = {0x45, 0x00, 6, 3, 0x3B};
+    assertTrue(
+        "Should send HeatOver state message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg9, d)));
+
+    // 10. RaceOver -> State 7, Value 0
+    serialConnection.allWrittenData.clear();
+    protocol.setRaceState(RaceState.RACE_OVER, RaceFlag.CHECKERED, 0.0);
+    byte[] expectedMsg10 = {0x45, 0x00, 7, 0, 0x3B};
+    assertTrue(
+        "Should send RaceOver state message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg10, d)));
+  }
+
+  @Test
+  public void testInitializeHardwareState_ResetsRaceStateCache() {
+    protocol.open();
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    serialConnection.allWrittenData.clear();
+
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.RED, 0.0);
+    byte[] expectedMsg = {0x45, 0x00, 0, 0, 0x3B};
+    assertTrue(
+        "Should send NotStarted state message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg, d)));
+
+    // Try sending same state again, should be cached
+    serialConnection.allWrittenData.clear();
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.RED, 0.0);
+    assertEquals("Should be cached", 0, serialConnection.allWrittenData.size());
+
+    // Initialize hardware state (should clear cache)
+    protocol.initializeHardwareState();
+    serialConnection.allWrittenData.clear();
+
+    // Send same state again, should NOT be cached now
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.RED, 0.0);
+    assertTrue(
+        "Should send message again after reset",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg, d)));
+  }
+
+  @Test
+  public void testClose_SendsClosingState() {
+    protocol.open();
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    serialConnection.allWrittenData.clear();
+
+    protocol.close();
+
+    byte[] expectedClosingMsg = {0x45, 0x00, 8, 0, 0x3B};
+    assertTrue(
+        "Should send closing state message on close",
+        serialConnection.allWrittenData.stream()
+            .anyMatch(d -> Arrays.equals(expectedClosingMsg, d)));
   }
 }

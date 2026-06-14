@@ -1181,7 +1181,10 @@ void processExtendedRequest() {
     case 0:
     case 1:
       // Heat not started (0)
-      // Heat not restarted (1)
+      // Heat not restarted (1) *** Not currently supported
+      // NOTE: inBuffer[3] 0x01 auto-starting
+      // NOTE: inBuffer[3] 0x02 warmup time
+
 #ifdef WITH_FUEL_STUTTER
       fuelHeatInProgress = false;
 #endif
@@ -1193,8 +1196,6 @@ void processExtendedRequest() {
       // Heat re-started (3)
 
       // NOTE: inBuffer[3] is the countdown timer (4, 3, 2, 1, 0)
-      // But there's some whacked things like a -2 which I think is
-      // a jammed in "go" state.  It should be considered a green flag
 #ifdef WITH_FUEL_STUTTER
       fuelHeatInProgress = true;
 #endif
@@ -1216,6 +1217,8 @@ void processExtendedRequest() {
 
     case 6:
       // Heat ended
+      // NOTE: inBuffer[3] 0x01 auto-advancing
+      // NOTE: inBuffer[3] 0x02 warmup time
 #ifdef WITH_FUEL_STUTTER
       fuelHeatInProgress = false;
 #endif

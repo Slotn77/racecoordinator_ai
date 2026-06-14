@@ -38,6 +38,8 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
   private Integer lastLeaderLane = null;
   private List<Integer> lastHeatStandings = null;
+  private Integer lastSentState = null;
+  private Integer lastSentValue = null;
 
   // Data sent from PC to Arduino
   private static final byte[] RESET_COMMAND = {0x52, 0x45, 0x53, 0x45, 0x54, 0x3B};
@@ -128,6 +130,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     }
 
     if (isConnected()) {
+      sendRaceStateMessage(8, 0);
       clearLeds();
       try {
         Thread.sleep(100);
@@ -138,6 +141,8 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
     super.close();
     versionVerified = false;
+    lastSentState = null;
+    lastSentValue = null;
   }
 
   public void updateConfig(ArduinoConfig newConfig) {
@@ -438,6 +443,74 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   @Override
   public void setRaceState(RaceState state, RaceFlag flag, double countdown) {
     ledHelper.setRaceState(state, flag, countdown);
+
+    int stateVal;
+    int valueVal = 0;
+
+    switch (state) {
+      case NOT_STARTED:
+        stateVal = 0;
+        int nsMask = 0;
+        if (countdown > 0.0) {
+          nsMask |= 0x01;
+        }
+        if (flag == RaceFlag.GREEN_YELLOW) {
+          nsMask |= 0x02;
+        }
+        valueVal = nsMask;
+        break;
+      case STARTING:
+        stateVal = (flag == RaceFlag.YELLOW) ? 3 : 2;
+        valueVal = Math.max(0, (int) Math.ceil(countdown));
+        break;
+      case RACING:
+        stateVal = 4;
+        break;
+      case PAUSED:
+        stateVal = 5;
+        break;
+      case HEAT_OVER:
+        stateVal = 6;
+        int hoMask = 0;
+        if (countdown > 0.0) {
+          hoMask |= 0x01;
+        }
+        if (flag == RaceFlag.GREEN_YELLOW) {
+          hoMask |= 0x02;
+        }
+        valueVal = hoMask;
+        break;
+      case RACE_OVER:
+        stateVal = 7;
+        break;
+      default:
+        return;
+    }
+
+    if (lastSentState == null
+        || lastSentValue == null
+        || lastSentState != stateVal
+        || lastSentValue != valueVal) {
+      lastSentState = stateVal;
+      lastSentValue = valueVal;
+      sendRaceStateMessage(stateVal, valueVal);
+    }
+  }
+
+  private void sendRaceStateMessage(int stateVal, int valueVal) {
+    if (!isConnected()) {
+      logger.warn("Serial connection not open, cannot send race state");
+      return;
+    }
+    byte[] message = new byte[5];
+    message[0] = 0x45; // 'E'
+    message[1] = 0x00; // Sub-opcode (Race State)
+    message[2] = (byte) stateVal;
+    message[3] = (byte) valueVal;
+    message[4] = TERMINATOR;
+
+    writeData(message);
+    logger.info("Sent RACE_STATE - State: {}, Value: {}", stateVal, valueVal);
   }
 
   @Override
@@ -607,6 +680,8 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   public void initializeHardwareState() {
     lastLeaderLane = null;
     lastHeatStandings = null;
+    lastSentState = null;
+    lastSentValue = null;
     syncPower();
     ledHelper.initializeHardwareState();
   }
