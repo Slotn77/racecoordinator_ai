@@ -237,6 +237,85 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   heatBestTime = "5.200";
   leaderboardEntries: any[] = [];
 
+  selectedWidgetId: string | null = null;
+
+  get selectedWidget(): any | null {
+    if (
+      !this.selectedWidgetId ||
+      !this.editingSettings?.racedayLayout?.widgets
+    ) {
+      return null;
+    }
+    return (
+      this.editingSettings.racedayLayout.widgets.find(
+        (w: any) => w.id === this.selectedWidgetId,
+      ) || null
+    );
+  }
+
+  onWidgetSelected(id: string | null) {
+    this.selectedWidgetId = id;
+    if (id) {
+      const widget = this.selectedWidget;
+      if (widget) {
+        let mutated = false;
+        if (widget.fontFamily === undefined || widget.fontFamily === null) {
+          widget.fontFamily = "";
+          mutated = true;
+        }
+        if (widget.scaleMode === undefined || widget.scaleMode === null) {
+          widget.scaleMode = "";
+          mutated = true;
+        }
+        if (widget.textColor === undefined || widget.textColor === null) {
+          widget.textColor = "";
+          mutated = true;
+        }
+        if (
+          widget.backgroundColor === undefined ||
+          widget.backgroundColor === null
+        ) {
+          widget.backgroundColor = "";
+          mutated = true;
+        }
+        if (widget.fontSize === undefined) {
+          widget.fontSize = 24;
+          mutated = true;
+        }
+        if (widget.textScaleFactor === undefined) {
+          widget.textScaleFactor = 1.0;
+          mutated = true;
+        }
+        if (mutated) {
+          this.editingState.settings = this.cloneSettings(
+            this.editingState.settings,
+          );
+        }
+      }
+    }
+    this.cdr.markForCheck();
+  }
+
+  onTextColorChange(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    const widget = this.selectedWidget;
+    if (widget) {
+      widget.textColor = value;
+      this.captureState();
+      this.cdr.markForCheck();
+    }
+  }
+
+  onBackgroundColorChange(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    const widget = this.selectedWidget;
+    if (widget) {
+      widget.backgroundColor = value;
+      this.captureState();
+      this.cdr.markForCheck();
+    }
+  }
+
   getCurrentFlagUrl() {
     return "";
   }
@@ -730,6 +809,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.undoManager.redo();
   }
   captureState() {
+    this.editingState.settings = this.cloneSettings(this.editingState.settings);
     this.undoManager.captureState();
   }
 

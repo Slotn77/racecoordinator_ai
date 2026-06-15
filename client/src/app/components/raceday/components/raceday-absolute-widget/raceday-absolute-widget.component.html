@@ -1,6 +1,12 @@
 <div
   class="widget-wrapper"
   [class.edit-mode]="isCustomizing()"
+  [class.selected]="isSelected"
+  [class.has-custom-font]="!!widget().fontFamily"
+  [class.has-custom-color]="!!widget().textColor"
+  [class.has-custom-bg]="!!widget().backgroundColor"
+  [class.scale-auto]="widget().scaleMode === 'auto'"
+  [class.scale-fixed]="widget().scaleMode === 'fixed'"
   [style.left]="(widget().x / 1920) * 100 + '%'"
   [style.top]="(widget().y / 1080) * 100 + '%'"
   [style.width]="(widget().width / 1920) * 100 + '%'"
@@ -8,6 +14,11 @@
   [style.z-index]="
     widget().widgetType === 'menu-bar' ? 99999 : widget().zIndex || 100
   "
+  [style.font-family]="widget().fontFamily || null"
+  [style.color]="widget().textColor || null"
+  [style.background-color]="widget().backgroundColor || null"
+  [style.--widget-font-size.px]="widget().fontSize || 24"
+  [style.--widget-scale-factor]="widget().textScaleFactor || 1"
   (pointerdown)="isCustomizing() ? bringToFront() : null"
   window-id="absolute-widget"
 >

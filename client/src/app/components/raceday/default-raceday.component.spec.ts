@@ -1452,13 +1452,17 @@ describe("DefaultRacedayComponent", () => {
     // TODO(aufderheide): Use a harness rather than the selector directly.
     it("should update transform when ranks change (animation check)", () => {
       // Initial state:
-      // Index 0: D1 (Rank 2) -> translateY(24px)
-      // Index 1: Team X (Rank 1) -> translateY(0px)
+      // Index 0: D1 (Rank 2) -> translateY(calc(1 * var(--row-height, 24px)))
+      // Index 1: Team X (Rank 1) -> translateY(calc(0 * var(--row-height, 24px)))
       let rows = fixture.nativeElement.querySelectorAll(".leaderboard-item");
       expect(rows[0].textContent).toContain("D1");
-      expect(rows[0].style.transform).toBe("translateY(24px)");
+      expect(rows[0].style.transform).toBe(
+        "translateY(calc(1 * var(--row-height, 24px)))",
+      );
       expect(rows[1].textContent).toContain("Team X");
-      expect(rows[1].style.transform).toBe("translateY(0px)");
+      expect(rows[1].style.transform).toBe(
+        "translateY(calc(0 * var(--row-height, 24px)))",
+      );
 
       // Swap ranks: D1 becomes Rank 1 (Pos 0), Team X becomes Rank 2 (Pos 1)
       participantsSubject.next([
@@ -1470,18 +1474,24 @@ describe("DefaultRacedayComponent", () => {
       rows = fixture.nativeElement.querySelectorAll(".leaderboard-item");
       // Verify stable DOM order (rows[0] is still D1) but visual position updated via transform
       expect(rows[0].textContent).toContain("D1");
-      expect(rows[0].style.transform).toBe("translateY(0px)");
+      expect(rows[0].style.transform).toBe(
+        "translateY(calc(0 * var(--row-height, 24px)))",
+      );
       expect(rows[1].textContent).toContain("Team X");
-      expect(rows[1].style.transform).toBe("translateY(24px)");
+      expect(rows[1].style.transform).toBe(
+        "translateY(calc(1 * var(--row-height, 24px)))",
+      );
     });
 
     it("should have correct height on scroll content wrapper", () => {
-      // 2 participants * 24px = 48px
+      // 2 participants * 24px spacing = calc(2 * var(--row-height, 24px))
       fixture.detectChanges();
       const scrollContent = fixture.nativeElement.querySelector(
         ".leaderboard-scroll-content",
       );
-      expect(scrollContent.style.height).toBe("48px");
+      expect(scrollContent.style.height).toBe(
+        "calc(2 * var(--row-height, 24px))",
+      );
 
       // Add more participants
       participantsSubject.next(
@@ -1492,11 +1502,13 @@ describe("DefaultRacedayComponent", () => {
         })),
       );
       fixture.detectChanges();
-      expect(scrollContent.style.height).toBe("240px");
+      expect(scrollContent.style.height).toBe(
+        "calc(10 * var(--row-height, 24px))",
+      );
     });
 
     it("should calculate a scroll height exceeding typical container height when many items are present", () => {
-      // simulate 50 participants -> 1200px height.
+      // simulate 50 participants -> calc(50 * var(--row-height, 24px))
       // 1200px definitely exceeds the parent panel's typical height.
       participantsSubject.next(
         new Array(50).fill(0).map((_, i) => ({
@@ -1509,7 +1521,9 @@ describe("DefaultRacedayComponent", () => {
       const scrollContent = fixture.nativeElement.querySelector(
         ".leaderboard-scroll-content",
       );
-      expect(parseInt(scrollContent.style.height)).toBeGreaterThan(1000);
+      const match = scrollContent.style.height.match(/calc\((\d+)\s*\*/);
+      const multiplier = match ? parseInt(match[1]) : 0;
+      expect(multiplier * 24).toBeGreaterThan(1000);
     });
 
     it("should return correct leaderboard score format based on entry type", () => {
@@ -3459,6 +3473,52 @@ describe("DefaultRacedayComponent", () => {
       expect(event.stopPropagation).toHaveBeenCalled();
       expect(component.hasAnchorValue(colData, "center-center")).toBeFalse();
       expect(component.columnsChanged.emit).toHaveBeenCalled();
+    });
+  });
+
+  describe("Scaling and Viewport Fitting", () => {
+    it("should lock scale to 1 and dashboardWidth to 1920 when in UI Editor Mode", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      fixture.detectChanges();
+
+      component.onResize();
+
+      expect(component.scale).toBe(1);
+      expect(component.dashboardWidth).toBe(1920);
+    });
+
+    it("should calculate scale based on min aspect ratio and keep dashboardWidth at 1920 in normal mode", () => {
+      fixture.componentRef.setInput("isUIEditorMode", false);
+      fixture.detectChanges();
+
+      const widthSpy = spyOnProperty(
+        window,
+        "innerWidth",
+        "get",
+      ).and.returnValue(1440);
+      const heightSpy = spyOnProperty(
+        window,
+        "innerHeight",
+        "get",
+      ).and.returnValue(900);
+
+      component.onResize();
+      expect(component.scale).toBeCloseTo(900 / 1080, 3); // scale = windowHeight / 1080
+      expect(component.dashboardWidth).toBe(1920); // 1440 / (900/1080) = 1728, which is < 1920 (locks to 1920)
+
+      widthSpy.and.returnValue(2560);
+      heightSpy.and.returnValue(1080);
+
+      component.onResize();
+      expect(component.scale).toBeCloseTo(1.0, 3); // scale = 1080 / 1080 = 1.0
+      expect(component.dashboardWidth).toBe(2560); // 2560 / 1.0 = 2560 (wider screen, extends to edges)
+
+      widthSpy.and.returnValue(1024);
+      heightSpy.and.returnValue(768);
+
+      component.onResize();
+      expect(component.scale).toBeCloseTo(768 / 1080, 3); // scale = 768 / 1080
+      expect(component.dashboardWidth).toBe(1920); // 1024 / (768/1080) = 1440, which is < 1920 (locks to 1920)
     });
   });
 });

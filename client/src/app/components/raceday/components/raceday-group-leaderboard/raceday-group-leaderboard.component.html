@@ -16,7 +16,9 @@
     } @else {
       <div
         class="leaderboard-scroll-content"
-        [style.height.px]="leaderboardEntries().length * 24"
+        [style.height]="
+          'calc(' + leaderboardEntries().length + ' * var(--row-height, 24px))'
+        "
       >
         @for (
           entry of leaderboardEntries();
@@ -29,7 +31,9 @@
               getLeaderboardPosition(entry) % 2 === 1
             "
             [style.transform]="
-              'translateY(' + getLeaderboardPosition(entry) * 24 + 'px)'
+              'translateY(calc(' +
+              getLeaderboardPosition(entry) +
+              ' * var(--row-height, 24px)))'
             "
           >
             <div

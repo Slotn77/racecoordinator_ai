@@ -22,6 +22,7 @@ app-default-raceday {
     justify-content: center;
     position: relative;
     background-color: transparent;
+    overflow: hidden;
   }
 
   .scalable-content {

@@ -448,6 +448,8 @@ export class DefaultRacedayComponent
   isUIEditorMode = input<boolean>(false);
   uiScale = input<number>(1);
   editingSettings = input<Settings | undefined>(undefined);
+  selectedWidgetId = input<string | null>(null);
+  widgetSelected = output<string | null>();
 
   get visualScale(): number {
     return this.isUIEditorMode() ? this.uiScale() : this.scale;
@@ -1554,7 +1556,8 @@ export class DefaultRacedayComponent
       this.scale = newScale;
     }
 
-    const calculatedWidth = this.scale > 0 ? windowWidth / this.scale : 1920;
+    const calculatedWidth =
+      this.scale > 0 ? Math.max(1920, windowWidth / this.scale) : 1920;
     if (Math.abs(this.dashboardWidth - calculatedWidth) > 0.1) {
       this.dashboardWidth = calculatedWidth;
       this.loadColumns();
@@ -3352,6 +3355,7 @@ export class DefaultRacedayComponent
     const w = this.layout.widgets.find((w: any) => w.id === id);
     if (w) {
       w.zIndex = this.getNextZIndex();
+      this.widgetSelected.emit(id);
     }
   }
 
@@ -3424,5 +3428,13 @@ export class DefaultRacedayComponent
       ignoreId,
       handle,
     );
+  }
+
+  onCanvasPointerDown(event: PointerEvent) {
+    if (!this.isLayoutCustomizing) return;
+    const target = event.target as HTMLElement;
+    if (target.classList.contains("raceday-absolute-layout-root-wrapper")) {
+      this.widgetSelected.emit(null);
+    }
   }
 }

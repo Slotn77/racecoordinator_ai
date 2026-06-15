@@ -51,6 +51,11 @@ export class RacedayAbsoluteWidgetComponent {
   widget = input.required<AbsoluteWidgetNode>();
   parentComponent = input<any>(undefined);
   isCustomizing = input<boolean>(false);
+  selectedWidgetId = input<string | null>(null);
+
+  get isSelected(): boolean {
+    return this.selectedWidgetId() === this.widget().id;
+  }
 
   private isResizing = false;
   private resizeStartWidth = 0;

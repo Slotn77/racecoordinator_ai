@@ -1,6 +1,8 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { AbsoluteWidgetNode } from "@app/models/settings";
+import { TranslationService } from "@app/services/translation.service";
+import { mockTranslationService } from "@app/testing/unit-test-mocks";
 
 import { RacedayAbsoluteWidgetComponent } from "./raceday-absolute-widget.component";
 import { RacedayAbsoluteWidgetHarness } from "./testing/raceday-absolute-widget.harness";
@@ -13,6 +15,8 @@ describe("RacedayAbsoluteWidgetComponent", () => {
   let mockWidget: AbsoluteWidgetNode;
 
   beforeEach(async () => {
+    mockTranslationService.translate.and.callFake((key: string) => key);
+
     mockWidget = {
       id: "test-widget",
       widgetType: "timer",
@@ -25,6 +29,13 @@ describe("RacedayAbsoluteWidgetComponent", () => {
 
     mockParent = {
       visualScale: 1,
+      track: undefined,
+      heat: undefined,
+      heats: [],
+      isTeam: () => false,
+      getTeammates: () => [],
+      getDropdownIcon: () => "",
+      getDriverStats: () => "",
       snapToEdges: jasmine
         .createSpy("snapToEdges")
         .and.callFake((x, y, w, h) => ({ x, y, w, h })),
@@ -42,6 +53,9 @@ describe("RacedayAbsoluteWidgetComponent", () => {
 
     await TestBed.configureTestingModule({
       imports: [RacedayAbsoluteWidgetComponent],
+      providers: [
+        { provide: TranslationService, useValue: mockTranslationService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(RacedayAbsoluteWidgetComponent);
@@ -83,5 +97,53 @@ describe("RacedayAbsoluteWidgetComponent", () => {
   it("should delegate bringToFront to parent bringToFront", () => {
     component.bringToFront();
     expect(mockParent.bringToFront).toHaveBeenCalledWith("test-widget");
+  });
+
+  it("should apply scale-auto class when scaleMode is 'auto'", () => {
+    mockWidget.scaleMode = "auto";
+    mockWidget.textScaleFactor = 1.2;
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("scale-auto")).toBeTrue();
+    expect(wrapper.classList.contains("scale-fixed")).toBeFalse();
+  });
+
+  it("should apply scale-fixed class and fontSize styles when scaleMode is 'fixed'", () => {
+    mockWidget.scaleMode = "fixed";
+    mockWidget.fontSize = 32;
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("scale-fixed")).toBeTrue();
+    expect(wrapper.classList.contains("scale-auto")).toBeFalse();
+  });
+
+  it("should apply custom color and background classes when set", () => {
+    mockWidget.textColor = "#ff0000";
+    mockWidget.backgroundColor = "#00ff00";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("has-custom-color")).toBeTrue();
+    expect(wrapper.classList.contains("has-custom-bg")).toBeTrue();
+  });
+
+  it("should render on-deck widget", () => {
+    mockWidget.widgetType = "on-deck";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+    const onDeck = fixture.nativeElement.querySelector("app-raceday-on-deck");
+    expect(onDeck).toBeTruthy();
+  });
+
+  it("should render next-heat widget", () => {
+    mockWidget.widgetType = "next-heat";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+    const nextHeat = fixture.nativeElement.querySelector(
+      "app-raceday-next-heat",
+    );
+    expect(nextHeat).toBeTruthy();
   });
 });

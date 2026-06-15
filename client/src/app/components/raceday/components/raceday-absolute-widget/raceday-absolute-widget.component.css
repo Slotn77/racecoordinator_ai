@@ -133,3 +133,274 @@
 .widget-zorder-btn .material-icons {
   font-size: 16px;
 }
+
+/* Selected state outline */
+.widget-wrapper.edit-mode.selected {
+  border: 2px solid #38bdf8 !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5) !important;
+}
+
+/* Custom font inheritance */
+.widget-wrapper.has-custom-font *:not(.material-icons) {
+  font-family: inherit !important;
+}
+
+/* Container query setup for auto-scaling */
+.widget-wrapper.scale-auto {
+  container-type: size;
+}
+
+/* Auto-scale for simple headers: race-name, heat-info, track-name */
+.widget-wrapper.scale-auto .value-text {
+  font-size: calc(80cqh * var(--widget-scale-factor, 1)) !important;
+}
+.widget-wrapper.scale-auto .label-text {
+  font-size: calc(55cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+/* Auto-scale for Timer component */
+.widget-wrapper.scale-auto .timer-text {
+  font-size: calc(42cqh * var(--widget-scale-factor, 1)) !important;
+  line-height: 1 !important;
+}
+.widget-wrapper.scale-auto .status-label {
+  font-size: calc(7cqh * var(--widget-scale-factor, 1)) !important;
+}
+.widget-wrapper.scale-auto .warmup-label {
+  font-size: calc(9cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+/* Fixed size text overrides */
+.widget-wrapper.scale-fixed .timer-text {
+  font-size: var(--widget-font-size) !important;
+  line-height: 1 !important;
+}
+.widget-wrapper.scale-fixed .value-text {
+  font-size: var(--widget-font-size) !important;
+}
+.widget-wrapper.scale-fixed .label-text,
+.widget-wrapper.scale-fixed .status-label,
+.widget-wrapper.scale-fixed .warmup-label {
+  font-size: calc(0.6 * var(--widget-font-size)) !important;
+}
+
+/* Fixed scaling for lists and tables */
+.widget-wrapper.scale-fixed td,
+.widget-wrapper.scale-fixed th,
+.widget-wrapper.scale-fixed li,
+.widget-wrapper.scale-fixed .driver-name,
+.widget-wrapper.scale-fixed .driver-nickname,
+.widget-wrapper.scale-fixed .cell-value,
+.widget-wrapper.scale-fixed .row-value {
+  font-size: var(--widget-font-size) !important;
+}
+
+/* Fixed scaling for leaderboards */
+.widget-wrapper.scale-fixed {
+  --row-height: calc(1.5 * var(--widget-font-size));
+}
+
+.widget-wrapper.scale-fixed .leaderboard-title {
+  font-size: calc(1.125 * var(--widget-font-size)) !important;
+  margin-bottom: calc(0.75 * var(--widget-font-size)) !important;
+}
+
+.widget-wrapper.scale-fixed .leaderboard-subtitle {
+  font-size: calc(0.8125 * var(--widget-font-size)) !important;
+  margin-bottom: calc(0.75 * var(--widget-font-size)) !important;
+}
+
+.widget-wrapper.scale-fixed .leaderboard-item,
+.widget-wrapper.scale-fixed .leaderboard-item span,
+.widget-wrapper.scale-fixed .leaderboard-rank,
+.widget-wrapper.scale-fixed .leaderboard-name,
+.widget-wrapper.scale-fixed .leaderboard-score,
+.widget-wrapper.scale-fixed .leaderboard-empty-message {
+  font-size: var(--widget-font-size) !important;
+}
+
+/* Auto scaling for leaderboards */
+.widget-wrapper.scale-auto {
+  --row-height: calc(12cqh * var(--widget-scale-factor, 1));
+}
+
+.widget-wrapper.scale-auto .leaderboard-title {
+  font-size: calc(8cqh * var(--widget-scale-factor, 1)) !important;
+  margin-bottom: calc(3cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+.widget-wrapper.scale-auto .leaderboard-subtitle {
+  font-size: calc(6cqh * var(--widget-scale-factor, 1)) !important;
+  margin-bottom: calc(3cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+.widget-wrapper.scale-auto .leaderboard-item,
+.widget-wrapper.scale-auto .leaderboard-item span,
+.widget-wrapper.scale-auto .leaderboard-rank,
+.widget-wrapper.scale-auto .leaderboard-name,
+.widget-wrapper.scale-auto .leaderboard-score,
+.widget-wrapper.scale-auto .leaderboard-empty-message {
+  font-size: calc(6.5cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+/* Fixed scaling for records */
+.widget-wrapper.scale-fixed .record-panel,
+.widget-wrapper.scale-fixed .record-val {
+  font-size: var(--widget-font-size) !important;
+}
+.widget-wrapper.scale-fixed .record-header {
+  font-size: calc(0.9 * var(--widget-font-size)) !important;
+}
+
+/* Auto scaling for records */
+.widget-wrapper.scale-auto .record-panel,
+.widget-wrapper.scale-auto .record-val {
+  font-size: calc(11cqh * var(--widget-scale-factor, 1)) !important;
+}
+.widget-wrapper.scale-auto .record-header {
+  font-size: calc(10cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+/* Support custom background color on widgets */
+.widget-wrapper.has-custom-bg .panel-card {
+  background: transparent !important;
+}
+
+/* Color overrides for branding */
+.widget-wrapper.has-custom-color .logo-text {
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+  color: inherit !important;
+  text-shadow: none !important;
+}
+.widget-wrapper.has-custom-color .branding-tagline {
+  color: inherit !important;
+  opacity: 0.8 !important;
+}
+
+/* Fixed scaling for flag */
+.widget-wrapper.scale-fixed .flag-image {
+  height: calc(8.75 * var(--widget-font-size)) !important;
+  max-height: 100% !important;
+  width: auto !important;
+}
+
+/* Auto scaling for flag */
+.widget-wrapper.scale-auto .flag-image {
+  height: calc(85cqh * var(--widget-scale-factor, 1)) !important;
+  max-height: 100% !important;
+  width: auto !important;
+}
+
+/* Fixed scaling for branding */
+.widget-wrapper.scale-fixed .logo-text {
+  font-size: var(--widget-font-size) !important;
+}
+.widget-wrapper.scale-fixed .branding-tagline {
+  font-size: calc(0.42 * var(--widget-font-size)) !important;
+  margin-top: calc(0.3 * var(--widget-font-size)) !important;
+}
+.widget-wrapper.scale-fixed .branding-panel {
+  padding: calc(0.6 * var(--widget-font-size)) !important;
+}
+
+/* Auto scaling for branding */
+.widget-wrapper.scale-auto .logo-text {
+  font-size: calc(35cqh * var(--widget-scale-factor, 1)) !important;
+}
+.widget-wrapper.scale-auto .branding-tagline {
+  font-size: calc(15cqh * var(--widget-scale-factor, 1)) !important;
+  margin-top: calc(3cqh * var(--widget-scale-factor, 1)) !important;
+}
+.widget-wrapper.scale-auto .branding-panel {
+  padding: calc(6cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+/* Fixed scaling for next-heat & on-deck */
+.widget-wrapper.scale-fixed .next-heat-panel,
+.widget-wrapper.scale-fixed .on-deck-panel {
+  padding: 0 calc(0.5 * var(--widget-font-size)) calc(0.5 * var(--widget-font-size)) calc(0.5 * var(--widget-font-size)) !important;
+}
+
+.widget-wrapper.scale-fixed .next-heat-title,
+.widget-wrapper.scale-fixed .on-deck-title {
+  font-size: calc(1.125 * var(--widget-font-size)) !important;
+  margin-bottom: calc(0.5 * var(--widget-font-size)) !important;
+}
+
+.widget-wrapper.scale-fixed .next-heat-list,
+.widget-wrapper.scale-fixed .on-deck-list {
+  gap: calc(0.35 * var(--widget-font-size)) !important;
+}
+
+.widget-wrapper.scale-fixed .next-heat-item,
+.widget-wrapper.scale-fixed .on-deck-item {
+  padding: calc(0.35 * var(--widget-font-size)) calc(0.5 * var(--widget-font-size)) !important;
+  border-left-width: calc(0.125 * var(--widget-font-size)) !important;
+}
+
+.widget-wrapper.scale-fixed .driver-nickname,
+.widget-wrapper.scale-fixed .teammate-display-name,
+.widget-wrapper.scale-fixed .next-heat-empty,
+.widget-wrapper.scale-fixed .on-deck-empty {
+  font-size: var(--widget-font-size) !important;
+}
+
+.widget-wrapper.scale-fixed .lane-badge {
+  font-size: calc(0.875 * var(--widget-font-size)) !important;
+  min-width: calc(1.75 * var(--widget-font-size)) !important;
+  height: calc(1.5 * var(--widget-font-size)) !important;
+  padding: 0 calc(0.375 * var(--widget-font-size)) !important;
+  border-radius: calc(0.75 * var(--widget-font-size)) !important;
+}
+
+/* Auto scaling for next-heat & on-deck */
+.widget-wrapper.scale-auto .next-heat-panel,
+.widget-wrapper.scale-auto .on-deck-panel {
+  padding: 0 calc(4cqh * var(--widget-scale-factor, 1)) calc(4cqh * var(--widget-scale-factor, 1)) calc(4cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+.widget-wrapper.scale-auto .next-heat-title,
+.widget-wrapper.scale-auto .on-deck-title {
+  font-size: calc(8cqh * var(--widget-scale-factor, 1)) !important;
+  margin-bottom: calc(3cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+.widget-wrapper.scale-auto .next-heat-list,
+.widget-wrapper.scale-auto .on-deck-list {
+  gap: calc(2.5cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+.widget-wrapper.scale-auto .next-heat-item,
+.widget-wrapper.scale-auto .on-deck-item {
+  padding: calc(2.5cqh * var(--widget-scale-factor, 1)) calc(4cqh * var(--widget-scale-factor, 1)) !important;
+  border-left-width: calc(1cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+.widget-wrapper.scale-auto .driver-nickname,
+.widget-wrapper.scale-auto .teammate-display-name,
+.widget-wrapper.scale-auto .next-heat-empty,
+.widget-wrapper.scale-auto .on-deck-empty {
+  font-size: calc(6.5cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+.widget-wrapper.scale-auto .lane-badge {
+  font-size: calc(5.5cqh * var(--widget-scale-factor, 1)) !important;
+  min-width: calc(11cqh * var(--widget-scale-factor, 1)) !important;
+  height: calc(9cqh * var(--widget-scale-factor, 1)) !important;
+  padding: 0 calc(2.5cqh * var(--widget-scale-factor, 1)) !important;
+  border-radius: calc(4.5cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+/* Custom color overrides for next-heat & on-deck */
+.widget-wrapper.has-custom-color .next-heat-title,
+.widget-wrapper.has-custom-color .on-deck-title {
+  color: inherit !important;
+  text-shadow: none !important;
+}
+
+.widget-wrapper.has-custom-color .driver-nickname,
+.widget-wrapper.has-custom-color .teammate-display-name {
+  color: inherit !important;
+}
+

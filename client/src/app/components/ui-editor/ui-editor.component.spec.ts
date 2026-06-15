@@ -1983,5 +1983,63 @@ describe("UIEditorComponent", () => {
       expect(component.undoManager.captureState).toHaveBeenCalled();
       expect(component.refreshDisplayProperties).toHaveBeenCalled();
     });
+
+    it("should select and deselect a widget", () => {
+      expect(component.selectedWidgetId).toBeNull();
+      expect(component.selectedWidget).toBeNull();
+
+      component.editingSettings.racedayLayout = {
+        widgets: [
+          {
+            id: "widget-test-timer",
+            widgetType: "timer",
+            x: 10,
+            y: 20,
+            width: 100,
+            height: 100,
+            zIndex: 1,
+          },
+        ],
+      };
+
+      component.onWidgetSelected("widget-test-timer");
+      expect(component.selectedWidgetId).toBe("widget-test-timer");
+      expect(component.selectedWidget).toBeTruthy();
+      expect(component.selectedWidget.widgetType).toBe("timer");
+
+      component.onWidgetSelected(null);
+      expect(component.selectedWidgetId).toBeNull();
+      expect(component.selectedWidget).toBeNull();
+    });
+
+    it("should mutate properties on the selected widget", () => {
+      component.editingSettings.racedayLayout = {
+        widgets: [
+          {
+            id: "widget-test-timer",
+            widgetType: "timer",
+            x: 10,
+            y: 20,
+            width: 100,
+            height: 100,
+            zIndex: 1,
+          },
+        ],
+      };
+
+      component.onWidgetSelected("widget-test-timer");
+      expect(component.selectedWidget.fontFamily).toBe("");
+      expect(component.selectedWidget.scaleMode).toBe("");
+      expect(component.selectedWidget.fontSize).toBe(24);
+
+      component.selectedWidget.fontFamily = "Orbitron";
+      component.selectedWidget.scaleMode = "auto";
+      component.selectedWidget.textScaleFactor = 1.15;
+
+      const widget = component.selectedWidget;
+      expect(widget.fontFamily).toBe("Orbitron");
+      expect(widget.scaleMode).toBe("auto");
+      expect(widget.textScaleFactor).toBe(1.15);
+    });
   });
 });

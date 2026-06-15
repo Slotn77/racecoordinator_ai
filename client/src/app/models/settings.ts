@@ -31,6 +31,12 @@ export interface AbsoluteWidgetNode {
   width: number;
   height: number;
   zIndex: number;
+  fontFamily?: string;
+  scaleMode?: "auto" | "fixed";
+  fontSize?: number;
+  textScaleFactor?: number;
+  textColor?: string;
+  backgroundColor?: string;
 }
 
 export interface LayoutConfig {
