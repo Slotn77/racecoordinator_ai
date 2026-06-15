@@ -144,4 +144,30 @@ describe("HeatResultsComponent", () => {
     component.exportPdf();
     expect(mockPrintService.print).toHaveBeenCalledWith("Heat Results");
   });
+
+  it("should open driver results window, track it, and close it on destroy or unload", () => {
+    const mockWindow = jasmine.createSpyObj("Window", ["close"]);
+    mockWindow.closed = false;
+    spyOn(window, "open").and.returnValue(mockWindow);
+
+    component["openDriverResults"]("d1");
+    expect(window.open).toHaveBeenCalledWith("/driver-results/d1", "_blank");
+    expect(component["driverResultsWindows"].length).toBe(1);
+
+    // Call unload
+    component.onUnload(null);
+    expect(mockWindow.close).toHaveBeenCalled();
+    expect(component["driverResultsWindows"].length).toBe(0);
+
+    // Test ngOnDestroy close
+    const mockWindow2 = jasmine.createSpyObj("Window", ["close"]);
+    mockWindow2.closed = false;
+    (window.open as jasmine.Spy).and.returnValue(mockWindow2);
+    component["openDriverResults"]("d2");
+    expect(component["driverResultsWindows"].length).toBe(1);
+
+    component.ngOnDestroy();
+    expect(mockWindow2.close).toHaveBeenCalled();
+    expect(component["driverResultsWindows"].length).toBe(0);
+  });
 });

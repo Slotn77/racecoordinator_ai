@@ -109,6 +109,8 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     );
   }
 
+  private driverResultsWindows: Window[] = [];
+
   protected openDriverResults(driverId: string, event: MouseEvent) {
     if (event) {
       event.preventDefault();
@@ -116,7 +118,10 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     }
     if (!driverId) return;
     const url = `/driver-results/${driverId}`;
-    window.open(url, "_blank");
+    const win = window.open(url, "_blank");
+    if (win) {
+      this.driverResultsWindows.push(win);
+    }
   }
 
   protected getDriverKey(d: any): string {
@@ -273,6 +278,21 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.raceConnectionService.disconnect();
     this.subscriptions.forEach((sub) => sub.unsubscribe());
+    this.closeDriverResultsWindows();
+  }
+
+  @HostListener("window:unload", ["$event"])
+  onUnload(_event: any) {
+    this.closeDriverResultsWindows();
+  }
+
+  private closeDriverResultsWindows() {
+    this.driverResultsWindows.forEach((win) => {
+      if (win && !win.closed) {
+        win.close();
+      }
+    });
+    this.driverResultsWindows = [];
   }
 
   exportPdf() {

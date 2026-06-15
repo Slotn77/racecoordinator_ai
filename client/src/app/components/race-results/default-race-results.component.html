@@ -280,6 +280,7 @@
                 [style.top.px]="row.visualIndex * 90"
                 [routerLink]="['/driver-results', getDriverId(row.driver)]"
                 target="_blank"
+                (click)="openDriverResults(getDriverId(row.driver), $event)"
               >
                 <!-- Position Overall Column -->
                 <div class="body-cell col-pos">

@@ -283,7 +283,11 @@
       "
     >
       @for (line of driverLines; track line; let i = $index) {
-        <g [attr.transform]="'translate(' + i * legendItemWidth + ', 0)'">
+        <g
+          [attr.transform]="'translate(' + i * legendItemWidth + ', 0)'"
+          (click)="openDriverResults(line.driverId)"
+          style="cursor: pointer"
+        >
           <rect
             width="18"
             height="18"

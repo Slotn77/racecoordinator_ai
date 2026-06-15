@@ -1,5 +1,11 @@
 import { DecimalPipe } from "@angular/common";
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  OnDestroy,
+  OnInit,
+} from "@angular/core";
 import { Subscription } from "rxjs";
 import { Race } from "@app/models/race";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -17,6 +23,7 @@ interface GraphPoint {
 
 interface DriverLine {
   objectId: string;
+  driverId: string;
   driverName: string;
   color: string;
   backgroundColor: string;
@@ -38,6 +45,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
   protected heat?: Heat;
   protected race?: Race;
   protected driverLines: DriverLine[] = [];
+  private driverResultsWindows: Window[] = [];
 
   // SVG Dimensions
   protected width = 1400;
@@ -94,6 +102,30 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.raceConnectionService.disconnect();
     this.subscriptions.forEach((sub) => sub.unsubscribe());
+    this.closeDriverResultsWindows();
+  }
+
+  @HostListener("window:unload", ["$event"])
+  onUnload(_event: any) {
+    this.closeDriverResultsWindows();
+  }
+
+  protected openDriverResults(driverId: string) {
+    if (!driverId) return;
+    const url = `/driver-results/${driverId}`;
+    const win = window.open(url, "_blank");
+    if (win) {
+      this.driverResultsWindows.push(win);
+    }
+  }
+
+  private closeDriverResultsWindows() {
+    this.driverResultsWindows.forEach((win) => {
+      if (win && !win.closed) {
+        win.close();
+      }
+    });
+    this.driverResultsWindows = [];
   }
 
   exportPdf() {
@@ -119,6 +151,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
       )
       .map((hd) => {
         const driverName = hd.driver.nickname || hd.driver.name;
+        const driverId = hd.driver.entity_id || hd.driver.objectId || "";
         const lane = this.race?.track?.lanes[hd.laneIndex];
         const color = lane?.foreground_color || "#ffffff";
         const backgroundColor = lane?.background_color || "#333333";
@@ -134,6 +167,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
 
         return {
           objectId: hd.objectId,
+          driverId,
           driverName,
           color,
           backgroundColor,

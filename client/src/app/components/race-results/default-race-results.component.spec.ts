@@ -933,4 +933,39 @@ describe("DefaultRaceResultsComponent", () => {
       expect(component["formatGap"](-0.5)).toBe("-0.500");
     });
   });
+
+  describe("Window Tracking and Cleanup", () => {
+    it("should open, track, and close driver results windows on destroy or unload", () => {
+      const mockWindow = jasmine.createSpyObj("Window", ["close"]);
+      mockWindow.closed = false;
+      spyOn(window, "open").and.returnValue(mockWindow);
+
+      const event = jasmine.createSpyObj("MouseEvent", [
+        "preventDefault",
+        "stopPropagation",
+      ]);
+
+      component["openDriverResults"]("d1", event);
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(window.open).toHaveBeenCalledWith("/driver-results/d1", "_blank");
+      expect(component["driverResultsWindows"].length).toBe(1);
+
+      // Trigger unload
+      component.onUnload(null);
+      expect(mockWindow.close).toHaveBeenCalled();
+      expect(component["driverResultsWindows"].length).toBe(0);
+
+      // Trigger ngOnDestroy
+      const mockWindow2 = jasmine.createSpyObj("Window", ["close"]);
+      mockWindow2.closed = false;
+      (window.open as jasmine.Spy).and.returnValue(mockWindow2);
+      component["openDriverResults"]("d2", event);
+      expect(component["driverResultsWindows"].length).toBe(1);
+
+      component.ngOnDestroy();
+      expect(mockWindow2.close).toHaveBeenCalled();
+      expect(component["driverResultsWindows"].length).toBe(0);
+    });
+  });
 });
