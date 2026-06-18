@@ -1136,13 +1136,12 @@ void processTimeResetRequest() {
   SERIAL_PRINT("TIME RESET REQUEST LANE: ");
   SERIAL_PRINTLN(lane);
 
-  // First send whatever time we have, the RMS
-  // will either take it or dump it, but we don't care.
-  sendTime(0xffffffff);
-
-  // Now mark it such that the next time sent has
+  // Now mark it such that the time sent has
   // the reset flag so the RMS knows what to do.
   timeResponse[5] = (1 << lane);
+
+  // Send the time response with the reset flag set.
+  sendTime(0xffffffff);
 }
 
 void processDebounceRequest() {

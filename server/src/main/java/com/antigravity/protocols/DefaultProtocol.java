@@ -192,20 +192,37 @@ public abstract class DefaultProtocol implements IProtocol {
   // Event Handlers
   protected void handleHeartbeat(long timeInUse, byte isReset) {
     logger.debug("Received Heartbeat - Time: {}us, Reset: {}", timeInUse, isReset);
-    if (isReset == hwReset) {
+    boolean arduinoReset = isReset != 0;
+    boolean pcExpectedReset = hwReset != 0;
+
+    if (arduinoReset == pcExpectedReset) {
       hwReset = 0;
       for (int i = 0; i < numLanes; i++) {
         hwLapTime[i].add(timeInUse);
         hwSegmentTime[i].add(timeInUse);
       }
     } else {
-      logger.warn(
-          "Received Heartbeat - Reset mismatch: got {}, expected {}. Clearing pin cache.",
-          isReset,
-          hwReset);
-      pinStateCache.clear();
-      hwReset = isReset;
-      initializeHardwareState();
+      if (!arduinoReset && pcExpectedReset) {
+        // Mismatch: Arduino hasn't reset yet, but PC expects reset (e.g. late in-flight message).
+        // Discard the pre-reset time but keep hwReset = 1, waiting for the reset heartbeat.
+        logger.info(
+            "Received Heartbeat - Reset expected but not set yet. Discarding in-flight time.");
+      } else {
+        // Mismatch: Arduino reset unexpectedly (arduinoReset is true, pcExpectedReset is false).
+        // Treat as a reset event: clear pin cache and initialize hardware state, and set hwReset =
+        // 0.
+        logger.warn(
+            "Received Heartbeat - Reset mismatch: got {}, expected {}. Clearing pin cache.",
+            isReset,
+            hwReset);
+        pinStateCache.clear();
+        hwReset = 0;
+        initializeHardwareState();
+        for (int i = 0; i < numLanes; i++) {
+          hwLapTime[i].add(timeInUse);
+          hwSegmentTime[i].add(timeInUse);
+        }
+      }
     }
   }
 

@@ -223,4 +223,29 @@ public class DefaultProtocolTest {
     scheduler.tick();
     assertEquals("Status should have correct index", 7, listener.lastInterfaceIndex);
   }
+
+  @Test
+  public void testHandleHeartbeat_ResetMismatchHandling() {
+    // 1. Initial State: PC expects reset (hwReset = 1)
+    protocol.startTimer();
+    assertEquals(1, protocol.hwReset);
+
+    // 2. Receive heartbeat with isReset = 0 (in-flight before reset confirmation)
+    // It should discard the time, but KEEP hwReset = 1
+    protocol.handleHeartbeat(1000000, (byte) 0);
+    assertEquals(1, protocol.hwReset);
+    assertEquals(0.0, protocol.hwLapTime[0].time(), 0.001);
+
+    // 3. Receive heartbeat with isReset = 1 (reset confirmation)
+    // It should match, set hwReset = 0, and accumulate the time (1.5s)
+    protocol.handleHeartbeat(1500000, (byte) 1);
+    assertEquals(0, protocol.hwReset);
+    assertEquals(1.5, protocol.hwLapTime[0].time(), 0.001);
+
+    // 4. Receive regular heartbeat with isReset = 0
+    // It should match (both false), set hwReset = 0, and accumulate time (2.0s)
+    protocol.handleHeartbeat(2000000, (byte) 0);
+    assertEquals(0, protocol.hwReset);
+    assertEquals(2.0, protocol.hwLapTime[0].time(), 0.001);
+  }
 }
