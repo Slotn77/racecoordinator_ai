@@ -11,6 +11,7 @@ import com.antigravity.race.states.Racing;
 import com.antigravity.race.states.Starting;
 import com.antigravity.service.ServerConfigService;
 import java.util.Collections;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -230,5 +231,13 @@ public class StartingStateTest {
     race.setHasRacedInCurrentHeat(true);
     race.changeState(starting);
     assertEquals("Flag should be YELLOW for restart", RaceFlag.YELLOW, starting.getFlagType(race));
+  }
+
+  @After
+  public void tearDown() {
+    if (race != null) {
+      race.stop();
+    }
+    ClientSubscriptionManager.setInstance(null);
   }
 }

@@ -2,6 +2,7 @@ package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
@@ -12,6 +13,7 @@ import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import com.antigravity.proto.RecordData;
 import com.antigravity.proto.RecordEntry;
+import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import java.util.ArrayList;
@@ -79,6 +81,10 @@ public class RaceRecordTest {
             .isDemoMode(true)
             .build();
 
+    // Inject mock ProtocolDelegate to prevent Demo background thread flakiness
+    ProtocolDelegate mockProtocols = mock(ProtocolDelegate.class);
+    race.injectProtocols(mockProtocols);
+
     // Set to Racing state so onLap returns true and updates records
     race.changeState(new Racing());
   }
@@ -88,6 +94,7 @@ public class RaceRecordTest {
     if (race != null && race.getState() != null) {
       race.getState().exit(race);
     }
+    ClientSubscriptionManager.setInstance(null);
   }
 
   @Test
