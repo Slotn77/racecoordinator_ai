@@ -15,6 +15,8 @@ export interface MockEditorData {
   track: Track;
   participants: RaceParticipant[];
   heat: Heat;
+  heats: Heat[];
+  groupParticipants: RaceParticipant[];
 }
 
 export function createMockEditorData(): MockEditorData {
@@ -29,13 +31,16 @@ export function createMockEditorData(): MockEditorData {
       finishMethod: FinishMethod.Timed,
       points: [],
     },
+    group_options: {
+      enabled: true,
+    },
   } as unknown as Race;
 
   const track = createMockTrack();
   const participants = createMockRaceParticipants();
 
   const heatDrivers = participants.map((p: any, index) => {
-    const hd = new DriverHeatData(`mock_hd_${index}`, p, p.lane);
+    const hd = new DriverHeatData(`mock_hd_${index}`, p, p.lane - 1);
     hd.addLapTime(
       p.lap_count,
       p.last_lap_time,
@@ -74,11 +79,38 @@ export function createMockEditorData(): MockEditorData {
 
   const heat = {
     id: "mock_heat_1",
+    objectId: "mock_heat_1",
     race_id: "mock_race_1",
+    heatNumber: 1,
     start_time: "2026-06-05T12:00:00Z",
     end_time: "2026-06-05T12:03:00Z",
     heatDrivers: heatDrivers,
   } as unknown as Heat;
+
+  const nextHeatDrivers = createMockNextHeatParticipants().map(
+    (p: any, index) => {
+      const hd = new DriverHeatData(`mock_hd_next_${index}`, p, p.lane - 1);
+      hd.reactionTime = 0.15;
+      if (hd.participant) {
+        (hd.participant as any).fuelLevel = p.fuelLevel || 100;
+        (hd.participant as any).seed = p.seed || index + 5;
+        (hd.participant as any).team = p.team;
+      }
+      return hd;
+    },
+  );
+
+  const nextHeat = {
+    id: "mock_heat_2",
+    objectId: "mock_heat_2",
+    race_id: "mock_race_1",
+    heatNumber: 2,
+    started: false,
+    heatDrivers: nextHeatDrivers,
+  } as unknown as Heat;
+
+  const heats = [heat, nextHeat];
+  const groupParticipants = participants;
 
   return {
     raceState,
@@ -87,6 +119,8 @@ export function createMockEditorData(): MockEditorData {
     track,
     participants,
     heat,
+    heats,
+    groupParticipants,
   };
 }
 
@@ -107,12 +141,13 @@ function createMockRaceParticipants(): RaceParticipant[] {
   return [
     {
       id: "p1",
-      driver: {
-        id: "d1",
-        name: "Mario",
-        nickname: "Jumpman",
-        avatarUrl: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Mario",
-      } as unknown as Driver,
+      objectId: "p1",
+      driver: new Driver(
+        "d1",
+        "Mario",
+        "Jumpman",
+        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Mario",
+      ),
       lane: 1,
       total_time: 120,
       lap_count: 5,
@@ -130,12 +165,13 @@ function createMockRaceParticipants(): RaceParticipant[] {
     } as unknown as RaceParticipant,
     {
       id: "p2",
-      driver: {
-        id: "d2",
-        name: "Luigi",
-        nickname: "Green Mario",
-        avatarUrl: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Luigi",
-      } as unknown as Driver,
+      objectId: "p2",
+      driver: new Driver(
+        "d2",
+        "Luigi",
+        "Green Mario",
+        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Luigi",
+      ),
       lane: 2,
       total_time: 125,
       lap_count: 4,
@@ -153,12 +189,13 @@ function createMockRaceParticipants(): RaceParticipant[] {
     } as unknown as RaceParticipant,
     {
       id: "p3",
-      driver: {
-        id: "d3",
-        name: "Bowser",
-        nickname: "King Koopa",
-        avatarUrl: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Bowser",
-      } as unknown as Driver,
+      objectId: "p3",
+      driver: new Driver(
+        "d3",
+        "Bowser",
+        "King Koopa",
+        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Bowser",
+      ),
       lane: 3,
       total_time: 130,
       lap_count: 4,
@@ -176,12 +213,13 @@ function createMockRaceParticipants(): RaceParticipant[] {
     } as unknown as RaceParticipant,
     {
       id: "p4",
-      driver: {
-        id: "d4",
-        name: "Peach",
-        nickname: "Princess",
-        avatarUrl: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Peach",
-      } as unknown as Driver,
+      objectId: "p4",
+      driver: new Driver(
+        "d4",
+        "Peach",
+        "Princess",
+        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Peach",
+      ),
       lane: 4,
       total_time: 140,
       lap_count: 3,
@@ -196,6 +234,107 @@ function createMockRaceParticipants(): RaceParticipant[] {
       fuelLevel: 40,
       seed: 4,
       team: { name: "Mushroom Kingdom", driverIds: ["d1", "d2", "d4"] },
+    } as unknown as RaceParticipant,
+  ];
+}
+
+function createMockNextHeatParticipants(): RaceParticipant[] {
+  return [
+    {
+      id: "p5",
+      objectId: "p5",
+      driver: new Driver(
+        "d5",
+        "Yoshi",
+        "Green Dino",
+        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Yoshi",
+      ),
+      lane: 1,
+      total_time: 0,
+      lap_count: 0,
+      last_lap_time: 0,
+      best_lap_time: 0,
+      average_lap_time: 0,
+      median_lap_time: 0,
+      rank: 5,
+      reaction_time: 0,
+      gap_leader: 0,
+      gap_position: 0,
+      fuelLevel: 100,
+      seed: 5,
+      team: { name: "Yoshi Island", driverIds: ["d5"] },
+    } as unknown as RaceParticipant,
+    {
+      id: "p6",
+      objectId: "p6",
+      driver: new Driver(
+        "d6",
+        "Donkey Kong",
+        "DK",
+        "https://api.dicebear.com/7.x/pixel-art/svg?seed=DK",
+      ),
+      lane: 2,
+      total_time: 0,
+      lap_count: 0,
+      last_lap_time: 0,
+      best_lap_time: 0,
+      average_lap_time: 0,
+      median_lap_time: 0,
+      rank: 6,
+      reaction_time: 0,
+      gap_leader: 0,
+      gap_position: 0,
+      fuelLevel: 100,
+      seed: 6,
+      team: { name: "DK Crew", driverIds: ["d6"] },
+    } as unknown as RaceParticipant,
+    {
+      id: "p7",
+      objectId: "p7",
+      driver: new Driver(
+        "d7",
+        "Wario",
+        "Greedy",
+        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Wario",
+      ),
+      lane: 3,
+      total_time: 0,
+      lap_count: 0,
+      last_lap_time: 0,
+      best_lap_time: 0,
+      average_lap_time: 0,
+      median_lap_time: 0,
+      rank: 7,
+      reaction_time: 0,
+      gap_leader: 0,
+      gap_position: 0,
+      fuelLevel: 100,
+      seed: 7,
+      team: { name: "Wario Land", driverIds: ["d7"] },
+    } as unknown as RaceParticipant,
+    {
+      id: "p8",
+      objectId: "p8",
+      driver: new Driver(
+        "d8",
+        "Waluigi",
+        "Purple",
+        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Waluigi",
+      ),
+      lane: 4,
+      total_time: 0,
+      lap_count: 0,
+      last_lap_time: 0,
+      best_lap_time: 0,
+      average_lap_time: 0,
+      median_lap_time: 0,
+      rank: 8,
+      reaction_time: 0,
+      gap_leader: 0,
+      gap_position: 0,
+      fuelLevel: 100,
+      seed: 8,
+      team: { name: "Waluigi Pinball", driverIds: ["d8"] },
     } as unknown as RaceParticipant,
   ];
 }
