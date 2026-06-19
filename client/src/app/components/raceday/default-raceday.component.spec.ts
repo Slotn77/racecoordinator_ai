@@ -3555,6 +3555,84 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
+  describe("Layout Editor Panel Persistence", () => {
+    it("should initialize layout editor minimized state and position from settings", () => {
+      mockSettings.layoutEditorMinimized = true;
+      mockSettings.layoutEditorPositionX = 120;
+      mockSettings.layoutEditorPositionY = 240;
+
+      // Re-trigger setupInitialState by calling ngOnInit
+      component.ngOnInit();
+
+      expect(component.isLayoutEditorMinimized).toBeTrue();
+      expect(component.layoutEditorPosition).toEqual({ x: 120, y: 240 });
+    });
+
+    it("should save minimize state and emit columnsChanged on toggleLayoutEditorMinimize", () => {
+      const settingsService = TestBed.inject(SettingsService);
+      spyOn(component.columnsChanged, "emit");
+      (settingsService.saveSettings as jasmine.Spy).calls.reset();
+
+      component.isLayoutEditorMinimized = false;
+      fixture.detectChanges();
+
+      const stopPropagationSpy = jasmine.createSpy("stopPropagation");
+      const fakeEvent = { stopPropagation: stopPropagationSpy } as any;
+
+      // Test when isUIEditorMode is true
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      component.toggleLayoutEditorMinimize(fakeEvent);
+
+      expect(stopPropagationSpy).toHaveBeenCalled();
+      expect(component.isLayoutEditorMinimized).toBeTrue();
+      expect(mockSettings.layoutEditorMinimized).toBeTrue();
+      expect(component.columnsChanged.emit).toHaveBeenCalled();
+      expect(settingsService.saveSettings).not.toHaveBeenCalled();
+
+      // Test when isUIEditorMode is false
+      fixture.componentRef.setInput("isUIEditorMode", false);
+      fixture.detectChanges();
+      component.toggleLayoutEditorMinimize(fakeEvent);
+
+      expect(component.isLayoutEditorMinimized).toBeFalse();
+      expect(mockSettings.layoutEditorMinimized).toBeFalse();
+      expect(settingsService.saveSettings).toHaveBeenCalled();
+    });
+
+    it("should save position and emit columnsChanged on onLayoutEditorDragEnded", () => {
+      const settingsService = TestBed.inject(SettingsService);
+      spyOn(component.columnsChanged, "emit");
+      (settingsService.saveSettings as jasmine.Spy).calls.reset();
+
+      const fakeDragEvent = {
+        source: {
+          getFreeDragPosition: () => ({ x: 300, y: 400 }),
+        },
+      };
+
+      // Test when isUIEditorMode is true
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      component.onLayoutEditorDragEnded(fakeDragEvent);
+
+      expect(component.layoutEditorPosition).toEqual({ x: 300, y: 400 });
+      expect(mockSettings.layoutEditorPositionX).toBe(300);
+      expect(mockSettings.layoutEditorPositionY).toBe(400);
+      expect(component.columnsChanged.emit).toHaveBeenCalled();
+      expect(settingsService.saveSettings).not.toHaveBeenCalled();
+
+      // Test when isUIEditorMode is false
+      fixture.componentRef.setInput("isUIEditorMode", false);
+      fixture.detectChanges();
+      fakeDragEvent.source.getFreeDragPosition = () => ({ x: 500, y: 600 });
+      component.onLayoutEditorDragEnded(fakeDragEvent);
+
+      expect(component.layoutEditorPosition).toEqual({ x: 500, y: 600 });
+      expect(mockSettings.layoutEditorPositionX).toBe(500);
+      expect(mockSettings.layoutEditorPositionY).toBe(600);
+      expect(settingsService.saveSettings).toHaveBeenCalled();
+    });
+  });
+
   describe("Scaling and Viewport Fitting", () => {
     it("should lock scale to 1 and dashboardWidth to 1920 when in UI Editor Mode", () => {
       fixture.componentRef.setInput("isUIEditorMode", true);

@@ -3,6 +3,8 @@
   cdkDrag
   [cdkDragScale]="scale()"
   cdkDragBoundary=".section-content"
+  [cdkDragFreeDragPosition]="columnEditorPosition()"
+  (cdkDragEnded)="onDragEnded($event)"
 >
   <div
     class="toolbox-title"

@@ -126,6 +126,8 @@
         cdkDrag
         [cdkDragScale]="toolboxScale"
         cdkDragBoundary=".dashboard-wrapper"
+        [cdkDragFreeDragPosition]="layoutEditorPosition"
+        (cdkDragEnded)="onLayoutEditorDragEnded($event)"
       >
         <div
           class="toolbox-title"

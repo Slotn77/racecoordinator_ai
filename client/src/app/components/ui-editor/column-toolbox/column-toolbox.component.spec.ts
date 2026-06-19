@@ -2,6 +2,7 @@ import { DragDropModule } from "@angular/cdk/drag-drop";
 import { Pipe, PipeTransform } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
+import { Settings } from "@app/models/settings";
 import { TranslationService } from "@app/services/translation.service";
 
 import { ColumnToolboxComponent } from "./column-toolbox.component";
@@ -49,6 +50,8 @@ describe("ColumnToolboxComponent", () => {
   });
 
   it("should minimize and expand when toggleMinimize is called", () => {
+    const settings = new Settings();
+    fixture.componentRef.setInput("settings", settings);
     fixture.detectChanges();
     expect(component.isMinimized()).toBeFalse();
 
@@ -60,9 +63,33 @@ describe("ColumnToolboxComponent", () => {
     component.toggleMinimize(fakeEvent);
     expect(stopPropagationSpy).toHaveBeenCalled();
     expect(component.isMinimized()).toBeTrue();
+    expect(settings.columnEditorMinimized).toBeTrue();
 
     component.toggleMinimize(fakeEvent);
     expect(component.isMinimized()).toBeFalse();
+    expect(settings.columnEditorMinimized).toBeFalse();
+  });
+
+  it("should update settings position and emit when onDragEnded is called", () => {
+    const settings = new Settings();
+    fixture.componentRef.setInput("settings", settings);
+    fixture.detectChanges();
+
+    let emitted = false;
+    component.settingsChanged.subscribe(() => {
+      emitted = true;
+    });
+
+    const fakeDragEvent = {
+      source: {
+        getFreeDragPosition: () => ({ x: 150, y: 200 }),
+      },
+    };
+
+    component.onDragEnded(fakeDragEvent);
+    expect(settings.columnEditorPositionX).toBe(150);
+    expect(settings.columnEditorPositionY).toBe(200);
+    expect(emitted).toBeTrue();
   });
 
   it("should sort available columns alphabetically by their translated labels", () => {
@@ -102,6 +129,8 @@ describe("ColumnToolboxComponent", () => {
   });
 
   it("should render correct template details based on minimization state", () => {
+    const settings = new Settings();
+    fixture.componentRef.setInput("settings", settings);
     fixture.componentRef.setInput("availableColumns", [
       { key: "col1", label: "col1_label" },
     ]);

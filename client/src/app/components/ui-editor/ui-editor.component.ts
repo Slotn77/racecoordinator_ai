@@ -643,6 +643,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       a.lampRedDim === b.lampRedDim &&
       a.lampGreen === b.lampGreen &&
       a.fuelGaugeImageSet === b.fuelGaugeImageSet &&
+      a.layoutEditorMinimized === b.layoutEditorMinimized &&
+      a.layoutEditorPositionX === b.layoutEditorPositionX &&
+      a.layoutEditorPositionY === b.layoutEditorPositionY &&
+      a.columnEditorMinimized === b.columnEditorMinimized &&
+      a.columnEditorPositionX === b.columnEditorPositionX &&
+      a.columnEditorPositionY === b.columnEditorPositionY &&
       JSON.stringify(a.demoConfig) === JSON.stringify(b.demoConfig) &&
       JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns) &&
       JSON.stringify(a.columnAnchors) === JSON.stringify(b.columnAnchors) &&

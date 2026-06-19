@@ -343,6 +343,8 @@
               <app-column-toolbox
                 [availableColumns]="availableColumns"
                 [scale]="scale"
+                [settings]="editingSettings"
+                (settingsChanged)="onColumnsChanged()"
               ></app-column-toolbox>
             }
           </div>

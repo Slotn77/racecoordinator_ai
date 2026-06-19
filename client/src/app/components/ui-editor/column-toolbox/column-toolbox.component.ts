@@ -1,6 +1,15 @@
 import { DragDropModule } from "@angular/cdk/drag-drop";
 import { CommonModule } from "@angular/common";
-import { Component, computed, inject, input, signal } from "@angular/core";
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from "@angular/core";
+import { Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -14,12 +23,47 @@ import { TranslationService } from "@app/services/translation.service";
 export class ColumnToolboxComponent {
   availableColumns = input<{ key: string; label: string }[]>([]);
   scale = input<number>(1);
+  settings = input<Settings | undefined>(undefined);
+  settingsChanged = output<void>();
+
   isMinimized = signal<boolean>(false);
+  columnEditorPosition = signal<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  constructor() {
+    effect(
+      () => {
+        const settings = this.settings();
+        this.isMinimized.set(settings?.columnEditorMinimized ?? false);
+        this.columnEditorPosition.set({
+          x: settings?.columnEditorPositionX ?? 0,
+          y: settings?.columnEditorPositionY ?? 0,
+        });
+      },
+      { allowSignalWrites: true },
+    );
+  }
+
   private translationService = inject(TranslationService);
 
   toggleMinimize(event: Event) {
     event.stopPropagation();
-    this.isMinimized.update((val) => !val);
+    const settings = this.settings();
+    if (settings) {
+      settings.columnEditorMinimized = !settings.columnEditorMinimized;
+      this.isMinimized.set(settings.columnEditorMinimized);
+      this.settingsChanged.emit();
+    }
+  }
+
+  onDragEnded(event: any) {
+    const pos = event.source.getFreeDragPosition();
+    const settings = this.settings();
+    if (settings) {
+      settings.columnEditorPositionX = pos.x;
+      settings.columnEditorPositionY = pos.y;
+      this.columnEditorPosition.set(pos);
+      this.settingsChanged.emit();
+    }
   }
 
   sortedAvailableColumns = computed(() => {

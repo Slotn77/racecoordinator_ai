@@ -462,12 +462,35 @@ export class DefaultRacedayComponent
   columnsChanged = output<void>();
   isLayoutCustomizing = false;
   isLayoutEditorMinimized = false;
+  layoutEditorPosition = { x: 0, y: 0 };
   layout!: LayoutConfig;
   draggedWidgetType: string | null = null;
 
   toggleLayoutEditorMinimize(event: Event) {
     event.stopPropagation();
     this.isLayoutEditorMinimized = !this.isLayoutEditorMinimized;
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    settings.layoutEditorMinimized = this.isLayoutEditorMinimized;
+    if (!this.isUIEditorMode()) {
+      this.settingsService.saveSettings(settings);
+    } else {
+      this.columnsChanged.emit();
+    }
+  }
+
+  onLayoutEditorDragEnded(event: any) {
+    const pos = event.source.getFreeDragPosition();
+    this.layoutEditorPosition = pos;
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    settings.layoutEditorPositionX = pos.x;
+    settings.layoutEditorPositionY = pos.y;
+    if (!this.isUIEditorMode()) {
+      this.settingsService.saveSettings(settings);
+    } else {
+      this.columnsChanged.emit();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -477,10 +500,17 @@ export class DefaultRacedayComponent
       this.isUIEditorMode()
     ) {
       const settings = this.editingSettings();
-      if (settings?.racedayLayout?.widgets) {
-        this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
-      } else {
-        this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+      if (settings) {
+        this.isLayoutEditorMinimized = settings.layoutEditorMinimized ?? false;
+        this.layoutEditorPosition = {
+          x: settings.layoutEditorPositionX ?? 0,
+          y: settings.layoutEditorPositionY ?? 0,
+        };
+        if (settings.racedayLayout?.widgets) {
+          this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
+        } else {
+          this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+        }
       }
       this.loadColumns();
       if (this.heat) {
@@ -512,6 +542,11 @@ export class DefaultRacedayComponent
   private setupInitialState() {
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
+    this.isLayoutEditorMinimized = settings.layoutEditorMinimized ?? false;
+    this.layoutEditorPosition = {
+      x: settings.layoutEditorPositionX ?? 0,
+      y: settings.layoutEditorPositionY ?? 0,
+    };
     if (settings.racedayLayout && settings.racedayLayout.widgets) {
       this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
     } else {
