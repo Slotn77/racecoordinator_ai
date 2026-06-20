@@ -126,4 +126,21 @@ describe("RacedayRecordsComponent", () => {
       expect(el.style.color).toBe("rgb(0, 255, 0)");
     }
   });
+
+  it("should apply correct styling classes (stripe, no-stripe, first-row) on headers and rows", () => {
+    const headers = fixture.nativeElement.querySelectorAll(".record-header");
+    expect(headers.length).toBe(4);
+    expect(headers[0].classList.contains("stripe")).toBeTrue();
+    expect(headers[1].classList.contains("no-stripe")).toBeTrue();
+    expect(headers[2].classList.contains("stripe")).toBeTrue();
+    expect(headers[3].classList.contains("no-stripe")).toBeTrue();
+
+    const rows = fixture.nativeElement.querySelectorAll(".record-row");
+    expect(rows.length).toBe(4);
+    expect(rows[0].classList.contains("stripe")).toBeTrue();
+    expect(rows[0].classList.contains("first-row")).toBeTrue();
+    expect(rows[1].classList.contains("no-stripe")).toBeTrue();
+    expect(rows[2].classList.contains("stripe")).toBeTrue();
+    expect(rows[3].classList.contains("no-stripe")).toBeTrue();
+  });
 });

@@ -1,16 +1,13 @@
 <div class="panel-card record-panel">
   <div
-    class="record-header"
+    class="record-header stripe"
     [style.font-family]="widget()?.customSettings?.['headerFontFamily'] || null"
     [style.font-size.px]="widget()?.customSettings?.['headerFontSize'] || null"
     [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
   >
     {{ "RD_RECORD_RACE_LAP" | translate }}
   </div>
-  <div
-    class="record-row"
-    style="background: #222; margin-top: 2px; padding: 0 10px"
-  >
+  <div class="record-row stripe first-row">
     <span
       class="record-val"
       [style.font-family]="
@@ -35,15 +32,14 @@
     >
   </div>
   <div
-    class="record-header"
-    style="margin-top: 5px; background: transparent"
+    class="record-header no-stripe"
     [style.font-family]="widget()?.customSettings?.['headerFontFamily'] || null"
     [style.font-size.px]="widget()?.customSettings?.['headerFontSize'] || null"
     [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
   >
     {{ "RD_RECORD_RACE_SCORE" | translate }}
   </div>
-  <div class="record-row" style="padding: 0 10px">
+  <div class="record-row no-stripe">
     <span
       class="record-val"
       [style.font-family]="
@@ -66,15 +62,14 @@
     >
   </div>
   <div
-    class="record-header"
-    style="margin-top: 5px; background: #222"
+    class="record-header stripe"
     [style.font-family]="widget()?.customSettings?.['headerFontFamily'] || null"
     [style.font-size.px]="widget()?.customSettings?.['headerFontSize'] || null"
     [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
   >
     {{ "RD_RECORD_CURRENT_RACE_BEST" | translate }}
   </div>
-  <div class="record-row" style="background: #222; padding: 0 10px">
+  <div class="record-row stripe">
     <span
       class="record-val"
       [style.font-family]="
@@ -99,15 +94,14 @@
     >
   </div>
   <div
-    class="record-header"
-    style="margin-top: 5px; background: transparent"
+    class="record-header no-stripe"
     [style.font-family]="widget()?.customSettings?.['headerFontFamily'] || null"
     [style.font-size.px]="widget()?.customSettings?.['headerFontSize'] || null"
     [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
   >
     {{ "RD_RECORD_HEAT_BEST" | translate }}
   </div>
-  <div class="record-row" style="padding: 0 10px">
+  <div class="record-row no-stripe">
     <span
       class="record-val"
       [style.font-family]="

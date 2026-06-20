@@ -8,16 +8,36 @@
   color: #eee;
 }
 
+.record-header {
+  padding-left: 12px;
+  font-size: 17px;
+}
+
+.record-header.stripe {
+  background: #222;
+}
+
+.record-header.no-stripe {
+  background: transparent;
+}
+
+.record-header:not(:first-child) {
+  margin-top: 5px;
+}
+
 .record-row {
   display: flex;
   justify-content: space-between;
+  padding: 0 10px;
   margin-bottom: 5px;
 }
 
-.record-header {
+.record-row.stripe {
   background: #222;
-  padding-left: 12px;
-  font-size: 17px;
+}
+
+.record-row.first-row {
+  margin-top: 2px;
 }
 
 .record-val {
