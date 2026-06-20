@@ -1,7 +1,8 @@
 import { CommonModule } from "@angular/common";
-import { Component, input, output } from "@angular/core";
+import { Component, inject, input, output } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { FontService } from "@app/services/font.service";
 
 @Component({
   standalone: true,
@@ -13,6 +14,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 export class LeaderboardInspectorComponent {
   settings = input.required<any>();
   change = output<void>();
+  fontService = inject(FontService);
 
   onSettingsChange() {
     this.change.emit();

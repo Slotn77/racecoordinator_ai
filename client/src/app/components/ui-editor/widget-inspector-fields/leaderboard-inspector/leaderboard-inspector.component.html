@@ -12,22 +12,14 @@
       <select
         [(ngModel)]="settings().titleFontFamily"
         (change)="onSettingsChange()"
+        (focus)="fontService.loadLocalFonts()"
       >
         <option value="">
           {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
         </option>
-        <option value="Orbitron">
-          {{ "UE_INSPECTOR_FONT_ORBITRON" | translate }}
-        </option>
-        <option value="Courier New">
-          {{ "UE_INSPECTOR_FONT_COURIER" | translate }}
-        </option>
-        <option value="Inter">
-          {{ "UE_INSPECTOR_FONT_INTER" | translate }}
-        </option>
-        <option value="Georgia">
-          {{ "UE_INSPECTOR_FONT_GEORGIA" | translate }}
-        </option>
+        @for (font of fontService.availableFonts(); track font) {
+          <option [value]="font">{{ font }}</option>
+        }
       </select>
     </div>
   </div>
@@ -95,22 +87,14 @@
       <select
         [(ngModel)]="settings().overallLeaderFontFamily"
         (change)="onSettingsChange()"
+        (focus)="fontService.loadLocalFonts()"
       >
         <option value="">
           {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
         </option>
-        <option value="Orbitron">
-          {{ "UE_INSPECTOR_FONT_ORBITRON" | translate }}
-        </option>
-        <option value="Courier New">
-          {{ "UE_INSPECTOR_FONT_COURIER" | translate }}
-        </option>
-        <option value="Inter">
-          {{ "UE_INSPECTOR_FONT_INTER" | translate }}
-        </option>
-        <option value="Georgia">
-          {{ "UE_INSPECTOR_FONT_GEORGIA" | translate }}
-        </option>
+        @for (font of fontService.availableFonts(); track font) {
+          <option [value]="font">{{ font }}</option>
+        }
       </select>
     </div>
   </div>
@@ -178,22 +162,14 @@
       <select
         [(ngModel)]="settings().restFontFamily"
         (change)="onSettingsChange()"
+        (focus)="fontService.loadLocalFonts()"
       >
         <option value="">
           {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
         </option>
-        <option value="Orbitron">
-          {{ "UE_INSPECTOR_FONT_ORBITRON" | translate }}
-        </option>
-        <option value="Courier New">
-          {{ "UE_INSPECTOR_FONT_COURIER" | translate }}
-        </option>
-        <option value="Inter">
-          {{ "UE_INSPECTOR_FONT_INTER" | translate }}
-        </option>
-        <option value="Georgia">
-          {{ "UE_INSPECTOR_FONT_GEORGIA" | translate }}
-        </option>
+        @for (font of fontService.availableFonts(); track font) {
+          <option [value]="font">{{ font }}</option>
+        }
       </select>
     </div>
   </div>

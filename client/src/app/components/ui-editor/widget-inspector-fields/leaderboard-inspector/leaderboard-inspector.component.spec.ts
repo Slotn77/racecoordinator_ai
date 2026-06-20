@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { FontService } from "@app/services/font.service";
 
 import { LeaderboardInspectorComponent } from "./leaderboard-inspector.component";
 
@@ -9,13 +10,21 @@ describe("LeaderboardInspectorComponent", () => {
   let fixture: ComponentFixture<LeaderboardInspectorComponent>;
   let changeSpy: jasmine.Spy;
 
+  let fontServiceSpy: jasmine.SpyObj<FontService>;
+
   beforeEach(async () => {
+    const fontSpy = jasmine.createSpyObj("FontService", ["loadLocalFonts"], {
+      availableFonts: () => ["Font A", "Font B"],
+    });
+
     await TestBed.configureTestingModule({
       imports: [FormsModule, LeaderboardInspectorComponent, TranslatePipe],
+      providers: [{ provide: FontService, useValue: fontSpy }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(LeaderboardInspectorComponent);
     component = fixture.componentInstance;
+    fontServiceSpy = TestBed.inject(FontService) as jasmine.SpyObj<FontService>;
 
     // Set required input
     fixture.componentRef.setInput("settings", {
@@ -60,5 +69,11 @@ describe("LeaderboardInspectorComponent", () => {
     component.resetColor("titleTextColor");
     expect(component.settings().titleTextColor).toBe("");
     expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should trigger loadLocalFonts on font service when select element is focused", () => {
+    const selectEl = fixture.nativeElement.querySelector("select");
+    selectEl.dispatchEvent(new Event("focus"));
+    expect(fontServiceSpy.loadLocalFonts).toHaveBeenCalled();
   });
 });
