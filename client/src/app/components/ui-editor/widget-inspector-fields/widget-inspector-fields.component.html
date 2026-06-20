@@ -11,4 +11,10 @@
       (change)="onSettingsChange()"
     ></app-records-inspector>
   }
+  @case ("timer") {
+    <app-timer-inspector
+      [settings]="widget().customSettings"
+      (change)="onSettingsChange()"
+    ></app-timer-inspector>
+  }
 }

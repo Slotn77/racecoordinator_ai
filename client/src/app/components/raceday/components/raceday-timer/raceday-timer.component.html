@@ -1,6 +1,13 @@
 <div class="panel-card timer-panel">
   <div class="timer-wrapper">
-    <div class="timer-text">{{ formattedTime() }}</div>
+    <div
+      class="timer-text"
+      [style.font-family]="widget()?.customSettings?.['timeFontFamily'] || null"
+      [style.font-size.px]="widget()?.customSettings?.['timeFontSize'] || null"
+      [style.color]="widget()?.customSettings?.['timeTextColor'] || null"
+    >
+      {{ formattedTime() }}
+    </div>
     <div class="timer-status-labels">
       @if (autoStatusLabel() && !showCountdownOverlay()) {
         <div class="status-label">

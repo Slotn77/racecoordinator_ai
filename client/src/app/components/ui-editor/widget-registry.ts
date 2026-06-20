@@ -26,4 +26,11 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       valueTextColor: "",
     }),
   },
+  timer: {
+    defaultSettings: () => ({
+      timeFontFamily: "",
+      timeFontSize: 100,
+      timeTextColor: "",
+    }),
+  },
 };

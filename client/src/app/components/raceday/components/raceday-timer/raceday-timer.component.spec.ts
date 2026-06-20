@@ -61,4 +61,24 @@ describe("RacedayTimerComponent", () => {
 
     expect(await harness.getStatusLabel()).toBeNull();
   });
+
+  it("should apply custom style settings for timer text when widget input is set", () => {
+    const mockWidget: any = {
+      widgetType: "timer",
+      customSettings: {
+        timeFontFamily: "Arial",
+        timeFontSize: 85,
+        timeTextColor: "#ff0000",
+      },
+    };
+    fixture.componentRef.setInput("widget", mockWidget);
+    fixture.componentRef.setInput("autoStatusLabel", "RD_PAUSED");
+    fixture.componentRef.setInput("isWarmup", true);
+    fixture.detectChanges();
+
+    const timerTextEl = fixture.nativeElement.querySelector(".timer-text");
+    expect(timerTextEl.style.fontFamily).toBe("Arial");
+    expect(timerTextEl.style.fontSize).toBe("85px");
+    expect(timerTextEl.style.color).toBe("rgb(255, 0, 0)");
+  });
 });

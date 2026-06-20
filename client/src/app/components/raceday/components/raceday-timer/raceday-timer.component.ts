@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component, input, ViewEncapsulation } from "@angular/core";
+import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
@@ -11,6 +12,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   imports: [CommonModule, TranslatePipe],
 })
 export class RacedayTimerComponent {
+  widget = input<AbsoluteWidgetNode | null>(null);
   formattedTime = input<string>("");
   autoStatusLabel = input<string>("");
   isWarmup = input<boolean>(false);

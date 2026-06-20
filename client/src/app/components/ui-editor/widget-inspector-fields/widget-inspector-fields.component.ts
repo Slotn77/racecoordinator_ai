@@ -4,6 +4,7 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
 
 import { LeaderboardInspectorComponent } from "./leaderboard-inspector/leaderboard-inspector.component";
 import { RecordsInspectorComponent } from "./records-inspector/records-inspector.component";
+import { TimerInspectorComponent } from "./timer-inspector/timer-inspector.component";
 
 @Component({
   standalone: true,
@@ -13,6 +14,7 @@ import { RecordsInspectorComponent } from "./records-inspector/records-inspector
     CommonModule,
     LeaderboardInspectorComponent,
     RecordsInspectorComponent,
+    TimerInspectorComponent,
   ],
 })
 export class WidgetInspectorFieldsComponent {

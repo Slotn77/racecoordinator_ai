@@ -1,0 +1,76 @@
+@if (settings()) {
+  <!-- Time Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_TIMER_TIME" | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().timeFontFamily"
+        (change)="onSettingsChange()"
+        (focus)="fontService.loadLocalFonts()"
+      >
+        <option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </option>
+        @for (font of fontService.availableFonts(); track font) {
+          <option [value]="font">{{ font }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ settings().timeFontSize || 100 }}px</span
+      >
+    </div>
+    <input
+      type="range"
+      min="10"
+      max="200"
+      [(ngModel)]="settings().timeFontSize"
+      (change)="onSettingsChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TEXT_COLOR" | translate
+    }}</label>
+    <div
+      class="color-picker-wrapper"
+      [class.is-null]="!settings().timeTextColor"
+    >
+      <input
+        type="color"
+        [value]="settings().timeTextColor || '#32cd32'"
+        (change)="onColorChange('timeTextColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!settings().timeTextColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (settings().timeTextColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('timeTextColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          ✕
+        </button>
+      }
+    </div>
+  </div>
+}

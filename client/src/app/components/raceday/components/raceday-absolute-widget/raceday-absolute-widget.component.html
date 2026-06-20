@@ -83,6 +83,7 @@
       }
       @case ("timer") {
         <app-raceday-timer
+          [widget]="widget()"
           [formattedTime]="parentComponent().formattedTime"
           [autoStatusLabel]="parentComponent().autoStatusLabel"
           [isWarmup]="parentComponent().isWarmup"
