@@ -28,6 +28,7 @@ describe("LeaderboardInspectorComponent", () => {
 
     // Set required input
     fixture.componentRef.setInput("settings", {
+      decimalPlaces: 3,
       titleFontFamily: "",
       titleFontSize: 18,
       titleTextColor: "",
@@ -72,8 +73,17 @@ describe("LeaderboardInspectorComponent", () => {
   });
 
   it("should trigger loadLocalFonts on font service when select element is focused", () => {
-    const selectEl = fixture.nativeElement.querySelector("select");
+    const selectEl = fixture.nativeElement.querySelectorAll("select")[1];
     selectEl.dispatchEvent(new Event("focus"));
     expect(fontServiceSpy.loadLocalFonts).toHaveBeenCalled();
+  });
+
+  it("should bind decimalPlaces and emit change on selection", () => {
+    const selectEl = fixture.nativeElement.querySelectorAll("select")[0];
+    selectEl.value = "2";
+    selectEl.dispatchEvent(new Event("change"));
+    fixture.detectChanges();
+    expect(Number(component.settings().decimalPlaces)).toBe(2);
+    expect(changeSpy).toHaveBeenCalled();
   });
 });

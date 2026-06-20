@@ -1,4 +1,22 @@
 @if (settings()) {
+  <!-- Decimal Places -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_DECIMAL_PLACES" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().decimalPlaces"
+        (change)="onSettingsChange()"
+      >
+        <option [value]="0">0</option>
+        <option [value]="1">1</option>
+        <option [value]="2">2</option>
+        <option [value]="3">3</option>
+      </select>
+    </div>
+  </div>
+
   <!-- Title Section -->
   <div class="inspector-geometry-title">
     {{ "UE_INSPECTOR_LEADERBOARD_TITLE" | translate }}

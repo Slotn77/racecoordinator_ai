@@ -1124,6 +1124,7 @@
   "UE_INSPECTOR_X_POS": "Posição X",
   "UE_INSPECTOR_Y_POS": "Posição Y",
   "UE_INSPECTOR_Z_INDEX": "Profundidade da Camada (Z-Index)",
+  "UE_INSPECTOR_DECIMAL_PLACES": "Casas Decimais",
   "UE_INSPECTOR_LEADERBOARD_TITLE": "Configurações do Título",
   "UE_INSPECTOR_LEADERBOARD_OVERALL_LEADER": "Líder Geral (1º Lugar)",
   "UE_INSPECTOR_LEADERBOARD_REST": "Placar de Líderes",

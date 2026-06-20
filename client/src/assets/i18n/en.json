@@ -1124,6 +1124,7 @@
   "UE_INSPECTOR_X_POS": "X Pos",
   "UE_INSPECTOR_Y_POS": "Y Pos",
   "UE_INSPECTOR_Z_INDEX": "Layer Depth (Z-Index)",
+  "UE_INSPECTOR_DECIMAL_PLACES": "Decimal Places",
   "UE_INSPECTOR_LEADERBOARD_TITLE": "Title Settings",
   "UE_INSPECTOR_LEADERBOARD_OVERALL_LEADER": "Overall Leader (1st Place)",
   "UE_INSPECTOR_LEADERBOARD_REST": "Leader Board",

@@ -32,6 +32,11 @@ export class RacedayLeaderboardComponent {
   }
 
   getLeaderboardScoreFormat(entry: any): string {
+    const customDecimals = this.widget()?.customSettings?.["decimalPlaces"];
+    if (customDecimals !== undefined && customDecimals !== null) {
+      const d = Math.min(3, Math.max(0, Number(customDecimals)));
+      return `1.${d}-${d}`;
+    }
     if (!entry) return "1.0-0";
     if (entry.isTime !== undefined) {
       return entry.isTime ? "1.3-3" : "1.2-2";

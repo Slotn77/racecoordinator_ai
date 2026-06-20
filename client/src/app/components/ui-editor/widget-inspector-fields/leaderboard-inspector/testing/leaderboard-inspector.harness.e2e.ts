@@ -25,12 +25,21 @@ export class LeaderboardInspectorHarnessE2e implements LeaderboardInspectorHarne
     return this.locator.locator(this.base.selectors.resetButtons);
   }
 
+  async getDecimalPlaces(): Promise<number> {
+    const val = await this.selects.nth(0).inputValue();
+    return Number(val);
+  }
+
+  async setDecimalPlaces(val: number): Promise<void> {
+    await this.selects.nth(0).selectOption({ value: val.toString() });
+  }
+
   async getTitleFontFamily(): Promise<string> {
-    return await this.selects.nth(0).inputValue();
+    return await this.selects.nth(1).inputValue();
   }
 
   async setTitleFontFamily(val: string): Promise<void> {
-    await this.selects.nth(0).selectOption({ label: val });
+    await this.selects.nth(1).selectOption({ label: val });
   }
 
   async getTitleFontSize(): Promise<number> {
@@ -55,11 +64,11 @@ export class LeaderboardInspectorHarnessE2e implements LeaderboardInspectorHarne
   }
 
   async getOverallLeaderFontFamily(): Promise<string> {
-    return await this.selects.nth(1).inputValue();
+    return await this.selects.nth(2).inputValue();
   }
 
   async setOverallLeaderFontFamily(val: string): Promise<void> {
-    await this.selects.nth(1).selectOption({ label: val });
+    await this.selects.nth(2).selectOption({ label: val });
   }
 
   async getOverallLeaderFontSize(): Promise<number> {
@@ -89,11 +98,11 @@ export class LeaderboardInspectorHarnessE2e implements LeaderboardInspectorHarne
   }
 
   async getRestFontFamily(): Promise<string> {
-    return await this.selects.nth(2).inputValue();
+    return await this.selects.nth(3).inputValue();
   }
 
   async setRestFontFamily(val: string): Promise<void> {
-    await this.selects.nth(2).selectOption({ label: val });
+    await this.selects.nth(3).selectOption({ label: val });
   }
 
   async getRestFontSize(): Promise<number> {

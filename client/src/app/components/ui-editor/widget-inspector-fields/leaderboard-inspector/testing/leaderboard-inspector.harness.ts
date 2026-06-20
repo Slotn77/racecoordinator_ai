@@ -21,15 +21,26 @@ export class LeaderboardInspectorHarness
     LeaderboardInspectorHarnessBase.selectors.resetButtons,
   );
 
+  async getDecimalPlaces(): Promise<number> {
+    const selects = await this.getSelects();
+    return Number(await selects[0].getProperty("value"));
+  }
+
+  async setDecimalPlaces(val: number): Promise<void> {
+    const selects = await this.getSelects();
+    await selects[0].sendKeys(val.toString());
+    await selects[0].dispatchEvent("change");
+  }
+
   async getTitleFontFamily(): Promise<string> {
     const selects = await this.getSelects();
-    return await selects[0].getProperty("value");
+    return await selects[1].getProperty("value");
   }
 
   async setTitleFontFamily(val: string): Promise<void> {
     const selects = await this.getSelects();
-    await selects[0].sendKeys(val);
-    await selects[0].dispatchEvent("change");
+    await selects[1].sendKeys(val);
+    await selects[1].dispatchEvent("change");
   }
 
   async getTitleFontSize(): Promise<number> {
@@ -64,13 +75,13 @@ export class LeaderboardInspectorHarness
 
   async getOverallLeaderFontFamily(): Promise<string> {
     const selects = await this.getSelects();
-    return await selects[1].getProperty("value");
+    return await selects[2].getProperty("value");
   }
 
   async setOverallLeaderFontFamily(val: string): Promise<void> {
     const selects = await this.getSelects();
-    await selects[1].sendKeys(val);
-    await selects[1].dispatchEvent("change");
+    await selects[2].sendKeys(val);
+    await selects[2].dispatchEvent("change");
   }
 
   async getOverallLeaderFontSize(): Promise<number> {
@@ -107,13 +118,13 @@ export class LeaderboardInspectorHarness
 
   async getRestFontFamily(): Promise<string> {
     const selects = await this.getSelects();
-    return await selects[2].getProperty("value");
+    return await selects[3].getProperty("value");
   }
 
   async setRestFontFamily(val: string): Promise<void> {
     const selects = await this.getSelects();
-    await selects[2].sendKeys(val);
-    await selects[2].dispatchEvent("change");
+    await selects[3].sendKeys(val);
+    await selects[3].dispatchEvent("change");
   }
 
   async getRestFontSize(): Promise<number> {

@@ -50,6 +50,7 @@ test.describe("Leaderboard Inspector Visuals", () => {
 
     const harness = new LeaderboardInspectorHarnessE2e(inspectorFields);
     // Interact with options to show they work and are displayed properly
+    await harness.setDecimalPlaces(1);
     await harness.setTitleFontSize(28);
     await harness.setOverallLeaderFontSize(24);
     await harness.setRestFontSize(20);

@@ -1124,6 +1124,7 @@
   "UE_INSPECTOR_X_POS": "Posizione X",
   "UE_INSPECTOR_Y_POS": "Posizione Y",
   "UE_INSPECTOR_Z_INDEX": "Profondità del Livello (Z-Index)",
+  "UE_INSPECTOR_DECIMAL_PLACES": "Decimali",
   "UE_INSPECTOR_LEADERBOARD_TITLE": "Impostazioni del Titolo",
   "UE_INSPECTOR_LEADERBOARD_OVERALL_LEADER": "Leader Generale (1° Posto)",
   "UE_INSPECTOR_LEADERBOARD_REST": "Tabella di Classifica",

@@ -5,6 +5,7 @@ export interface WidgetRegistryEntry {
 export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
   leaderboard: {
     defaultSettings: () => ({
+      decimalPlaces: 3,
       titleFontFamily: "",
       titleFontSize: 18,
       titleTextColor: "",

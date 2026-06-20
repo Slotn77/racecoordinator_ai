@@ -8,6 +8,9 @@ export abstract class LeaderboardInspectorHarnessBase {
     resetButtons: ".color-reset-btn",
   };
 
+  abstract getDecimalPlaces(): Promise<number>;
+  abstract setDecimalPlaces(val: number): Promise<void>;
+
   abstract getTitleFontFamily(): Promise<string>;
   abstract setTitleFontFamily(val: string): Promise<void>;
   abstract getTitleFontSize(): Promise<number>;

@@ -1124,6 +1124,7 @@
   "UE_INSPECTOR_X_POS": "X Positie",
   "UE_INSPECTOR_Y_POS": "Y Positie",
   "UE_INSPECTOR_Z_INDEX": "Laagdiepte (Z-Index)",
+  "UE_INSPECTOR_DECIMAL_PLACES": "Decimalen",
   "UE_INSPECTOR_LEADERBOARD_TITLE": "Titelinstellingen",
   "UE_INSPECTOR_LEADERBOARD_OVERALL_LEADER": "Algemeen Leider (1e Plaats)",
   "UE_INSPECTOR_LEADERBOARD_REST": "Leaderboard",
