@@ -36,4 +36,16 @@
       (change)="onSettingsChange()"
     ></app-lane-view-inspector>
   }
+  @case ("on-deck") {
+    <app-upcoming-inspector
+      [settings]="widget().customSettings"
+      (change)="onSettingsChange()"
+    ></app-upcoming-inspector>
+  }
+  @case ("next-heat") {
+    <app-upcoming-inspector
+      [settings]="widget().customSettings"
+      (change)="onSettingsChange()"
+    ></app-upcoming-inspector>
+  }
 }

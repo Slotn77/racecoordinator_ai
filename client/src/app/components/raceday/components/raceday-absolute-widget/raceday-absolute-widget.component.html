@@ -128,6 +128,7 @@
           [currentHeat]="parentComponent().heat"
           [heats]="parentComponent().heats"
           [parent]="parentComponent()"
+          [widget]="widget()"
         ></app-raceday-on-deck>
       }
       @case ("next-heat") {
@@ -136,6 +137,7 @@
           [currentHeat]="parentComponent().heat"
           [heats]="parentComponent().heats"
           [parent]="parentComponent()"
+          [widget]="widget()"
         ></app-raceday-next-heat>
       }
       @case ("image") {

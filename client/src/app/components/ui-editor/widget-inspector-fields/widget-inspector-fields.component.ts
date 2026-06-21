@@ -7,6 +7,7 @@ import { LaneViewInspectorComponent } from "./lane-view-inspector/lane-view-insp
 import { LeaderboardInspectorComponent } from "./leaderboard-inspector/leaderboard-inspector.component";
 import { RecordsInspectorComponent } from "./records-inspector/records-inspector.component";
 import { TimerInspectorComponent } from "./timer-inspector/timer-inspector.component";
+import { UpcomingInspectorComponent } from "./upcoming-inspector/upcoming-inspector.component";
 
 @Component({
   standalone: true,
@@ -19,6 +20,7 @@ import { TimerInspectorComponent } from "./timer-inspector/timer-inspector.compo
     RecordsInspectorComponent,
     TimerInspectorComponent,
     ImageInspectorComponent,
+    UpcomingInspectorComponent,
   ],
 })
 export class WidgetInspectorFieldsComponent {

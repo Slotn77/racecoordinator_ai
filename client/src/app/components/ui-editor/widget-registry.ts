@@ -45,6 +45,26 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       lapDecimalPlaces: 2,
     }),
   },
+  "on-deck": {
+    defaultSettings: () => ({
+      titleFontFamily: "",
+      titleFontSize: 18,
+      titleTextColor: "",
+      laneFontFamily: "",
+      laneFontSize: 16,
+      laneTextColor: "",
+    }),
+  },
+  "next-heat": {
+    defaultSettings: () => ({
+      titleFontFamily: "",
+      titleFontSize: 18,
+      titleTextColor: "",
+      laneFontFamily: "",
+      laneFontSize: 16,
+      laneTextColor: "",
+    }),
+  },
   "group-leaderboard": {
     defaultSettings: () => ({
       decimalPlaces: 3,

@@ -1,4 +1,4 @@
-.on-deck-panel {
+.next-heat-panel, .on-deck-panel {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -9,7 +9,7 @@
   border-radius: 6px;
 }
 
-.on-deck-title {
+.next-heat-title, .on-deck-title {
   color: #38bdf8;
   font-size: 18px;
   font-weight: bold;
@@ -20,7 +20,7 @@
   text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
 }
 
-.on-deck-list {
+.next-heat-list, .on-deck-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -29,28 +29,28 @@
   padding-right: 4px;
 }
 
-.on-deck-list::-webkit-scrollbar {
+.next-heat-list::-webkit-scrollbar, .on-deck-list::-webkit-scrollbar {
   width: 10px;
 }
 
-.on-deck-list::-webkit-scrollbar-track {
+.next-heat-list::-webkit-scrollbar-track, .on-deck-list::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 5px;
 }
 
-.on-deck-list::-webkit-scrollbar-thumb {
+.next-heat-list::-webkit-scrollbar-thumb, .on-deck-list::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border: 2px solid transparent;
   background-clip: padding-box;
   border-radius: 5px;
 }
 
-.on-deck-list::-webkit-scrollbar-thumb:hover {
+.next-heat-list::-webkit-scrollbar-thumb:hover, .on-deck-list::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
   background-clip: padding-box;
 }
 
-.on-deck-item {
+.next-heat-item, .on-deck-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -58,15 +58,16 @@
   background: rgba(255, 255, 255, 0.03);
   border-radius: 4px;
   transition: background 0.2s ease;
+  font-size: 16px;
 }
 
-.on-deck-item:hover {
+.next-heat-item:hover, .on-deck-item:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
 .driver-nickname {
   color: #f8fafc;
-  font-size: 16px;
+  font-size: inherit;
   font-weight: 600;
 }
 
@@ -74,17 +75,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 0.875em;
   font-weight: bold;
-  min-width: 28px;
-  height: 24px;
-  padding: 0 6px;
-  border-radius: 12px;
+  padding: 0.2em 0.6em;
+  border-radius: 9999px;
   border: 1px solid transparent;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  line-height: 1;
 }
 
-.on-deck-empty {
+.next-heat-empty, .on-deck-empty {
   color: #64748b;
   font-style: italic;
   text-align: center;
