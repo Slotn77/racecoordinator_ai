@@ -3195,10 +3195,11 @@ export class DefaultRacedayComponent
 
   onCellClick(hd: DriverHeatData, col: ColumnDefinition, event: MouseEvent) {
     if (col.propertyName === "lapCount") {
-      const amount = event.shiftKey
-        ? -this.LAP_ADJUSTMENT_AMOUNT
-        : this.LAP_ADJUSTMENT_AMOUNT;
-      this.updateUserLaps(hd, amount);
+      if (event.ctrlKey || event.metaKey) {
+        this.updateUserLaps(hd, this.LAP_ADJUSTMENT_AMOUNT);
+      } else if (event.shiftKey) {
+        this.updateUserLaps(hd, -this.LAP_ADJUSTMENT_AMOUNT);
+      }
     }
   }
 
