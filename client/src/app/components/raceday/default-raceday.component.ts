@@ -1505,16 +1505,12 @@ export class DefaultRacedayComponent
   }
 
   getWidgets(): any[] {
-    const layout = this.isUIEditorMode()
-      ? this.editingSettings()?.racedayLayout
-      : this.layout;
+    const layout = this.layout;
     return layout?.widgets || [];
   }
 
   getTableBodyHeight(): number {
-    const layout = this.isUIEditorMode()
-      ? this.editingSettings()?.racedayLayout
-      : this.layout;
+    const layout = this.layout;
     return RacedayLayoutUtils.getTableBodyHeight(
       layout,
       this.isLayoutCustomizing,
@@ -1522,9 +1518,7 @@ export class DefaultRacedayComponent
   }
 
   getRowHeight(): number {
-    const layout = this.isUIEditorMode()
-      ? this.editingSettings()?.racedayLayout
-      : this.layout;
+    const layout = this.layout;
     return RacedayLayoutUtils.getRowHeight(
       layout,
       this.track?.lanes?.length || 1,

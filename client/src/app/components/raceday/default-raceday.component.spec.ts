@@ -39,6 +39,8 @@ import { AuthService } from "@app/services/auth.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import * as _audio from "@app/utils/audio";
 
+import { RacedayLayoutUtils } from "./utils/raceday-layout.utils";
+
 @Component({
   selector: "app-acknowledgement-modal",
   standalone: true,
@@ -3656,6 +3658,44 @@ describe("DefaultRacedayComponent", () => {
       expect(component["currentRaceBestTime"]).toBe(1.955);
       expect(component["heatBestNickname"]).toBe("Peach");
       expect(component["heatBestTime"]).toBe(2.012);
+    });
+  });
+
+  describe("Layout Source of Truth", () => {
+    it("should always return widgets and calculate dimensions from local layout", () => {
+      const testLayout = {
+        widgets: [
+          {
+            id: "test-w1",
+            widgetType: "timer",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+          },
+        ],
+      } as any;
+      component.layout = testLayout;
+
+      // Test getWidgets
+      expect(component.getWidgets()).toEqual(testLayout.widgets);
+
+      // Test that it uses local layout for heights
+      spyOn(RacedayLayoutUtils, "getTableBodyHeight").and.returnValue(500);
+      spyOn(RacedayLayoutUtils, "getRowHeight").and.returnValue(50);
+
+      expect(component.getTableBodyHeight()).toBe(500);
+      expect(RacedayLayoutUtils.getTableBodyHeight).toHaveBeenCalledWith(
+        testLayout,
+        component.isLayoutCustomizing,
+      );
+
+      expect(component.getRowHeight()).toBe(50);
+      expect(RacedayLayoutUtils.getRowHeight).toHaveBeenCalledWith(
+        testLayout,
+        jasmine.any(Number),
+        component.isLayoutCustomizing,
+      );
     });
   });
 });
