@@ -2,6 +2,7 @@
   @case ("leaderboard") {
     <app-leaderboard-inspector
       [settings]="widget().customSettings"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
       (change)="onSettingsChange()"
     ></app-leaderboard-inspector>
   }
@@ -9,18 +10,21 @@
     <app-leaderboard-inspector
       [settings]="widget().customSettings"
       [isGroup]="true"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
       (change)="onSettingsChange()"
     ></app-leaderboard-inspector>
   }
   @case ("records") {
     <app-records-inspector
       [settings]="widget().customSettings"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
       (change)="onSettingsChange()"
     ></app-records-inspector>
   }
   @case ("timer") {
     <app-timer-inspector
       [settings]="widget().customSettings"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
       (change)="onSettingsChange()"
     ></app-timer-inspector>
   }
@@ -33,18 +37,21 @@
   @case ("lane-view") {
     <app-lane-view-inspector
       [settings]="widget().customSettings"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
       (change)="onSettingsChange()"
     ></app-lane-view-inspector>
   }
   @case ("on-deck") {
     <app-upcoming-inspector
       [settings]="widget().customSettings"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
       (change)="onSettingsChange()"
     ></app-upcoming-inspector>
   }
   @case ("next-heat") {
     <app-upcoming-inspector
       [settings]="widget().customSettings"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
       (change)="onSettingsChange()"
     ></app-upcoming-inspector>
   }

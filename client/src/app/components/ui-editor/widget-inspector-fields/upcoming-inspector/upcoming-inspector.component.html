@@ -38,6 +38,7 @@
       min="10"
       max="120"
       [(ngModel)]="settings().titleFontSize"
+      [disabled]="disableFontSizes()"
       (change)="onSettingsChange()"
       class="inspector-slider"
     />
@@ -113,6 +114,7 @@
       min="10"
       max="120"
       [(ngModel)]="settings().laneFontSize"
+      [disabled]="disableFontSizes()"
       (change)="onSettingsChange()"
       class="inspector-slider"
     />

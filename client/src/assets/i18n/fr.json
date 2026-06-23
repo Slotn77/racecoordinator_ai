@@ -1143,7 +1143,7 @@
   "UE_INSPECTOR_RECORDS_HEADER": "Paramètres d'en-tête",
   "UE_INSPECTOR_RECORDS_VALUE": "Paramètres de valeur",
   "UE_INSPECTOR_SCALING_AUTO": "Ajustement Automatique",
-  "UE_INSPECTOR_SCALING_DEFAULT": "Défaut",
+  "UE_INSPECTOR_SCALING_DEFAULT": "Personnalisé",
   "UE_INSPECTOR_SCALING_FIXED": "Taille de Police Fixe",
   "UE_INSPECTOR_SCALING_MODE": "Mode de Mise à l'Échelle",
   "UE_INSPECTOR_TEXT_COLOR": "Couleur du Texte",

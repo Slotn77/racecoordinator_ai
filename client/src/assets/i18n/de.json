@@ -1143,7 +1143,7 @@
   "UE_INSPECTOR_RECORDS_HEADER": "Kopfzeileneinstellungen",
   "UE_INSPECTOR_RECORDS_VALUE": "Werteinstellungen",
   "UE_INSPECTOR_SCALING_AUTO": "Automatisch anpassen",
-  "UE_INSPECTOR_SCALING_DEFAULT": "Standard",
+  "UE_INSPECTOR_SCALING_DEFAULT": "Benutzerdefiniert",
   "UE_INSPECTOR_SCALING_FIXED": "Feste Schriftgröße",
   "UE_INSPECTOR_SCALING_MODE": "Skalierungsmodus",
   "UE_INSPECTOR_TEXT_COLOR": "Textfarbe",

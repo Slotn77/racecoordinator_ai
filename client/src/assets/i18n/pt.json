@@ -1143,7 +1143,7 @@
   "UE_INSPECTOR_RECORDS_HEADER": "Configurações de cabeçalho",
   "UE_INSPECTOR_RECORDS_VALUE": "Configurações de valor",
   "UE_INSPECTOR_SCALING_AUTO": "Ajuste Automático",
-  "UE_INSPECTOR_SCALING_DEFAULT": "Padrão",
+  "UE_INSPECTOR_SCALING_DEFAULT": "Personalizado",
   "UE_INSPECTOR_SCALING_FIXED": "Tamanho de Fonte Fixo",
   "UE_INSPECTOR_SCALING_MODE": "Modo de Dimensionamento",
   "UE_INSPECTOR_TEXT_COLOR": "Cor do Texto",

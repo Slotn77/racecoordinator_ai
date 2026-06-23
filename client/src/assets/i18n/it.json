@@ -1143,7 +1143,7 @@
   "UE_INSPECTOR_RECORDS_HEADER": "Impostazioni intestazione",
   "UE_INSPECTOR_RECORDS_VALUE": "Impostazioni valore",
   "UE_INSPECTOR_SCALING_AUTO": "Adattamento Automatico",
-  "UE_INSPECTOR_SCALING_DEFAULT": "Predefinito",
+  "UE_INSPECTOR_SCALING_DEFAULT": "Personalizzato",
   "UE_INSPECTOR_SCALING_FIXED": "Dimensione del Font Fissa",
   "UE_INSPECTOR_SCALING_MODE": "Modalità di Ridimensionamento",
   "UE_INSPECTOR_TEXT_COLOR": "Colore del Testo",

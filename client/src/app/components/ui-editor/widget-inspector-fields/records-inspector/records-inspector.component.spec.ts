@@ -88,4 +88,17 @@ describe("RecordsInspectorComponent", () => {
     expect(await harness.getHeaderFontSize()).toBe(45);
     expect(changeSpy).toHaveBeenCalled();
   });
+
+  it("should disable font size inputs when disableFontSizes is true", async () => {
+    fixture.componentRef.setInput("disableFontSizes", true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const sliders = fixture.nativeElement.querySelectorAll(
+      'input[type="range"]',
+    );
+    expect(sliders.length).toBeGreaterThan(0);
+    sliders.forEach((slider: HTMLInputElement) => {
+      expect(slider.disabled).toBeTrue();
+    });
+  });
 });

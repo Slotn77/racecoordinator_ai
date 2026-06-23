@@ -13,6 +13,7 @@ import { FontService } from "@app/services/font.service";
 })
 export class LaneViewInspectorComponent {
   settings = input.required<any>();
+  disableFontSizes = input<boolean>(false);
   change = output<void>();
   fontService = inject(FontService);
 

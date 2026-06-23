@@ -38,6 +38,7 @@
       min="10"
       max="200"
       [(ngModel)]="settings().timeFontSize"
+      [disabled]="disableFontSizes()"
       (change)="onSettingsChange()"
       class="inspector-slider"
     />

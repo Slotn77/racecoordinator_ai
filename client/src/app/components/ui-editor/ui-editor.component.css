@@ -877,6 +877,18 @@
   background: #0ea5e9;
 }
 
+.inspector-slider:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.inspector-slider:disabled::-webkit-slider-thumb {
+  background: #64748b;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
 .inspector-row-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
