@@ -81,4 +81,14 @@ describe("RacedayTimerComponent", () => {
     expect(timerTextEl.style.fontSize).toBe("85px");
     expect(timerTextEl.style.color).toBe("rgb(255, 0, 0)");
   });
+
+  it("should render with timer-panel and timer-text classes for styling", () => {
+    fixture.componentRef.setInput("formattedTime", "01:23");
+    fixture.detectChanges();
+    const timerPanel = fixture.nativeElement.querySelector(".timer-panel");
+    const timerText = fixture.nativeElement.querySelector(".timer-text");
+    expect(timerPanel).toBeTruthy();
+    expect(timerText).toBeTruthy();
+    expect(timerText.textContent.trim()).toBe("01:23");
+  });
 });

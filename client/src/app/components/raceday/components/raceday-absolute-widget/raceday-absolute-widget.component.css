@@ -159,18 +159,27 @@
 }
 
 /* Auto-scale for Timer component */
+.widget-wrapper.scale-auto .timer-panel {
+  padding: 4cqh 6cqw !important;
+}
 .widget-wrapper.scale-auto .timer-text {
-  font-size: calc(42cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: var(--timer-font-size, calc(min(38cqh, 24cqw) * var(--widget-scale-factor, 1))) !important;
   line-height: 1 !important;
+  white-space: nowrap !important;
 }
 .widget-wrapper.scale-auto .status-label {
-  font-size: calc(7cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: var(--timer-status-font-size, calc(0.16 * var(--timer-font-size, calc(min(38cqh, 24cqw) * var(--widget-scale-factor, 1))))) !important;
+  white-space: nowrap !important;
 }
 .widget-wrapper.scale-auto .warmup-label {
-  font-size: calc(9cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: var(--timer-warmup-font-size, calc(0.2 * var(--timer-font-size, calc(min(38cqh, 24cqw) * var(--widget-scale-factor, 1))))) !important;
+  white-space: nowrap !important;
 }
 
 /* Fixed size text overrides */
+.widget-wrapper.scale-fixed .timer-panel {
+  padding: 12px !important;
+}
 .widget-wrapper.scale-fixed .timer-text {
   font-size: var(--widget-font-size) !important;
   line-height: 1 !important;
