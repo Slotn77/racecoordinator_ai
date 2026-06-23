@@ -160,4 +160,35 @@ describe("RacedayRecordsComponent", () => {
     );
     expect(values.length).toBe(4);
   });
+
+  it("should calculate and set CSS custom properties for auto-scaled record values when scaleMode is auto", (done) => {
+    fixture.componentRef.setInput("widget", {
+      id: "widget-records",
+      widgetType: "records",
+      x: 0,
+      y: 0,
+      width: 400,
+      height: 300,
+      zIndex: 100,
+      scaleMode: "auto",
+      customSettings: {},
+    });
+    fixture.detectChanges();
+
+    setTimeout(() => {
+      const panel = fixture.nativeElement.querySelector(
+        ".record-panel",
+      ) as HTMLElement;
+      expect(panel).toBeTruthy();
+      const valSize = panel.style.getPropertyValue("--record-value-font-size");
+      const headerSize = panel.style.getPropertyValue(
+        "--record-header-font-size",
+      );
+      expect(valSize).toBeTruthy();
+      expect(headerSize).toBeTruthy();
+      expect(valSize.endsWith("px")).toBeTrue();
+      expect(headerSize.endsWith("px")).toBeTrue();
+      done();
+    }, 50);
+  });
 });

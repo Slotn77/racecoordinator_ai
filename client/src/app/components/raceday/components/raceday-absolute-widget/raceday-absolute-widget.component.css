@@ -276,11 +276,13 @@
   box-sizing: border-box !important;
 }
 .widget-wrapper.scale-auto .record-val {
-  font-size: calc(min(11cqh, 9cqw) * var(--widget-scale-factor, 1)) !important;
+  font-size: var(--record-value-font-size, calc(min(11cqh, 9cqw) * var(--widget-scale-factor, 1))) !important;
+  line-height: 1.1 !important;
 }
 .widget-wrapper.scale-auto .record-header {
-  font-size: calc(min(9cqh, 7.5cqw) * var(--widget-scale-factor, 1)) !important;
+  font-size: var(--record-header-font-size, calc(min(9cqh, 7.5cqw) * var(--widget-scale-factor, 1))) !important;
   padding-left: calc(1.5cqw * var(--widget-scale-factor, 1)) !important;
+  line-height: 1.1 !important;
 }
 .widget-wrapper.scale-auto .record-header:not(:first-child) {
   margin-top: 0 !important;

@@ -1,12 +1,15 @@
-<div class="panel-card record-panel">
+<div class="panel-card record-panel" #recordPanel>
   <div class="record-group stripe">
     <div
+      #recordHeader
       class="record-header stripe"
       [style.font-family]="
         widget()?.customSettings?.['headerFontFamily'] || null
       "
       [style.font-size.px]="
-        widget()?.customSettings?.['headerFontSize'] || null
+        widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
+          ? widget()?.customSettings?.['headerFontSize'] || null
+          : null
       "
       [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
     >
@@ -14,23 +17,29 @@
     </div>
     <div class="record-row stripe first-row">
       <span
+        #recordName
         class="record-val record-name"
         [style.font-family]="
           widget()?.customSettings?.['valueFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.customSettings?.['valueFontSize'] || null
+          widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
+            ? widget()?.customSettings?.['valueFontSize'] || null
+            : null
         "
         [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
         >{{ raceRecordLapNickname() || "---" }}</span
       >
       <span
+        #recordValue
         class="record-val record-value"
         [style.font-family]="
           widget()?.customSettings?.['valueFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.customSettings?.['valueFontSize'] || null
+          widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
+            ? widget()?.customSettings?.['valueFontSize'] || null
+            : null
         "
         [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
         >{{
@@ -44,12 +53,15 @@
 
   <div class="record-group no-stripe">
     <div
+      #recordHeader
       class="record-header no-stripe"
       [style.font-family]="
         widget()?.customSettings?.['headerFontFamily'] || null
       "
       [style.font-size.px]="
-        widget()?.customSettings?.['headerFontSize'] || null
+        widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
+          ? widget()?.customSettings?.['headerFontSize'] || null
+          : null
       "
       [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
     >
@@ -57,23 +69,29 @@
     </div>
     <div class="record-row no-stripe">
       <span
+        #recordName
         class="record-val record-name"
         [style.font-family]="
           widget()?.customSettings?.['valueFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.customSettings?.['valueFontSize'] || null
+          widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
+            ? widget()?.customSettings?.['valueFontSize'] || null
+            : null
         "
         [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
         >{{ raceRecordScoreNickname() || "---" }}</span
       >
       <span
+        #recordValue
         class="record-val record-value"
         [style.font-family]="
           widget()?.customSettings?.['valueFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.customSettings?.['valueFontSize'] || null
+          widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
+            ? widget()?.customSettings?.['valueFontSize'] || null
+            : null
         "
         [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
         >{{
@@ -85,12 +103,15 @@
 
   <div class="record-group stripe">
     <div
+      #recordHeader
       class="record-header stripe"
       [style.font-family]="
         widget()?.customSettings?.['headerFontFamily'] || null
       "
       [style.font-size.px]="
-        widget()?.customSettings?.['headerFontSize'] || null
+        widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
+          ? widget()?.customSettings?.['headerFontSize'] || null
+          : null
       "
       [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
     >
@@ -98,23 +119,29 @@
     </div>
     <div class="record-row stripe">
       <span
+        #recordName
         class="record-val record-name"
         [style.font-family]="
           widget()?.customSettings?.['valueFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.customSettings?.['valueFontSize'] || null
+          widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
+            ? widget()?.customSettings?.['valueFontSize'] || null
+            : null
         "
         [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
         >{{ currentRaceBestNickname() || "---" }}</span
       >
       <span
+        #recordValue
         class="record-val record-value"
         [style.font-family]="
           widget()?.customSettings?.['valueFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.customSettings?.['valueFontSize'] || null
+          widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
+            ? widget()?.customSettings?.['valueFontSize'] || null
+            : null
         "
         [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
         >{{
@@ -128,12 +155,15 @@
 
   <div class="record-group no-stripe">
     <div
+      #recordHeader
       class="record-header no-stripe"
       [style.font-family]="
         widget()?.customSettings?.['headerFontFamily'] || null
       "
       [style.font-size.px]="
-        widget()?.customSettings?.['headerFontSize'] || null
+        widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
+          ? widget()?.customSettings?.['headerFontSize'] || null
+          : null
       "
       [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
     >
@@ -141,23 +171,29 @@
     </div>
     <div class="record-row no-stripe">
       <span
+        #recordName
         class="record-val record-name"
         [style.font-family]="
           widget()?.customSettings?.['valueFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.customSettings?.['valueFontSize'] || null
+          widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
+            ? widget()?.customSettings?.['valueFontSize'] || null
+            : null
         "
         [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
         >{{ heatBestNickname() || "---" }}</span
       >
       <span
+        #recordValue
         class="record-val record-value"
         [style.font-family]="
           widget()?.customSettings?.['valueFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.customSettings?.['valueFontSize'] || null
+          widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
+            ? widget()?.customSettings?.['valueFontSize'] || null
+            : null
         "
         [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
         >{{
