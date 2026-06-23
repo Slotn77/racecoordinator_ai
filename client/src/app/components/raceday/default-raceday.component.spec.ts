@@ -3065,7 +3065,7 @@ describe("DefaultRacedayComponent", () => {
       expect(component.formatValue("lapCount", 2, hdAdjusted)).toBe("2.00");
     });
 
-    it("should call updateUserLaps with current + 0.25 on ctrl+click", () => {
+    it("should call updateUserLaps with current + 0.25 on shift+click", () => {
       const mockHd: any = {
         laneIndex: 1,
         userLaps: 1.25,
@@ -3076,32 +3076,18 @@ describe("DefaultRacedayComponent", () => {
       );
 
       const mockCol: any = { propertyName: "lapCount" };
-      const mockEvent = { ctrlKey: true } as MouseEvent;
+      const mockEvent = {
+        shiftKey: true,
+        preventDefault: jasmine.createSpy("preventDefault"),
+      } as any;
       component.onCellClick(mockHd, mockCol, mockEvent);
 
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(mockDataService.updateUserLaps).toHaveBeenCalledWith(1, 1.5);
       expect(mockHd.adjustedLapCount).toBe(10.5);
     });
 
-    it("should call updateUserLaps with current + 0.25 on cmd/meta+click", () => {
-      const mockHd: any = {
-        laneIndex: 1,
-        userLaps: 1.25,
-        adjustedLapCount: 10.25,
-      };
-      mockDataService.updateUserLaps.and.returnValue(
-        of({ adjustedLapCount: 10.5 }),
-      );
-
-      const mockCol: any = { propertyName: "lapCount" };
-      const mockEvent = { metaKey: true } as MouseEvent;
-      component.onCellClick(mockHd, mockCol, mockEvent);
-
-      expect(mockDataService.updateUserLaps).toHaveBeenCalledWith(1, 1.5);
-      expect(mockHd.adjustedLapCount).toBe(10.5);
-    });
-
-    it("should call updateUserLaps with current - 0.25 on shift+click", () => {
+    it("should call updateUserLaps with current - 0.25 on alt+click", () => {
       const mockHd: any = {
         laneIndex: 1,
         userLaps: 1.25,
@@ -3112,14 +3098,36 @@ describe("DefaultRacedayComponent", () => {
       );
 
       const mockCol: any = { propertyName: "lapCount" };
-      const mockEvent = { shiftKey: true } as MouseEvent;
+      const mockEvent = {
+        altKey: true,
+        preventDefault: jasmine.createSpy("preventDefault"),
+      } as any;
       component.onCellClick(mockHd, mockCol, mockEvent);
 
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(mockDataService.updateUserLaps).toHaveBeenCalledWith(1, 1.0);
       expect(mockHd.adjustedLapCount).toBe(10.0);
     });
 
-    it("should not call updateUserLaps on regular click without modifiers", () => {
+    it("should not call updateUserLaps on regular click or modifier clicks without shift/alt", () => {
+      const mockHd: any = {
+        laneIndex: 1,
+        userLaps: 1.25,
+        adjustedLapCount: 10.25,
+      };
+      const mockCol: any = { propertyName: "lapCount" };
+      const mockEvent = {
+        ctrlKey: true,
+        shiftKey: false,
+        metaKey: false,
+        altKey: false,
+      } as MouseEvent;
+      component.onCellClick(mockHd, mockCol, mockEvent);
+
+      expect(mockDataService.updateUserLaps).not.toHaveBeenCalled();
+    });
+
+    it("should not open dialog or execute lap adjustment in cell click when in edit/customizer mode", () => {
       const mockHd: any = {
         laneIndex: 1,
         userLaps: 1.25,
@@ -3131,9 +3139,26 @@ describe("DefaultRacedayComponent", () => {
         shiftKey: false,
         metaKey: false,
       } as MouseEvent;
-      component.onCellClick(mockHd, mockCol, mockEvent);
 
-      expect(mockDataService.updateUserLaps).not.toHaveBeenCalled();
+      component.isLayoutCustomizing = true;
+      component.onCellClick(mockHd, mockCol, mockEvent);
+      expect(component["showAddLapSectionsDialog"]).toBeFalse();
+
+      component.isLayoutCustomizing = false;
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      component.onCellClick(mockHd, mockCol, mockEvent);
+      expect(component["showAddLapSectionsDialog"]).toBeFalse();
+    });
+
+    it("should return true for isDriverSwapDisabled when in edit/customizer mode", () => {
+      const mockHd: any = { laneIndex: 1 };
+
+      component.isLayoutCustomizing = true;
+      expect(component.isDriverSwapDisabled(mockHd)).toBeTrue();
+
+      component.isLayoutCustomizing = false;
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      expect(component.isDriverSwapDisabled(mockHd)).toBeTrue();
     });
   });
 

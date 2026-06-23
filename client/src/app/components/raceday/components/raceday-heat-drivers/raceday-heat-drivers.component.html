@@ -66,6 +66,7 @@
               class="teammate-select"
               [style.background-image]="getDropdownArrowBg(hd)"
               (change)="onTeammateChange(hd, $event)"
+              [disabled]="isEditMode()"
               style="
                 position: absolute;
                 top: 0;

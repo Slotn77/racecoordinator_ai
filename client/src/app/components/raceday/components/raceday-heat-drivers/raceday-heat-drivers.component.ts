@@ -60,6 +60,17 @@ export class RacedayHeatDriversComponent {
     return this.parent()?.isTeam(hd) ?? false;
   }
 
+  isEditMode(): boolean {
+    const parent = this.parent();
+    if (!parent) return false;
+    const isCustomizing = parent.isLayoutCustomizing;
+    const isUIEditor =
+      typeof parent.isUIEditorMode === "function"
+        ? parent.isUIEditorMode()
+        : parent.isUIEditorMode;
+    return !!(isCustomizing || isUIEditor);
+  }
+
   getTeammates(hd: DriverHeatData): any[] {
     return this.parent()?.getTeammates(hd) ?? [];
   }

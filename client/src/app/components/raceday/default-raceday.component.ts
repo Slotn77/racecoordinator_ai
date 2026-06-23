@@ -2986,6 +2986,9 @@ export class DefaultRacedayComponent
   }
 
   isDriverSwapDisabled(hd: any): boolean {
+    if (this.isLayoutCustomizing || this.isUIEditorMode()) {
+      return true;
+    }
     const race = this.raceService.getRace();
     if (!race?.team_options?.require_pit_stop_change_driver) {
       return false;
@@ -3221,13 +3224,18 @@ export class DefaultRacedayComponent
   }
 
   onCellClick(hd: DriverHeatData, col: ColumnDefinition, event: MouseEvent) {
+    if (this.isLayoutCustomizing || this.isUIEditorMode()) {
+      return;
+    }
     if (col.propertyName === "lapCount") {
       if (this.heat && this.heat.started === false) {
         return;
       }
-      if (event.ctrlKey || event.metaKey) {
+      if (event.shiftKey) {
+        event.preventDefault();
         this.updateUserLaps(hd, this.LAP_ADJUSTMENT_AMOUNT);
-      } else if (event.shiftKey) {
+      } else if (event.altKey) {
+        event.preventDefault();
         this.updateUserLaps(hd, -this.LAP_ADJUSTMENT_AMOUNT);
       } else {
         this.selectedHeatDriver = hd;
