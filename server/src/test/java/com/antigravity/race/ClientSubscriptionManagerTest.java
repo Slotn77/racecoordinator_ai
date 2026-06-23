@@ -366,6 +366,27 @@ public class ClientSubscriptionManagerTest {
         manager.isDirectorSession(mockContext));
   }
 
+  @Test
+  public void testIsDirectorSession_PreviewIntent() throws Exception {
+    WsContext mockContext = mock(WsContext.class);
+    when(mockContext.queryParam("intent")).thenReturn("preview");
+
+    // Even if it's from localhost (which would normally be a director session)
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    java.net.InetSocketAddress mockAddress = new java.net.InetSocketAddress("127.0.0.1", 12345);
+    when(mockSession.getRemoteAddress()).thenReturn(mockAddress);
+
+    // Inject session into WsContext using reflection
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    assertFalse(
+        "Session with intent=preview should NOT be a director session",
+        manager.isDirectorSession(mockContext));
+  }
+
   private static void assertTrue(String message, boolean condition) {
     org.junit.Assert.assertTrue(message, condition);
   }

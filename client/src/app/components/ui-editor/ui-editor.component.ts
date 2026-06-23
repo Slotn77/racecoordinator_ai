@@ -403,6 +403,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.updateScale();
     this.loadExpanderState();
     this.loadData();
+    this.dataService.setConnectionIntent("preview");
     this.raceConnectionService.connect();
 
     // Auto-save on changes (like Driver Editor)
@@ -416,6 +417,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   ngOnDestroy() {
     this.isDestroyed = true;
     this.raceConnectionService.disconnect();
+    this.dataService.setConnectionIntent("");
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
     }

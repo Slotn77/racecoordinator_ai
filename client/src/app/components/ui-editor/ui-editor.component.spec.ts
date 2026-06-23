@@ -9,7 +9,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
-import { BehaviorSubject, delay, of, throwError } from "rxjs";
+import { BehaviorSubject, delay, of, Subject, throwError } from "rxjs";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
 import { DataService } from "@app/data.service";
 import { Settings } from "@app/models/settings";
@@ -210,13 +210,19 @@ describe("UIEditorComponent", () => {
       "getSystemState",
       "getDrivers",
       "getTracks",
+      "setConnectionIntent",
     ]);
     mockDataService.socketConnected$ = of(true);
     mockDataService.systemState$ = new BehaviorSubject<any>({});
     mockDataService.getDrivers.and.returnValue(of([]));
     mockDataService.getTracks.and.returnValue(of([]));
     mockDataService.updateRaceSubscription.and.stub();
-    mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
+    mockRouter = jasmine.createSpyObj("Router", [
+      "navigate",
+      "getCurrentNavigation",
+    ]);
+    mockRouter.events = new Subject().asObservable();
+    mockRouter.getCurrentNavigation.and.returnValue(null);
     mockThemeService = jasmine.createSpyObj("ThemeService", [
       "getActiveTheme",
       "isThemeActive",

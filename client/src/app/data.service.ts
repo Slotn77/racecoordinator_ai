@@ -111,6 +111,7 @@ export class DataService {
   private get racesUrl(): string {
     return `${this.baseUrl}/api/races`;
   }
+  private connectionIntent = "";
 
   constructor(
     private http: HttpClient,
@@ -140,6 +141,10 @@ export class DataService {
       this.raceDataSocket.close();
       this.raceDataSocket = undefined;
     }
+  }
+
+  public setConnectionIntent(intent: string) {
+    this.connectionIntent = intent;
   }
 
   getDrivers(): Observable<any[]> {
@@ -1280,10 +1285,13 @@ export class DataService {
     }
 
     const token = localStorage.getItem("director_token");
-    const wsUrl = token
-      ? `ws://${this.serverIp}:${this.serverPort}/api/race-data?token=${token}`
-      : `ws://${this.serverIp}:${this.serverPort}/api/race-data`;
-    this.logger.debug(`Attempting to connect to WebSocket: ${wsUrl}`);
+    let wsUrl = `ws://${this.serverIp}:${this.serverPort}/api/race-data`;
+    const params = [];
+    if (token) params.push(`token=${token}`);
+    if (this.connectionIntent) params.push(`intent=${this.connectionIntent}`);
+    if (params.length > 0) wsUrl += "?" + params.join("&");
+
+    this.logger.debug(`Connecting to Race Data WebSocket: ${wsUrl}`);
     this.raceDataSocket = new WebSocket(wsUrl);
     this.raceDataSocket.binaryType = "arraybuffer";
 

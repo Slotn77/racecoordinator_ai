@@ -113,4 +113,9 @@ describe("DataService", () => {
     expect(mockSocket.close).toHaveBeenCalled();
     expect(service["raceDataSocket"]).toBeUndefined();
   });
+
+  it("should set connection intent property", () => {
+    service.setConnectionIntent("preview");
+    expect(service["connectionIntent"]).toBe("preview");
+  });
 });

@@ -112,6 +112,7 @@ export const mockDataService = {
   getServerIp: jasmine
     .createSpy("getServerIp")
     .and.returnValue(of("127.0.0.1")),
+  setConnectionIntent: jasmine.createSpy("setConnectionIntent"),
   socketConnected$: of(true),
   serverUrl: "http://localhost:7070",
 };
@@ -142,6 +143,9 @@ export const mockRouter = {
   events: new Subject().asObservable(),
   serializeUrl: jasmine.createSpy("serializeUrl").and.returnValue("mock-url"),
   createUrlTree: jasmine.createSpy("createUrlTree").and.returnValue({}),
+  getCurrentNavigation: jasmine
+    .createSpy("getCurrentNavigation")
+    .and.returnValue(null),
 };
 
 export const mockAnalyticsService = {
@@ -236,6 +240,7 @@ export function resetMocks() {
   mockDataService.updateRaceSubscription.and.stub();
   mockDataService.connectToInterfaceDataSocket.and.stub();
   mockDataService.disconnectFromInterfaceDataSocket.and.stub();
+  mockDataService.setConnectionIntent.and.stub();
 
   // Restore default behaviors for mockTranslationService
   mockTranslationService.translate.and.callFake((key: string) => key);
@@ -254,6 +259,7 @@ export function resetMocks() {
   (mockRouter as any).events = new Subject().asObservable();
   mockRouter.serializeUrl.and.returnValue("mock-url");
   mockRouter.createUrlTree.and.returnValue({});
+  mockRouter.getCurrentNavigation.and.returnValue(null);
   delete (mockRouter as any).url;
 
   // Restore default behaviors for mockAnalyticsService

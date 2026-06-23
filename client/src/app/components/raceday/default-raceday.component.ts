@@ -16,7 +16,12 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router, RouterStateSnapshot } from "@angular/router";
+import {
+  ActivatedRoute,
+  NavigationStart,
+  Router,
+  RouterStateSnapshot,
+} from "@angular/router";
 import * as QRCode from "qrcode";
 import { Observable, Subject, Subscription } from "rxjs";
 import { LoginDialogComponent } from "@app/components/login-dialog/login-dialog.component";
@@ -455,6 +460,7 @@ export class DefaultRacedayComponent
 
   public Role = Role;
   showLoginModal = false;
+  private pendingNavigationUrl = "";
 
   constructor(
     private el: ElementRef,
@@ -474,6 +480,11 @@ export class DefaultRacedayComponent
   ) {
     // Initial default columns, will be overwritten in ngOnInit
     this.columns = [];
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationStart) {
+        this.pendingNavigationUrl = event.url;
+      }
+    });
   }
 
   protected driverRankings = new Map<string, number>();
@@ -1113,9 +1124,12 @@ export class DefaultRacedayComponent
       this.viewerRaceEndedHandler.stopListening();
     }
     this.isDestroyed = true;
-    const isNavigatingToSetup = (this.router.url || "").includes(
-      "raceday-setup",
-    );
+    const currentNav = this.router.getCurrentNavigation();
+    let destUrl = this.pendingNavigationUrl || this.router.url || "";
+    if (currentNav && currentNav.extractedUrl) {
+      destUrl = currentNav.extractedUrl.toString();
+    }
+    const isNavigatingToSetup = destUrl.includes("raceday-setup");
     this.raceConnectionService.disconnect(isNavigatingToSetup);
 
     this.subscriptions.forEach((sub) => sub.unsubscribe());

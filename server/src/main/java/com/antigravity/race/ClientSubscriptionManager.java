@@ -378,6 +378,11 @@ public class ClientSubscriptionManager {
 
   public boolean isDirectorSession(WsContext ctx) {
     try {
+      String intent = ctx.queryParam("intent");
+      if ("preview".equals(intent)) {
+        return false;
+      }
+
       // 1. Localhost Auto-Admin
       String remoteIp = ctx.session.getRemoteAddress().getAddress().getHostAddress();
       if (NetworkUtils.isLocalhost(remoteIp, null)) {
