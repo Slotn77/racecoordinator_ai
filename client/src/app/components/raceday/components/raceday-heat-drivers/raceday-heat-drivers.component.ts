@@ -1,10 +1,22 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, input, ViewEncapsulation } from "@angular/core";
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  input,
+  OnDestroy,
+  viewChild,
+  ViewEncapsulation,
+} from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { TranslationService } from "@app/services/translation.service";
 
 @Component({
   standalone: true,
@@ -14,13 +26,223 @@ import { Heat } from "@app/race/heat";
   encapsulation: ViewEncapsulation.None,
   imports: [CommonModule, TranslatePipe, FormsModule],
 })
-export class RacedayHeatDriversComponent {
+export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
   type = input<"next-heat" | "on-deck">("next-heat");
   track = input<Track | undefined>(undefined);
   currentHeat = input<Heat | undefined>(undefined);
   heats = input<Heat[]>([]);
   parent = input<any>(undefined);
   widget = input<any>(undefined);
+
+  private driversPanel = viewChild<ElementRef<HTMLElement>>("driversPanel");
+  private resizeObserver?: ResizeObserver;
+  private translationService = inject(TranslationService);
+
+  constructor() {
+    effect(() => {
+      // Trigger whenever inputs change
+      this.drivers();
+      this.type();
+      this.widget();
+
+      // Schedule fit on next microtask
+      setTimeout(() => this.fitText(), 0);
+    });
+  }
+
+  ngAfterViewInit() {
+    const panelEl = this.driversPanel()?.nativeElement;
+    if (panelEl && typeof ResizeObserver !== "undefined") {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.fitText();
+      });
+      this.resizeObserver.observe(panelEl);
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+  }
+
+  private fitText() {
+    const panelEl = this.driversPanel()?.nativeElement;
+    const widgetData = this.widget();
+
+    if (!panelEl) return;
+
+    const isAuto = widgetData?.scaleMode === "auto";
+    if (!isAuto) {
+      this.resetCSSProperties(panelEl);
+      return;
+    }
+
+    const titleText = this.translationService.translate(
+      this.type() === "on-deck" ? "RD_WIN_ON_DECK" : "RD_WIN_NEXT_HEAT",
+    );
+
+    // Font families and weights
+    const titleFontFamily =
+      widgetData?.customSettings?.titleFontFamily || "sans-serif";
+    const laneFontFamily =
+      widgetData?.customSettings?.laneFontFamily || "sans-serif";
+
+    // Use canvas to measure text
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    let titleWidthAt100 = 100;
+    let maxRowWidthAt100 = 0;
+
+    if (context) {
+      context.font = `bold 100px ${titleFontFamily}`;
+      titleWidthAt100 = context.measureText(titleText).width || 1;
+
+      const driversList = this.drivers();
+      maxRowWidthAt100 = this.measureMaxRowWidthAt100(
+        context,
+        driversList,
+        laneFontFamily,
+      );
+    }
+
+    const containerWidth = panelEl.clientWidth;
+    const containerHeight = panelEl.clientHeight;
+
+    // We pad container bounds
+    const availableWidth = containerWidth * 0.92;
+    const availableHeight = containerHeight * 0.9;
+
+    // Calculate limit width based on title (title S = 1.125 * lane S)
+    const limitWidthTitle = (availableWidth * 100) / (1.125 * titleWidthAt100);
+
+    // Calculate limit width based on driver row (lane S = S)
+    const limitWidthRow = availableWidth / (maxRowWidthAt100 / 100 + 0.24);
+
+    // Calculate height limit
+    const N = this.drivers().length;
+    let heightFactor = 0;
+    if (N > 0) {
+      heightFactor = 2.35 + 2.7 * N;
+    } else {
+      heightFactor = 1.35 + 0.75 + 1.125 + 1.25 + 0.75;
+    }
+
+    const limitHeight = availableHeight / heightFactor;
+
+    const baseScaleFactor = widgetData?.textScaleFactor ?? 1;
+    const targetLaneFontSize = Math.max(
+      Math.floor(
+        Math.min(limitHeight, limitWidthTitle, limitWidthRow) * baseScaleFactor,
+      ),
+      8,
+    );
+
+    const targetTitleFontSize = Math.floor(targetLaneFontSize * 1.125);
+
+    // Apply via CSS custom properties
+    this.applyCSSProperties(panelEl, targetLaneFontSize, targetTitleFontSize);
+  }
+
+  private resetCSSProperties(panelEl: HTMLElement) {
+    panelEl.style.removeProperty("--heat-drivers-font-size");
+    panelEl.style.removeProperty("--heat-drivers-title-size");
+    panelEl.style.removeProperty("--heat-drivers-padding-x");
+    panelEl.style.removeProperty("--heat-drivers-padding-y");
+    panelEl.style.removeProperty("--heat-drivers-gap");
+    panelEl.style.removeProperty("--heat-drivers-item-padding-x");
+    panelEl.style.removeProperty("--heat-drivers-item-padding-y");
+    panelEl.style.removeProperty("--heat-drivers-title-margin");
+  }
+
+  private measureMaxRowWidthAt100(
+    context: CanvasRenderingContext2D,
+    driversList: DriverHeatData[],
+    laneFontFamily: string,
+  ): number {
+    if (driversList.length === 0) {
+      // Empty state text: "N/A"
+      const naText = this.translationService.translate("GEN_NA");
+      context.font = `italic 93.75px ${laneFontFamily}`; // 15px/16px = 93.75%
+      return context.measureText(naText).width || 1;
+    }
+
+    let maxWidth = 0;
+    for (const hd of driversList) {
+      let driverText = hd.driver.nickname || hd.driver.name || "";
+      if (this.isTeam(hd)) {
+        const teamName =
+          hd.participant.team?.name || (hd.driver as any)?.team?.name || "";
+        if (teamName) {
+          driverText += ` (${teamName})`;
+        }
+      }
+
+      let textPadding = 0;
+      if (
+        this.parent() &&
+        this.isTeam(hd) &&
+        this.parent().authService.currentRole !== this.parent().Role.VIEWER
+      ) {
+        textPadding = 44; // 44px at S=100px
+      }
+
+      context.font = `600 100px ${laneFontFamily}`;
+      const driverWidth = context.measureText(driverText).width || 1;
+
+      // Lane badge text
+      const badgeText = `L${hd.laneIndex + 1}`;
+      context.font = `bold 87.5px ${laneFontFamily}`;
+      const badgeTextWidth = context.measureText(badgeText).width || 1;
+      const badgeWidth = badgeTextWidth + 105; // text width + padding
+
+      const rowWidth = driverWidth + textPadding + badgeWidth + 8; // 8px margin-left at 100px
+      if (rowWidth > maxWidth) {
+        maxWidth = rowWidth;
+      }
+    }
+    return maxWidth;
+  }
+
+  private applyCSSProperties(
+    panelEl: HTMLElement,
+    targetLaneFontSize: number,
+    targetTitleFontSize: number,
+  ) {
+    panelEl.style.setProperty(
+      "--heat-drivers-font-size",
+      `${targetLaneFontSize}px`,
+    );
+    panelEl.style.setProperty(
+      "--heat-drivers-title-size",
+      `${targetTitleFontSize}px`,
+    );
+    panelEl.style.setProperty(
+      "--heat-drivers-padding-x",
+      `${targetLaneFontSize * 0.75}px`,
+    );
+    panelEl.style.setProperty(
+      "--heat-drivers-padding-y",
+      `${targetLaneFontSize * 0.75}px`,
+    );
+    panelEl.style.setProperty(
+      "--heat-drivers-gap",
+      `${targetLaneFontSize * 0.5}px`,
+    );
+    panelEl.style.setProperty(
+      "--heat-drivers-item-padding-x",
+      `${targetLaneFontSize * 0.75}px`,
+    );
+    panelEl.style.setProperty(
+      "--heat-drivers-item-padding-y",
+      `${targetLaneFontSize * 0.5}px`,
+    );
+    panelEl.style.setProperty(
+      "--heat-drivers-title-margin",
+      `${targetLaneFontSize * 0.75}px`,
+    );
+  }
 
   nextHeatNumber = computed<number>(() => {
     const cur = this.currentHeat();

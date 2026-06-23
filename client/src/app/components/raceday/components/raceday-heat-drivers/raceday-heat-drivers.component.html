@@ -1,11 +1,16 @@
 <div
+  #driversPanel
   class="panel-card"
   [ngClass]="type() === 'on-deck' ? 'on-deck-panel' : 'next-heat-panel'"
 >
   <div
     [ngClass]="type() === 'on-deck' ? 'on-deck-title' : 'next-heat-title'"
     [style.font-family]="widget()?.customSettings?.['titleFontFamily'] || null"
-    [style.font-size.px]="widget()?.customSettings?.['titleFontSize'] || null"
+    [style.font-size.px]="
+      widget()?.scaleMode === 'auto'
+        ? null
+        : widget()?.customSettings?.['titleFontSize'] || null
+    "
     [style.color]="widget()?.customSettings?.['titleTextColor'] || null"
   >
     {{
@@ -20,7 +25,9 @@
           widget()?.customSettings?.['laneFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.customSettings?.['laneFontSize'] || null
+          widget()?.scaleMode === 'auto'
+            ? null
+            : widget()?.customSettings?.['laneFontSize'] || null
         "
         style="
           position: relative;
@@ -49,8 +56,10 @@
               [style.color]="
                 widget()?.customSettings?.['laneTextColor'] || null
               "
+              [style.padding-right]="
+                widget()?.scaleMode === 'auto' ? '2.75em' : '44px'
+              "
               style="
-                padding-right: 44px;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -135,7 +144,7 @@
           [style.font-family]="
             widget()?.customSettings?.['laneFontFamily'] || null
           "
-          style="flex-shrink: 0; margin-left: 8px"
+          style="flex-shrink: 0; margin-left: 0.5em"
         >
           L{{ hd.laneIndex + 1 }}
         </span>

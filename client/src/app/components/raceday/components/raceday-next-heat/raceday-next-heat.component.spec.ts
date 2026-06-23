@@ -17,10 +17,26 @@ describe("RacedayNextHeatComponent", () => {
   let harness: RacedayNextHeatHarness;
   let mockParent: any;
   let roleSubject: BehaviorSubject<string>;
+  let originalOnError: any;
 
   beforeEach(async () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
     roleSubject = new BehaviorSubject<string>("VIEWER");
+
+    // Suppress ResizeObserver loop errors in tests
+    originalOnError = window.onerror;
+    window.onerror = function (message, url, line, col, error) {
+      const msgStr = String(message || "");
+      if (
+        msgStr.includes("ResizeObserver loop") ||
+        msgStr.includes("ResizeObserver loop limit exceeded")
+      ) {
+        return true; // Ignored
+      }
+      return originalOnError
+        ? originalOnError.call(window, message, url, line, col, error)
+        : false;
+    };
 
     mockParent = {
       isTeam: (_hd: any) => false,
@@ -53,6 +69,10 @@ describe("RacedayNextHeatComponent", () => {
       fixture,
       RacedayNextHeatHarness,
     );
+  });
+
+  afterEach(() => {
+    window.onerror = originalOnError;
   });
 
   it("should create", () => {
@@ -186,5 +206,60 @@ describe("RacedayNextHeatComponent", () => {
     fixture.detectChanges();
 
     expect(mockParent.onNextHeatTeammateChange).toHaveBeenCalled();
+  });
+
+  it("should calculate and apply --heat-drivers-font-size in auto scale mode", (done) => {
+    const mockTrack = new Track("t1", "Track 1", 100, [
+      new Lane("l1", "white", "red", 50),
+    ]);
+    const d1 = new Driver("d1", "Driver One", "One");
+    const currentHeat: Heat = {
+      objectId: "h1",
+      heatNumber: 1,
+      heatDrivers: [],
+      standings: [],
+      started: false,
+      group: 0,
+    };
+    const nextHeat: Heat = {
+      objectId: "h2",
+      heatNumber: 2,
+      heatDrivers: [
+        {
+          objectId: "hd2",
+          laneIndex: 0,
+          driver: d1,
+          reset: () => {},
+        } as any,
+      ],
+      standings: [],
+      started: false,
+      group: 0,
+    };
+
+    fixture.componentRef.setInput("track", mockTrack);
+    fixture.componentRef.setInput("currentHeat", currentHeat);
+    fixture.componentRef.setInput("heats", [currentHeat, nextHeat]);
+    fixture.componentRef.setInput("widget", {
+      scaleMode: "auto",
+      textScaleFactor: 1,
+      customSettings: {
+        titleFontFamily: "sans-serif",
+        laneFontFamily: "sans-serif",
+      },
+    });
+
+    fixture.detectChanges();
+
+    setTimeout(() => {
+      const element = fixture.nativeElement;
+      const panel = element.querySelector(".panel-card") as HTMLElement;
+      expect(panel).toBeTruthy();
+      const fontSize = panel.style.getPropertyValue("--heat-drivers-font-size");
+      expect(fontSize).toContain("px");
+      const num = parseInt(fontSize, 10);
+      expect(num).toBeGreaterThanOrEqual(8);
+      done();
+    }, 50);
   });
 });

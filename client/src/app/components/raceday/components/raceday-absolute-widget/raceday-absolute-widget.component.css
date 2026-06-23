@@ -406,23 +406,23 @@
 /* Auto scaling for next-heat & on-deck */
 .widget-wrapper.scale-auto .next-heat-panel,
 .widget-wrapper.scale-auto .on-deck-panel {
-  padding: 0 calc(4cqh * var(--widget-scale-factor, 1)) calc(4cqh * var(--widget-scale-factor, 1)) calc(4cqh * var(--widget-scale-factor, 1)) !important;
+  padding: 0 var(--heat-drivers-padding-x, calc(4cqh * var(--widget-scale-factor, 1))) var(--heat-drivers-padding-y, calc(4cqh * var(--widget-scale-factor, 1))) var(--heat-drivers-padding-x, calc(4cqh * var(--widget-scale-factor, 1))) !important;
 }
 
 .widget-wrapper.scale-auto .next-heat-title,
 .widget-wrapper.scale-auto .on-deck-title {
-  font-size: calc(8cqh * var(--widget-scale-factor, 1)) !important;
-  margin-bottom: calc(3cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: var(--heat-drivers-title-size, calc(8cqh * var(--widget-scale-factor, 1))) !important;
+  margin-bottom: var(--heat-drivers-title-margin, calc(3cqh * var(--widget-scale-factor, 1))) !important;
 }
 
 .widget-wrapper.scale-auto .next-heat-list,
 .widget-wrapper.scale-auto .on-deck-list {
-  gap: calc(2.5cqh * var(--widget-scale-factor, 1)) !important;
+  gap: var(--heat-drivers-gap, calc(2.5cqh * var(--widget-scale-factor, 1))) !important;
 }
 
 .widget-wrapper.scale-auto .next-heat-item,
 .widget-wrapper.scale-auto .on-deck-item {
-  padding: calc(2.5cqh * var(--widget-scale-factor, 1)) calc(4cqh * var(--widget-scale-factor, 1)) !important;
+  padding: var(--heat-drivers-item-padding-y, calc(2.5cqh * var(--widget-scale-factor, 1))) var(--heat-drivers-item-padding-x, calc(4cqh * var(--widget-scale-factor, 1))) !important;
   border-left-width: calc(1cqh * var(--widget-scale-factor, 1)) !important;
 }
 
@@ -430,15 +430,15 @@
 .widget-wrapper.scale-auto .teammate-display-name,
 .widget-wrapper.scale-auto .next-heat-empty,
 .widget-wrapper.scale-auto .on-deck-empty {
-  font-size: calc(6.5cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: var(--heat-drivers-font-size, calc(6.5cqh * var(--widget-scale-factor, 1))) !important;
 }
 
 .widget-wrapper.scale-auto .lane-badge {
-  font-size: calc(5.5cqh * var(--widget-scale-factor, 1)) !important;
-  min-width: calc(11cqh * var(--widget-scale-factor, 1)) !important;
-  height: calc(9cqh * var(--widget-scale-factor, 1)) !important;
-  padding: 0 calc(2.5cqh * var(--widget-scale-factor, 1)) !important;
-  border-radius: calc(4.5cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(0.875 * var(--heat-drivers-font-size, calc(5.5cqh * var(--widget-scale-factor, 1)))) !important;
+  min-width: calc(1.75 * var(--heat-drivers-font-size, calc(11cqh * var(--widget-scale-factor, 1)))) !important;
+  height: calc(1.5 * var(--heat-drivers-font-size, calc(9cqh * var(--widget-scale-factor, 1)))) !important;
+  padding: 0 calc(0.375 * var(--heat-drivers-font-size, calc(2.5cqh * var(--widget-scale-factor, 1)))) !important;
+  border-radius: calc(0.75 * var(--heat-drivers-font-size, calc(4.5cqh * var(--widget-scale-factor, 1)))) !important;
 }
 
 /* Custom color overrides for next-heat & on-deck */
