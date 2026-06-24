@@ -1,0 +1,153 @@
+@if (settings()) {
+  <!-- Header Section -->
+  <div class="inspector-geometry-title">
+    {{ labelTitleKey() | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().labelFontFamily"
+        (change)="onSettingsChange()"
+        (focus)="fontService.loadLocalFonts()"
+      >
+        <option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </option>
+        @for (font of fontService.availableFonts(); track font) {
+          <option [value]="font">{{ font }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ settings().labelFontSize || 17 }}px</span
+      >
+    </div>
+    <input
+      type="range"
+      min="10"
+      max="120"
+      [(ngModel)]="settings().labelFontSize"
+      [disabled]="disableFontSizes()"
+      (change)="onSettingsChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TEXT_COLOR" | translate
+    }}</label>
+    <div
+      class="color-picker-wrapper"
+      [class.is-null]="!settings().labelTextColor"
+    >
+      <input
+        type="color"
+        [value]="settings().labelTextColor || '#94a3b8'"
+        (change)="onColorChange('labelTextColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!settings().labelTextColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (settings().labelTextColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('labelTextColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          ✕
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Value Section -->
+  <div class="inspector-geometry-title">
+    {{ valueTitleKey() | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().valueFontFamily"
+        (change)="onSettingsChange()"
+        (focus)="fontService.loadLocalFonts()"
+      >
+        <option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </option>
+        @for (font of fontService.availableFonts(); track font) {
+          <option [value]="font">{{ font }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ settings().valueFontSize || 19 }}px</span
+      >
+    </div>
+    <input
+      type="range"
+      min="10"
+      max="120"
+      [(ngModel)]="settings().valueFontSize"
+      [disabled]="disableFontSizes()"
+      (change)="onSettingsChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TEXT_COLOR" | translate
+    }}</label>
+    <div
+      class="color-picker-wrapper"
+      [class.is-null]="!settings().valueTextColor"
+    >
+      <input
+        type="color"
+        [value]="settings().valueTextColor || '#f8fafc'"
+        (change)="onColorChange('valueTextColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!settings().valueTextColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (settings().valueTextColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('valueTextColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          ✕
+        </button>
+      }
+    </div>
+  </div>
+}

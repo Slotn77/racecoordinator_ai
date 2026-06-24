@@ -152,10 +152,10 @@
 
 /* Auto-scale for simple headers: race-name, heat-info, track-name */
 .widget-wrapper.scale-auto .value-text {
-  font-size: calc(80cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: var(--header-value-font-size, calc(80cqh * var(--widget-scale-factor, 1))) !important;
 }
 .widget-wrapper.scale-auto .label-text {
-  font-size: calc(55cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: var(--header-label-font-size, calc(55cqh * var(--widget-scale-factor, 1))) !important;
 }
 
 /* Auto-scale for Timer component */

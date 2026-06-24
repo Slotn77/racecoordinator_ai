@@ -82,6 +82,7 @@ export function createMockEditorData(): MockEditorData {
     objectId: "mock_heat_1",
     race_id: "mock_race_1",
     heatNumber: 1,
+    group: 0,
     start_time: "2026-06-05T12:00:00Z",
     end_time: "2026-06-05T12:03:00Z",
     heatDrivers: heatDrivers,
@@ -105,6 +106,7 @@ export function createMockEditorData(): MockEditorData {
     objectId: "mock_heat_2",
     race_id: "mock_race_1",
     heatNumber: 2,
+    group: 0,
     started: false,
     heatDrivers: nextHeatDrivers,
   } as unknown as Heat;

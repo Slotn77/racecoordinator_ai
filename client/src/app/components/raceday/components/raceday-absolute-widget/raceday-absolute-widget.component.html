@@ -54,6 +54,7 @@
       @case ("race-name") {
         <app-raceday-race-name
           [race]="parentComponent().race"
+          [widget]="widget()"
         ></app-raceday-race-name>
       }
       @case ("heat-info") {
@@ -61,11 +62,13 @@
           [heat]="parentComponent().heat"
           [race]="parentComponent().race"
           [totalHeats]="parentComponent().totalHeats"
+          [widget]="widget()"
         ></app-raceday-heat-info>
       }
       @case ("track-name") {
         <app-raceday-track-name
           [track]="parentComponent().track"
+          [widget]="widget()"
         ></app-raceday-track-name>
       }
       @case ("branding") {

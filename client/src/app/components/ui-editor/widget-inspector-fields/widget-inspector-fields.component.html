@@ -55,4 +55,31 @@
       (change)="onSettingsChange()"
     ></app-upcoming-inspector>
   }
+  @case ("heat-info") {
+    <app-text-info-inspector
+      [settings]="widget().customSettings"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      labelTitleKey="UE_INSPECTOR_RECORDS_HEADER"
+      valueTitleKey="UE_INSPECTOR_RECORDS_VALUE"
+      (change)="onSettingsChange()"
+    ></app-text-info-inspector>
+  }
+  @case ("race-name") {
+    <app-text-info-inspector
+      [settings]="widget().customSettings"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      labelTitleKey="UE_INSPECTOR_RECORDS_HEADER"
+      valueTitleKey="UE_INSPECTOR_RECORDS_VALUE"
+      (change)="onSettingsChange()"
+    ></app-text-info-inspector>
+  }
+  @case ("track-name") {
+    <app-text-info-inspector
+      [settings]="widget().customSettings"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      labelTitleKey="UE_INSPECTOR_RECORDS_HEADER"
+      valueTitleKey="UE_INSPECTOR_RECORDS_VALUE"
+      (change)="onSettingsChange()"
+    ></app-text-info-inspector>
+  }
 }

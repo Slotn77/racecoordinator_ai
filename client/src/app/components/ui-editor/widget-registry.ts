@@ -93,4 +93,34 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       restTextColor: "",
     }),
   },
+  "heat-info": {
+    defaultSettings: () => ({
+      labelFontFamily: "",
+      labelFontSize: 13,
+      labelTextColor: "",
+      valueFontFamily: "",
+      valueFontSize: 18,
+      valueTextColor: "",
+    }),
+  },
+  "race-name": {
+    defaultSettings: () => ({
+      labelFontFamily: "",
+      labelFontSize: 13,
+      labelTextColor: "",
+      valueFontFamily: "",
+      valueFontSize: 18,
+      valueTextColor: "",
+    }),
+  },
+  "track-name": {
+    defaultSettings: () => ({
+      labelFontFamily: "",
+      labelFontSize: 13,
+      labelTextColor: "",
+      valueFontFamily: "",
+      valueFontSize: 18,
+      valueTextColor: "",
+    }),
+  },
 };
