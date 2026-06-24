@@ -299,7 +299,9 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
 
   getDropdownArrowBg(hd: DriverHeatData): string {
     if (!this.parent()) return "";
-    const color = this.getLaneForegroundColor(hd.laneIndex);
+    const color =
+      this.widget()?.customSettings?.["laneTextColor"] ||
+      this.getLaneForegroundColor(hd.laneIndex);
     return this.parent().getDropdownIcon(color);
   }
 

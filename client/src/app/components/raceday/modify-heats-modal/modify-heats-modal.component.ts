@@ -13,6 +13,7 @@ import {
 } from "@angular/core";
 import { HostListener } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { DomSanitizer, SafeStyle } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { finalize, forkJoin, Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
@@ -145,6 +146,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   private translationService = inject(TranslationService);
   private router = inject(Router);
   private logger = inject(LoggerService);
+  private sanitizer = inject(DomSanitizer);
 
   // Acknowledgement modal properties
   protected showAckModal = false;
@@ -487,14 +489,123 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     return false;
   }
 
-  protected getDriverInLane(
+  protected getDriverHeatDataInLane(
     heatIdx: number,
     laneIdx: number,
-  ): RaceParticipant | null {
+  ): DriverHeatData | null {
     const dhd = this.localHeats[heatIdx].heatDrivers.find(
       (d: DriverHeatData) => d.laneIndex === laneIdx,
     );
-    return dhd ? dhd.participant : null;
+    return dhd || null;
+  }
+
+  protected isTeamLane(dhd: DriverHeatData): boolean {
+    return !!dhd.participant?.team;
+  }
+
+  protected getTeammates(dhd: DriverHeatData): Driver[] {
+    if (!dhd.participant || !dhd.participant.team) return [];
+    const team = dhd.participant.team;
+    const driverIds = team.driverIds || (team as any).driver_ids || [];
+    return this.allDrivers.filter((d) => {
+      const id = d.entity_id || d.objectId || (d as any).entityId;
+      return driverIds.includes(id);
+    });
+  }
+
+  protected getDropdownArrowBg(color: string): SafeStyle {
+    const encodedColor = encodeURIComponent(color);
+    const svg = `data:image/svg+xml;utf8,<svg fill="%23${encodedColor.replace(/^%23/, "")}" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>`;
+    return this.sanitizer.bypassSecurityTrustStyle(`url('${svg}')`);
+  }
+
+  protected onTeammateChange(
+    heatIdx: number,
+    dhd: DriverHeatData,
+    event: Event,
+  ) {
+    const select = event.target as HTMLSelectElement;
+    const selectedDriverId = select.value;
+    const driver = this.allDrivers.find((d) => {
+      const id = d.entity_id || d.objectId || (d as any).entityId;
+      return id === selectedDriverId;
+    });
+    if (driver) {
+      const newDhd = new DriverHeatData(
+        dhd.objectId,
+        dhd.participant,
+        dhd.laneIndex,
+        driver,
+      );
+      const heat = this.localHeats[heatIdx];
+      heat.heatDrivers = heat.heatDrivers.map((d) =>
+        d.laneIndex === dhd.laneIndex ? newDhd : d,
+      );
+      this.undoManager.captureState();
+      this.autoSave();
+    }
+  }
+
+  protected getHeatDriverMeta(dhd: DriverHeatData): string {
+    if (dhd.participant && dhd.participant.team) {
+      const actual = dhd.actualDriver;
+      if (actual && !actual.isEmpty()) {
+        return actual.nickname || actual.name;
+      }
+      return (
+        dhd.participant.driver?.nickname || dhd.participant.driver?.name || ""
+      );
+    }
+    return this.getParticipantMeta(dhd.participant);
+  }
+
+  protected getDriverStats(hd: DriverHeatData, driverId: string): string {
+    if (!hd || !driverId) return "";
+    let heatLaps = 0;
+    let heatTime = 0;
+    let overallLaps = 0;
+    let overallTime = 0;
+
+    const hLabel = this.translationService.translate("RD_STATS_HEAT_ABBR");
+    const lLabel = this.translationService.translate("RD_STATS_LAP_ABBR");
+    const tLabel = this.translationService.translate("RD_STATS_TOTAL_ABBR");
+
+    if (hd.lapsWithDetails) {
+      hd.lapsWithDetails.forEach((l: any) => {
+        if (l.driverId === driverId) {
+          heatLaps++;
+          heatTime += l.time;
+        }
+      });
+    }
+
+    if (this.localHeats) {
+      this.localHeats.forEach((h: any) => {
+        if (h.heatDrivers) {
+          h.heatDrivers.forEach((d_hd: any) => {
+            if (d_hd.lapsWithDetails) {
+              d_hd.lapsWithDetails.forEach((l: any) => {
+                if (l.driverId === driverId) {
+                  overallLaps++;
+                  overallTime += l.time;
+                }
+              });
+            }
+          });
+        }
+      });
+    }
+
+    const formatTime = (t: number) => {
+      if (t >= 60) {
+        const m = Math.floor(t / 60);
+        const s = (t % 60).toFixed(1).padStart(4, "0");
+        return `${m}:${s}`;
+      }
+      return `${t.toFixed(1)}s`;
+    };
+
+    return `(${hLabel}: ${heatLaps} ${lLabel} / ${formatTime(heatTime)}, ${tLabel}: ${overallLaps} ${lLabel} / ${formatTime(overallTime)})`;
   }
 
   // eslint-disable-next-line max-lines-per-function

@@ -506,6 +506,74 @@ describe("ModifyHeatsModalComponent", () => {
     });
   });
 
+  describe("team and driver stats", () => {
+    let pTeam: RaceParticipant;
+    let d1: Driver, d2: Driver;
+    let t1: Team;
+    let heat1: Heat;
+
+    beforeEach(() => {
+      d1 = new Driver("d1", "Driver 1", "D1");
+      d2 = new Driver("d2", "Driver 2", "D2");
+      t1 = new Team("t1", "Team 1", undefined, ["d1", "d2"]);
+      pTeam = new RaceParticipant("rp-t1", d1, 0, 0, 0, 0, 0, 0, 0, 0, 100, t1);
+      heat1 = new Heat("h1", 1, [new DriverHeatData("dhd1", pTeam, 0, d1)]);
+
+      component["allDrivers"] = [d1, d2];
+      component["localHeats"] = [heat1];
+    });
+
+    it("should identify team lane", () => {
+      expect(component["isTeamLane"](heat1.heatDrivers[0])).toBeTrue();
+    });
+
+    it("should return teammates", () => {
+      const teammates = component["getTeammates"](heat1.heatDrivers[0]);
+      expect(teammates.length).toBe(2);
+      expect(teammates).toContain(d1);
+      expect(teammates).toContain(d2);
+    });
+
+    it("should generate SVG arrow background", () => {
+      const bg = component["getDropdownArrowBg"]("#ff0000");
+      expect(bg.toString()).toContain("data:image/svg+xml");
+      expect(bg.toString()).toContain("%23ff0000");
+    });
+
+    it("should return heat driver meta for team", () => {
+      const meta = component["getHeatDriverMeta"](heat1.heatDrivers[0]);
+      expect(meta).toBe("D1");
+    });
+
+    it("should return driver stats", () => {
+      heat1.heatDrivers[0].addLapTime(
+        1,
+        15.0,
+        15.0,
+        15.0,
+        15.0,
+        0,
+        "d1",
+        false,
+      );
+      const stats = component["getDriverStats"](heat1.heatDrivers[0], "d1");
+      expect(stats).toContain(
+        "RD_STATS_HEAT_ABBR: 1 RD_STATS_LAP_ABBR / 15.0s",
+      );
+      expect(stats).toContain(
+        "RD_STATS_TOTAL_ABBR: 1 RD_STATS_LAP_ABBR / 15.0s",
+      );
+    });
+
+    it("should change teammate", () => {
+      const event = { target: { value: "d2" } } as any;
+      component["onTeammateChange"](0, heat1.heatDrivers[0], event);
+
+      const updatedDhd = component["localHeats"][0].heatDrivers[0];
+      expect(updatedDhd.actualDriver).toBe(d2);
+    });
+  });
+
   describe("validation", () => {
     it("should return error if a started heat was modified", () => {
       const p1 = new RaceParticipant(

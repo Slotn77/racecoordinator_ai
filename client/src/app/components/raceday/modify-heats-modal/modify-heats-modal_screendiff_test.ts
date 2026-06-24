@@ -467,4 +467,86 @@ test.describe("Modify Heats Modal Visuals", () => {
       "modify-heats-collapsed-available-list.png",
     );
   });
+
+  test("should show team name and team driver selector", async ({ page }) => {
+    const racedayHarness = new DefaultRacedayHarnessE2e(
+      page.locator(".dashboard-wrapper"),
+    );
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Team Screendiff Race",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                backgroundColor: "#ff0000",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            seed: 1,
+            driver: { model: { entityId: "d3" }, name: "Charlie" },
+            team: {
+              name: "The Dream Team",
+              driverIds: ["d3", "d4"],
+            },
+          },
+        ],
+        heats: [
+          {
+            objectId: "h1",
+            heatNumber: 1,
+            heatDrivers: [
+              {
+                objectId: "hd1",
+                laneIndex: 0,
+                driverId: "rp1",
+                driver: {
+                  objectId: "rp1",
+                  seed: 1,
+                  driver: { model: { entityId: "d3" }, name: "Charlie" },
+                  team: {
+                    name: "The Dream Team",
+                    driverIds: ["d3", "d4"],
+                  },
+                },
+                lapsWithDetails: [
+                  { time: 10, driverId: "d3" },
+                  { time: 12, driverId: "d3" },
+                ],
+              },
+            ],
+          },
+        ],
+        currentHeat: { objectId: "h1", heatNumber: 1 },
+        state: RaceState.NOT_STARTED,
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+
+    await racedayHarness.clickMenuButton("Race Director");
+    await racedayHarness.clickMenuItem("Modify Heats");
+
+    const modalHarness = new ModifyHeatsModalHarnessE2e(
+      page.locator("app-modify-heats-modal"),
+    );
+    await page.locator("app-modify-heats-modal").waitFor();
+
+    await TestSetupHelper.waitForLocalization(page);
+    await modalHarness.waitForLoaderToBeHidden();
+
+    // Just capture the screen showing the team layout and chevron.
+    await expect(page).toHaveScreenshot("modify-heats-team-selector.png");
+  });
 });
