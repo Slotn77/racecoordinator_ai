@@ -1,0 +1,67 @@
+@if (widget()) {
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="widget().fontFamily"
+        (change)="onSettingsChange()"
+        (focus)="fontService.loadLocalFonts()"
+      >
+        <option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </option>
+        @for (font of fontService.availableFonts(); track font) {
+          <option [value]="font">{{ font }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge">{{ widget().fontSize || 14 }}px</span>
+    </div>
+    <input
+      type="range"
+      min="8"
+      max="120"
+      [(ngModel)]="widget().fontSize"
+      [disabled]="disableFontSizes()"
+      (change)="onSettingsChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TEXT_COLOR" | translate
+    }}</label>
+    <div class="color-picker-wrapper" [class.is-null]="!widget().textColor">
+      <input
+        type="color"
+        [value]="widget().textColor || '#f8fafc'"
+        (change)="onColorChange('textColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!widget().textColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (widget().textColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('textColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          ✕
+        </button>
+      }
+    </div>
+  </div>
+}

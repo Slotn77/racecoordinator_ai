@@ -421,3 +421,33 @@
   color: inherit !important;
 }
 
+
+/* Fixed scaling for menu-bar */
+.widget-wrapper.scale-fixed .menu-button-top,
+.widget-wrapper.scale-fixed .menu-item {
+  font-size: var(--widget-font-size) !important;
+}
+.widget-wrapper.scale-fixed .menu-shortcut,
+.widget-wrapper.scale-fixed .submenu-arrow {
+  font-size: calc(0.75 * var(--widget-font-size)) !important;
+}
+
+/* Auto scaling for menu-bar */
+.widget-wrapper.scale-auto .menu-button-top,
+.widget-wrapper.scale-auto .menu-item {
+  font-size: calc(26cqh * var(--widget-scale-factor, 1)) !important;
+}
+.widget-wrapper.scale-auto .menu-shortcut,
+.widget-wrapper.scale-auto .submenu-arrow {
+  font-size: calc(20cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+/* Custom color overrides for menu-bar */
+.widget-wrapper.has-custom-color .menu-button-top,
+.widget-wrapper.has-custom-color .menu-item {
+  color: inherit !important;
+}
+.widget-wrapper.has-custom-color .menu-shortcut {
+  color: inherit !important;
+  opacity: 0.8 !important;
+}

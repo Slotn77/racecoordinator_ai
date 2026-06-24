@@ -6,7 +6,7 @@
   [class.has-custom-color]="!!widget().textColor"
   [class.has-custom-bg]="!!widget().backgroundColor"
   [class.scale-auto]="widget().scaleMode === 'auto'"
-  [class.scale-fixed]="widget().scaleMode === 'fixed'"
+  [class.scale-fixed]="widget().scaleMode !== 'auto'"
   [style.left]="(widget().x / 1920) * 100 + '%'"
   [style.top]="(widget().y / 1080) * 100 + '%'"
   [style.width]="(widget().width / 1920) * 100 + '%'"

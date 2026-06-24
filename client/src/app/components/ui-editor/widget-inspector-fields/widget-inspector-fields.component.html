@@ -82,4 +82,11 @@
       (change)="onSettingsChange()"
     ></app-text-info-inspector>
   }
+  @case ("menu-bar") {
+    <app-menu-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-menu-inspector>
+  }
 }
