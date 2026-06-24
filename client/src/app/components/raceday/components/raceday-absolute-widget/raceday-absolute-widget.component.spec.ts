@@ -79,16 +79,6 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(await harness.getWidgetTypeLabel()).toBe("timer");
   });
 
-  it("should delegate moveForward to parent moveWidgetForward via harness", async () => {
-    await harness.clickMoveForward();
-    expect(mockParent.moveWidgetForward).toHaveBeenCalledWith("test-widget");
-  });
-
-  it("should delegate moveBackward to parent moveWidgetBackward via harness", async () => {
-    await harness.clickMoveBackward();
-    expect(mockParent.moveWidgetBackward).toHaveBeenCalledWith("test-widget");
-  });
-
   it("should delegate removeWidget to parent removeWidget via harness", async () => {
     await harness.clickRemove();
     expect(mockParent.removeWidget).toHaveBeenCalledWith("test-widget");

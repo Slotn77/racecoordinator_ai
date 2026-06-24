@@ -102,38 +102,6 @@
   overflow: visible !important;
 }
 
-.widget-zorder-buttons {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: auto;
-  margin-right: 8px;
-}
-
-.widget-zorder-btn {
-  background: transparent;
-  border: none;
-  color: #38bdf8;
-  cursor: pointer;
-  padding: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.15s, transform 0.1s;
-}
-
-.widget-zorder-btn:hover {
-  color: #0ea5e9;
-}
-
-.widget-zorder-btn:active {
-  transform: scale(0.9);
-}
-
-.widget-zorder-btn .material-icons {
-  font-size: 16px;
-}
-
 /* Selected state outline */
 .widget-wrapper.edit-mode.selected {
   border: 2px solid #38bdf8 !important;

@@ -11,12 +11,7 @@ export class RacedayAbsoluteWidgetHarness
   protected getLabelEl = this.locatorForOptional(
     RacedayAbsoluteWidgetHarnessBase.selectors.label,
   );
-  protected getMoveForwardBtnEl = this.locatorForOptional(
-    RacedayAbsoluteWidgetHarnessBase.selectors.moveForwardBtn,
-  );
-  protected getMoveBackwardBtnEl = this.locatorForOptional(
-    RacedayAbsoluteWidgetHarnessBase.selectors.moveBackwardBtn,
-  );
+
   protected getRemoveBtnEl = this.locatorForOptional(
     RacedayAbsoluteWidgetHarnessBase.selectors.removeBtn,
   );
@@ -27,20 +22,6 @@ export class RacedayAbsoluteWidgetHarness
   async getWidgetTypeLabel(): Promise<string> {
     const el = await this.getLabelEl();
     return el ? await el.text() : "";
-  }
-
-  async clickMoveForward(): Promise<void> {
-    const el = await this.getMoveForwardBtnEl();
-    if (el) {
-      await el.click();
-    }
-  }
-
-  async clickMoveBackward(): Promise<void> {
-    const el = await this.getMoveBackwardBtnEl();
-    if (el) {
-      await el.click();
-    }
   }
 
   async clickRemove(): Promise<void> {

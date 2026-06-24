@@ -211,20 +211,6 @@ export class RacedayAbsoluteWidgetComponent {
     document.addEventListener("pointerup", onPointerUp);
   }
 
-  moveForward(event: Event) {
-    event.stopPropagation();
-    if (this.parentComponent().moveWidgetForward) {
-      this.parentComponent().moveWidgetForward(this.widget().id);
-    }
-  }
-
-  moveBackward(event: Event) {
-    event.stopPropagation();
-    if (this.parentComponent().moveWidgetBackward) {
-      this.parentComponent().moveWidgetBackward(this.widget().id);
-    }
-  }
-
   removeWidget(event: Event) {
     event.stopPropagation();
     if (this.parentComponent().removeWidget) {

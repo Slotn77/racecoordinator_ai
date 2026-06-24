@@ -13,14 +13,6 @@ export class RacedayAbsoluteWidgetHarnessE2e implements RacedayAbsoluteWidgetHar
     return this.locator.locator(this.base.selectors.label).first();
   }
 
-  private get moveForwardBtn() {
-    return this.locator.locator(this.base.selectors.moveForwardBtn).first();
-  }
-
-  private get moveBackwardBtn() {
-    return this.locator.locator(this.base.selectors.moveBackwardBtn).first();
-  }
-
   private get removeBtn() {
     return this.locator.locator(this.base.selectors.removeBtn).first();
   }
@@ -31,14 +23,6 @@ export class RacedayAbsoluteWidgetHarnessE2e implements RacedayAbsoluteWidgetHar
 
   async getWidgetTypeLabel(): Promise<string> {
     return (await this.label.isVisible()) ? await this.label.innerText() : "";
-  }
-
-  async clickMoveForward(): Promise<void> {
-    await this.moveForwardBtn.click();
-  }
-
-  async clickMoveBackward(): Promise<void> {
-    await this.moveBackwardBtn.click();
   }
 
   async clickRemove(): Promise<void> {

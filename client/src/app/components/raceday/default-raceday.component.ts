@@ -3625,42 +3625,6 @@ export class DefaultRacedayComponent
     });
   }
 
-  moveWidgetForward(id: string) {
-    if (!this.layout?.widgets) return;
-    this.normalizeZIndices();
-    const sorted = [...this.layout.widgets].sort(
-      (a, b) => (a.zIndex || 100) - (b.zIndex || 100),
-    );
-    const idx = sorted.findIndex((w: any) => w.id === id);
-    if (idx !== -1 && idx < sorted.length - 1) {
-      const current = sorted[idx];
-      const next = sorted[idx + 1];
-      const temp = current.zIndex;
-      current.zIndex = next.zIndex;
-      next.zIndex = temp;
-      this.layoutChanged.emit(this.layout);
-      this.cdr.detectChanges();
-    }
-  }
-
-  moveWidgetBackward(id: string) {
-    if (!this.layout?.widgets) return;
-    this.normalizeZIndices();
-    const sorted = [...this.layout.widgets].sort(
-      (a, b) => (a.zIndex || 100) - (b.zIndex || 100),
-    );
-    const idx = sorted.findIndex((w: any) => w.id === id);
-    if (idx > 0) {
-      const current = sorted[idx];
-      const prev = sorted[idx - 1];
-      const temp = current.zIndex;
-      current.zIndex = prev.zIndex;
-      prev.zIndex = temp;
-      this.layoutChanged.emit(this.layout);
-      this.cdr.detectChanges();
-    }
-  }
-
   removeWidget(id: string) {
     if (!this.layout?.widgets) return;
     this.layout.widgets = this.layout.widgets.filter((w: any) => w.id !== id);

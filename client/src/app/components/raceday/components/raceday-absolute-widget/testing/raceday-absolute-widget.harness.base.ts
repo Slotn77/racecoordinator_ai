@@ -5,8 +5,6 @@ export abstract class RacedayAbsoluteWidgetHarnessBase {
     widgetWrapper: ".widget-wrapper",
     dragHeader: ".widget-header-drag",
     label: ".widget-label",
-    moveBackwardBtn: ".widget-zorder-buttons .widget-zorder-btn:nth-child(1)",
-    moveForwardBtn: ".widget-zorder-buttons .widget-zorder-btn:nth-child(2)",
     removeBtn: ".widget-remove-btn",
     resizeHandleN: ".resize-handle.n",
     resizeHandleE: ".resize-handle.e",
@@ -19,8 +17,6 @@ export abstract class RacedayAbsoluteWidgetHarnessBase {
   };
 
   abstract getWidgetTypeLabel(): Promise<string>;
-  abstract clickMoveForward(): Promise<void>;
-  abstract clickMoveBackward(): Promise<void>;
   abstract clickRemove(): Promise<void>;
   abstract isCustomizing(): Promise<boolean>;
 }
