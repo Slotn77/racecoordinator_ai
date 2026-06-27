@@ -39,16 +39,69 @@ export function createMockEditorData(): MockEditorData {
   const track = createMockTrack();
   const participants = createMockRaceParticipants();
 
-  const heatDrivers = participants.slice(0, 4).map((p: any, index) => {
+  const heatDrivers = createMockHeatDrivers(participants);
+
+  const heat = {
+    id: "mock_heat_1",
+    objectId: "mock_heat_1",
+    race_id: "mock_race_1",
+    heatNumber: 1,
+    group: 0,
+    start_time: "2026-06-05T12:00:00Z",
+    end_time: "2026-06-05T12:03:00Z",
+    heatDrivers: heatDrivers,
+  } as unknown as Heat;
+
+  const nextHeatDrivers = createMockNextHeatDrivers();
+
+  const nextHeat = {
+    id: "mock_heat_2",
+    objectId: "mock_heat_2",
+    race_id: "mock_race_1",
+    heatNumber: 2,
+    group: 0,
+    started: false,
+    heatDrivers: nextHeatDrivers,
+  } as unknown as Heat;
+
+  const heats = [heat, nextHeat];
+  const groupParticipants = participants;
+
+  return {
+    raceState,
+    time,
+    race,
+    track,
+    participants,
+    heat,
+    heats,
+    groupParticipants,
+  };
+}
+
+function createMockHeatDrivers(
+  participants: RaceParticipant[],
+): DriverHeatData[] {
+  return participants.slice(0, 4).map((p: any, index) => {
     const hd = new DriverHeatData(`mock_hd_${index}`, p, p.lane - 1);
-    hd.addLapTime(
-      p.lap_count,
-      p.last_lap_time,
-      p.average_lap_time,
-      p.median_lap_time,
-      p.best_lap_time,
-      p.lap_count,
-    );
+    for (let i = 1; i <= p.lap_count; i++) {
+      const isLast = i === p.lap_count;
+      const lapTime = isLast
+        ? p.last_lap_time
+        : p.best_lap_time + (i % 3) * 0.1;
+      hd.addLapTime(
+        i,
+        lapTime,
+        p.average_lap_time,
+        p.median_lap_time,
+        p.best_lap_time,
+        i,
+        undefined,
+        false,
+        undefined,
+        [lapTime * 0.2, lapTime * 0.3, lapTime * 0.2, lapTime * 0.3],
+      );
+    }
     hd.reactionTime = p.reaction_time || 0.123;
     hd.gapLeader = p.gap_leader || 0;
     hd.gapPosition = p.gap_position || 0;
@@ -76,54 +129,19 @@ export function createMockEditorData(): MockEditorData {
 
     return hd;
   });
+}
 
-  const heat = {
-    id: "mock_heat_1",
-    objectId: "mock_heat_1",
-    race_id: "mock_race_1",
-    heatNumber: 1,
-    group: 0,
-    start_time: "2026-06-05T12:00:00Z",
-    end_time: "2026-06-05T12:03:00Z",
-    heatDrivers: heatDrivers,
-  } as unknown as Heat;
-
-  const nextHeatDrivers = createMockNextHeatParticipants().map(
-    (p: any, index) => {
-      const hd = new DriverHeatData(`mock_hd_next_${index}`, p, p.lane - 1);
-      hd.reactionTime = 0.15;
-      if (hd.participant) {
-        (hd.participant as any).fuelLevel = p.fuelLevel || 100;
-        (hd.participant as any).seed = p.seed || index + 5;
-        (hd.participant as any).team = p.team;
-      }
-      return hd;
-    },
-  );
-
-  const nextHeat = {
-    id: "mock_heat_2",
-    objectId: "mock_heat_2",
-    race_id: "mock_race_1",
-    heatNumber: 2,
-    group: 0,
-    started: false,
-    heatDrivers: nextHeatDrivers,
-  } as unknown as Heat;
-
-  const heats = [heat, nextHeat];
-  const groupParticipants = participants;
-
-  return {
-    raceState,
-    time,
-    race,
-    track,
-    participants,
-    heat,
-    heats,
-    groupParticipants,
-  };
+function createMockNextHeatDrivers(): DriverHeatData[] {
+  return createMockNextHeatParticipants().map((p: any, index) => {
+    const hd = new DriverHeatData(`mock_hd_next_${index}`, p, p.lane - 1);
+    hd.reactionTime = 0.15;
+    if (hd.participant) {
+      (hd.participant as any).fuelLevel = p.fuelLevel || 100;
+      (hd.participant as any).seed = p.seed || index + 5;
+      (hd.participant as any).team = p.team;
+    }
+    return hd;
+  });
 }
 
 function createMockTrack(): Track {

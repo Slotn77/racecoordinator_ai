@@ -58,6 +58,11 @@ import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
 import { LoggerService } from "@app/services/logger.service";
 import { PrintService } from "@app/services/print.service";
+
+export interface LapDisplayInfo {
+  lapTime: string;
+  segments: string[];
+}
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
@@ -1766,10 +1771,11 @@ export class DefaultRacedayComponent
     heatDriver: DriverHeatData,
     column: ColumnDefinition,
     anchor?: string,
-  ): string[] {
+  ): LapDisplayInfo[] {
     const laps = heatDriver.lapTimes || [];
+    const lapsDetails = heatDriver.lapsWithDetails || [];
     const n = laps.length;
-    const result: string[] = [];
+    const result: LapDisplayInfo[] = [];
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
       (w) => w.widgetType === "lane-view",
     );
@@ -1785,19 +1791,44 @@ export class DefaultRacedayComponent
       laneViewWidgetSettings: laneViewWidget?.customSettings,
     };
 
+    const isInset = anchor ? anchor !== "center-center" : false;
+    const timeDecimals = isInset
+      ? ctx.laneViewWidgetSettings?.insetTimeDecimalPlaces !== undefined
+        ? Number(ctx.laneViewWidgetSettings.insetTimeDecimalPlaces)
+        : 3
+      : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
+        ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
+        : 3;
+
     for (let i = 1; i <= 5; i++) {
       const index = n - 1 - i;
       const val = index >= 0 && laps[index] > 0 ? laps[index] : 0;
-      result.push(
-        RacedayFormatUtils.formatValue(
-          "lastLapTime",
-          val,
-          heatDriver,
-          column,
-          ctx,
-          anchor,
-        ),
+
+      const formattedLapTime = RacedayFormatUtils.formatValue(
+        "lastLapTime",
+        val,
+        heatDriver,
+        column,
+        ctx,
+        anchor,
       );
+
+      const segments: string[] = [];
+      if (index >= 0 && lapsDetails[index] && lapsDetails[index].segments) {
+        // max 4 segments
+        const rawSegments = lapsDetails[index].segments || [];
+        const numToDisplay = Math.min(rawSegments.length, 4);
+        for (let s = 0; s < numToDisplay; s++) {
+          const segVal = rawSegments[s];
+          if (segVal > 0) {
+            segments.push(segVal.toFixed(timeDecimals));
+          } else {
+            segments.push("--." + "-".repeat(timeDecimals));
+          }
+        }
+      }
+
+      result.push({ lapTime: formattedLapTime, segments });
     }
     return result;
   }
@@ -2143,19 +2174,19 @@ export class DefaultRacedayComponent
   }
 
   onColumnDragOver(event: DragEvent) {
-    if (!this.isUIEditorMode()) return;
+    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
     event.preventDefault();
     if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
     (event.currentTarget as HTMLElement).classList.add("drag-over");
   }
 
   onColumnDragLeave(event: DragEvent) {
-    if (!this.isUIEditorMode()) return;
+    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
     (event.currentTarget as HTMLElement).classList.remove("drag-over");
   }
 
   onColumnHeaderDrop(event: DragEvent, dropColData: ColumnDefinition) {
-    if (!this.isUIEditorMode()) return;
+    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
     event.preventDefault();
     event.stopPropagation();
     (event.currentTarget as HTMLElement).classList.remove("drag-over");
@@ -2211,7 +2242,7 @@ export class DefaultRacedayComponent
   }
 
   onColumnHeaderRowDrop(event: DragEvent) {
-    if (!this.isUIEditorMode()) return;
+    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
     event.preventDefault();
     (event.currentTarget as HTMLElement).classList.remove("drag-over");
 
@@ -2284,24 +2315,24 @@ export class DefaultRacedayComponent
   }
 
   onAnchorDragOver(event: DragEvent) {
-    if (!this.isUIEditorMode()) return;
+    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
     event.preventDefault();
     if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
   }
 
   onAnchorDragEnter(event: DragEvent) {
-    if (!this.isUIEditorMode()) return;
+    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
     event.preventDefault();
     (event.target as HTMLElement).classList.add("drag-over");
   }
 
   onAnchorDragLeave(event: DragEvent) {
-    if (!this.isUIEditorMode()) return;
+    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
     (event.target as HTMLElement).classList.remove("drag-over");
   }
 
   onAnchorDrop(event: DragEvent, colData: ColumnDefinition, anchor: string) {
-    if (!this.isUIEditorMode()) return;
+    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
     event.preventDefault();
     (event.target as HTMLElement).classList.remove("drag-over");
 
@@ -3846,7 +3877,12 @@ export class DefaultRacedayComponent
     if (!this.isLayoutCustomizing || !this.draggedWidgetType) return;
     event.preventDefault();
 
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const scalableContent = this.el.nativeElement.querySelector(
+      ".scalable-content",
+    ) as HTMLElement;
+    if (!scalableContent) return;
+
+    const rect = scalableContent.getBoundingClientRect();
     const scale = this.visualScale || 1;
     let x = (event.clientX - rect.left) / scale;
     let y = (event.clientY - rect.top) / scale;

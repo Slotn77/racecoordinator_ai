@@ -3991,6 +3991,50 @@ describe("DefaultRacedayComponent", () => {
       expect(mockSettings.layoutEditorPositionY).toBe(600);
       expect(settingsService.saveSettings).toHaveBeenCalled();
     });
+
+    it("should ignore column drag events when draggedWidgetType is set", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      component.draggedWidgetType = "timer"; // Simulate widget being dragged
+
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        dataTransfer: { dropEffect: "" },
+        currentTarget: document.createElement("div"),
+        target: document.createElement("div"),
+      } as any;
+
+      const colData = { propertyName: "name" } as any;
+
+      // Test all relevant methods return early without modifying event or state
+      component.onColumnDragOver(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+
+      component.onColumnDragLeave(event);
+      expect(
+        (event.currentTarget as HTMLElement).classList.contains("drag-over"),
+      ).toBeFalse();
+
+      component.onColumnHeaderDrop(event, colData);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+
+      component.onColumnHeaderRowDrop(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+
+      component.onAnchorDragOver(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+
+      component.onAnchorDragEnter(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+
+      component.onAnchorDragLeave(event);
+      expect(
+        (event.target as HTMLElement).classList.contains("drag-over"),
+      ).toBeFalse();
+
+      component.onAnchorDrop(event, colData, "top-center");
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    });
   });
 
   describe("Scaling and Viewport Fitting", () => {
@@ -4109,9 +4153,12 @@ describe("DefaultRacedayComponent", () => {
         height: 1080,
       } as DOMRect);
 
+      spyOn(component["el"].nativeElement, "querySelector").and.returnValue(
+        element,
+      );
+
       const event = {
         preventDefault: jasmine.createSpy("preventDefault"),
-        currentTarget: element,
         clientX: 100,
         clientY: 200,
       } as any;

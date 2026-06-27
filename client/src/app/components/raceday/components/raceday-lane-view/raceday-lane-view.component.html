@@ -84,10 +84,21 @@
             style="
               flex: 1;
               display: flex;
-              align-items: center;
               justify-content: center;
               height: 100%;
               line-height: 1;
+            "
+            [style.align-items]="
+              widget()?.customSettings?.['isVertical'] &&
+              col.propertyName === 'lastLaps'
+                ? 'flex-start'
+                : 'center'
+            "
+            [style.padding-top]="
+              widget()?.customSettings?.['isVertical'] &&
+              col.propertyName === 'lastLaps'
+                ? '12px'
+                : '0'
             "
           >
             {{ parent().getColumnLabel(col) }}
@@ -448,10 +459,38 @@
                         "
                       >
                         @for (
-                          lap of parent().getLastLaps(hd, col, entry.anchor);
+                          lapObj of parent().getLastLaps(hd, col, entry.anchor);
                           track $index
                         ) {
-                          <span>{{ lap }}</span>
+                          <div
+                            [style.display]="'flex'"
+                            [style.flex-direction]="
+                              widget()?.customSettings?.['isVertical']
+                                ? 'row'
+                                : 'column'
+                            "
+                            [style.align-items]="'center'"
+                            [style.gap]="'4px'"
+                          >
+                            <span>{{ lapObj.lapTime }}</span>
+                            @if (lapObj.segments.length > 0) {
+                              <div
+                                [style.display]="'flex'"
+                                [style.flex-direction]="
+                                  widget()?.customSettings?.['isVertical']
+                                    ? 'column'
+                                    : 'row'
+                                "
+                                [style.gap]="'4px'"
+                                [style.font-size]="'0.7em'"
+                                [style.opacity]="'0.8'"
+                              >
+                                @for (seg of lapObj.segments; track $index) {
+                                  <span>{{ seg }}</span>
+                                }
+                              </div>
+                            }
+                          </div>
                         }
                       </div>
                     } @else if (

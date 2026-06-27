@@ -1,4 +1,8 @@
-<div class="dashboard-wrapper">
+<div
+  class="dashboard-wrapper"
+  (dragover)="onCanvasDragOver($event)"
+  (drop)="onCanvasDrop($event)"
+>
   <app-raceday-modals
     [showAckModal]="showAckModal"
     [ackModalTitle]="ackModalTitle"
@@ -72,8 +76,6 @@
     [style.width.px]="dashboardWidth"
     [style.min-width.px]="dashboardWidth"
     [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
-    (dragover)="onCanvasDragOver($event)"
-    (drop)="onCanvasDrop($event)"
   >
     <div
       class="raceday-absolute-layout-root-wrapper"
