@@ -806,4 +806,71 @@ test.describe("Raceday Visuals for Fuel", () => {
       maxDiffPixels: 0,
     });
   });
+
+  test("should display default practice layout correctly", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    const container = page.locator(".dashboard-wrapper");
+    const _harness = new DefaultRacedayHarnessE2e(container);
+
+    await expect(page.locator(".scalable-content")).toBeVisible();
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Mock Practice",
+          practice: true,
+          fuelOptions: {
+            enabled: true,
+            capacity: 100,
+            usageType: 0,
+            usageRate: 1.0,
+            startLevel: 100,
+          },
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                length: 10,
+                backgroundColor: "#550000",
+                foregroundColor: "#ffffff",
+              },
+              {
+                objectId: "l2",
+                length: 10,
+                backgroundColor: "#005500",
+                foregroundColor: "#ffffff",
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            driver: {
+              model: { entityId: "d1" },
+              name: "Driver 1",
+              nickname: "D1",
+            },
+          },
+        ],
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page.waitForTimeout(500);
+
+    await expect(page).toHaveScreenshot("default-practice-layout.png", {
+      maxDiffPixelRatio: 0.001,
+      maxDiffPixels: 0,
+    });
+  });
 });

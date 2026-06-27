@@ -2027,10 +2027,10 @@ describe("UIEditorComponent", () => {
 
       expect(component.selectedPracticeWidgetId).toBeNull();
       expect(component.editingSettings.practiceRacedayLayout).toEqual(
-        Settings.DEFAULT_LAYOUT,
+        Settings.DEFAULT_PRACTICE_LAYOUT,
       );
       expect(component.editingSettings.practiceRacedayColumns).toEqual(
-        Settings.DEFAULT_COLUMNS,
+        Settings.DEFAULT_PRACTICE_COLUMNS,
       );
       expect(component.editingSettings.practiceColumnLayouts).toEqual(
         new Settings().practiceColumnLayouts,

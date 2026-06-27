@@ -684,7 +684,13 @@ export class DefaultRacedayComponent
         if (this.currentRacedayLayout?.widgets) {
           this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
         } else {
-          this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+          this.layout = JSON.parse(
+            JSON.stringify(
+              this.isPracticeLayout
+                ? Settings.DEFAULT_PRACTICE_LAYOUT
+                : Settings.DEFAULT_LAYOUT,
+            ),
+          );
         }
       }
       this.loadColumns();
@@ -740,7 +746,13 @@ export class DefaultRacedayComponent
     if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
       this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
     } else {
-      this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+      this.layout = JSON.parse(
+        JSON.stringify(
+          this.isPracticeLayout
+            ? Settings.DEFAULT_PRACTICE_LAYOUT
+            : Settings.DEFAULT_LAYOUT,
+        ),
+      );
     }
 
     this.loadColumns();
@@ -1563,7 +1575,13 @@ export class DefaultRacedayComponent
       if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
         this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
       } else {
-        this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+        this.layout = JSON.parse(
+          JSON.stringify(
+            this.isPracticeLayout
+              ? Settings.DEFAULT_PRACTICE_LAYOUT
+              : Settings.DEFAULT_LAYOUT,
+          ),
+        );
       }
 
       this.loadColumns();
@@ -3760,14 +3778,26 @@ export class DefaultRacedayComponent
     if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
       this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
     } else {
-      this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+      this.layout = JSON.parse(
+        JSON.stringify(
+          this.isPracticeLayout
+            ? Settings.DEFAULT_PRACTICE_LAYOUT
+            : Settings.DEFAULT_LAYOUT,
+        ),
+      );
     }
     this.isLayoutCustomizing = false;
     this.cdr.detectChanges();
   }
 
   resetLayoutToDefaults() {
-    this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+    this.layout = JSON.parse(
+      JSON.stringify(
+        this.isPracticeLayout
+          ? Settings.DEFAULT_PRACTICE_LAYOUT
+          : Settings.DEFAULT_LAYOUT,
+      ),
+    );
     const settings = this.settingsService.getSettings();
     this.currentRacedayLayout = this.layout;
     this.settingsService.saveSettings(settings);

@@ -414,9 +414,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   resetPracticeRacedayLayout() {
     this.selectedPracticeWidgetId = null;
     this.editingSettings.practiceRacedayLayout = JSON.parse(
-      JSON.stringify(Settings.DEFAULT_LAYOUT),
+      JSON.stringify(Settings.DEFAULT_PRACTICE_LAYOUT),
     );
-    this.editingSettings.practiceRacedayColumns = [...Settings.DEFAULT_COLUMNS];
+    this.editingSettings.practiceRacedayColumns = [
+      ...Settings.DEFAULT_PRACTICE_COLUMNS,
+    ];
     this.editingSettings.practiceColumnLayouts = JSON.parse(
       JSON.stringify(new Settings().practiceColumnLayouts),
     );
@@ -597,7 +599,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
         if (!editingSettings.practiceRacedayLayout) {
           editingSettings.practiceRacedayLayout = JSON.parse(
-            JSON.stringify(Settings.DEFAULT_LAYOUT),
+            JSON.stringify(Settings.DEFAULT_PRACTICE_LAYOUT),
           );
         }
 

@@ -54,6 +54,14 @@ export class Settings {
     "gapLeader",
   ];
 
+  static readonly DEFAULT_PRACTICE_COLUMNS = [
+    "driver.nickname",
+    "lastLapTime",
+    "lastLaps",
+    "bestLapTime",
+    "lapCount",
+  ];
+
   recentRaceIds: string[] = [];
   selectedRaceId: string = "";
   selectedDriverIds: string[] = [];
@@ -139,30 +147,25 @@ export class Settings {
 
   racedayLayout?: LayoutConfig;
 
-  practiceRacedayColumns: string[] = Settings.DEFAULT_COLUMNS;
+  practiceRacedayColumns: string[] = Settings.DEFAULT_PRACTICE_COLUMNS;
   practiceColumnAnchors: { [key: string]: AnchorPoint } = {};
   practiceColumnLayouts: {
     [columnKey: string]: { [A in AnchorPoint]?: string };
   } = {
     "driver.nickname": {
       [AnchorPoint.CenterCenter]: "driver.nickname",
-      [AnchorPoint.BottomRight]: "participant.team.name",
-    },
-    "imageset_fuel-gauge-builtin": {
-      [AnchorPoint.CenterCenter]: "imageset_fuel-gauge-builtin",
-    },
-    lapCount: {
-      [AnchorPoint.CenterCenter]: "lapCount",
-      [AnchorPoint.BottomLeft]: "flag",
     },
     lastLapTime: {
       [AnchorPoint.CenterCenter]: "lastLapTime",
-      [AnchorPoint.TopRight]: "bestLapTime",
-      [AnchorPoint.BottomRight]: "averageLapTime",
     },
-    gapLeader: {
-      [AnchorPoint.CenterCenter]: "gapLeader",
-      [AnchorPoint.BottomRight]: "gapPosition",
+    lastLaps: {
+      [AnchorPoint.CenterCenter]: "lastLaps",
+    },
+    bestLapTime: {
+      [AnchorPoint.CenterCenter]: "bestLapTime",
+    },
+    lapCount: {
+      [AnchorPoint.CenterCenter]: "lapCount",
     },
   };
   practiceColumnVisibility: { [columnKey: string]: ColumnVisibility } = {
@@ -282,6 +285,72 @@ export class Settings {
         height: 751,
         zIndex: 100,
         scaleMode: "auto",
+      },
+    ],
+  };
+
+  static readonly DEFAULT_PRACTICE_LAYOUT: LayoutConfig = {
+    widgets: [
+      {
+        id: "widget-menu-bar",
+        widgetType: "menu-bar",
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 54,
+        zIndex: 100,
+        scaleMode: "auto",
+      },
+      {
+        id: "widget-timer",
+        widgetType: "timer",
+        x: 0,
+        y: 288,
+        width: 233,
+        height: 570,
+        zIndex: 112,
+        scaleMode: "auto",
+        fontFamily: "",
+        textColor: "",
+        backgroundColor: "",
+        fontSize: 24,
+        textScaleFactor: 1,
+        customSettings: {
+          timeFontFamily: "",
+          timeFontSize: 100,
+          timeTextColor: "",
+        },
+      },
+      {
+        id: "widget-lane-view",
+        widgetType: "lane-view",
+        x: 0,
+        y: 54,
+        width: 1920,
+        height: 1026,
+        zIndex: 111,
+        scaleMode: "auto",
+        fontFamily: "",
+        textColor: "",
+        backgroundColor: "",
+        fontSize: 24,
+        textScaleFactor: 1,
+        customSettings: {
+          isVertical: true,
+          timeDecimalPlaces: 3,
+          lapDecimalPlaces: 2,
+          columnFontFamily: "",
+          columnFontSize: 24,
+          columnTextColor: "",
+          dataFontFamily: "",
+          dataFontSize: 54,
+          dataTextColor: "",
+          insetTimeDecimalPlaces: 3,
+          insetLapDecimalPlaces: 2,
+          insetFontFamily: "",
+          insetFontSize: 24,
+          insetTextColor: "",
+        },
       },
     ],
   };
