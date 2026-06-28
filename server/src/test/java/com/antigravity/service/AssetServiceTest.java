@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -39,6 +40,8 @@ public class AssetServiceTest {
   private MongoDatabase mongoDatabase;
   private MongoCollection<Document> collection;
   private MongoCollection<Document> themesCollection;
+  private MongoCollection<Document> driversCollection;
+  private MongoCollection<Document> teamsCollection;
   private AssetService assetService;
   private String assetsDir;
   private File testDir;
@@ -51,6 +54,10 @@ public class AssetServiceTest {
 
     when(mongoDatabase.getCollection("assets")).thenReturn(collection);
     when(mongoDatabase.getCollection("themes")).thenReturn(themesCollection);
+    driversCollection = mock(MongoCollection.class);
+    teamsCollection = mock(MongoCollection.class);
+    when(mongoDatabase.getCollection("drivers")).thenReturn(driversCollection);
+    when(mongoDatabase.getCollection("teams")).thenReturn(teamsCollection);
 
     // Default to return an empty FindIterable for any find() call
     FindIterable<Document> emptyIterable = mock(FindIterable.class);
@@ -63,6 +70,9 @@ public class AssetServiceTest {
 
     when(themesCollection.find(any(Bson.class))).thenReturn(emptyIterable);
     when(themesCollection.find()).thenReturn(emptyIterable);
+
+    when(driversCollection.find(any(Bson.class))).thenReturn(emptyIterable);
+    when(teamsCollection.find(any(Bson.class))).thenReturn(emptyIterable);
 
     // Manual temp dir management to avoid permission issues in /var/folders/
     testDir = new File("target/test_assets_" + System.currentTimeMillis());
@@ -100,7 +110,11 @@ public class AssetServiceTest {
     assertEquals(1, files.length);
 
     // Verify DB insertion
-    verify(collection).insertOne(any(Document.class));
+    verify(collection)
+        .replaceOne(
+            any(Bson.class),
+            any(Document.class),
+            any(com.mongodb.client.model.ReplaceOptions.class));
   }
 
   @Test
@@ -314,12 +328,14 @@ public class AssetServiceTest {
 
     assetService.backfillDefaults();
 
-    // Capture the documents inserted
+    // Capture the documents replaced
     ArgumentCaptor<Document> captor = ArgumentCaptor.forClass(Document.class);
-    verify(collection, atLeastOnce()).insertOne(captor.capture());
+    verify(collection, atLeastOnce())
+        .replaceOne(
+            any(Bson.class), captor.capture(), any(com.mongodb.client.model.ReplaceOptions.class));
 
     List<Document> insertedDocs = captor.getAllValues();
-    assertTrue("Should have inserted many default assets", insertedDocs.size() > 10);
+    assertTrue("Should have saved many default assets", insertedDocs.size() > 10);
 
     ArgumentCaptor<Document> updateCaptor = ArgumentCaptor.forClass(Document.class);
     verify(collection, atLeastOnce())
@@ -371,9 +387,12 @@ public class AssetServiceTest {
 
     assetService.backfillDefaults();
 
-    // Verify insertOne was never called for this ID
+    // Verify replaceOne was never called for this ID
     ArgumentCaptor<Document> captor = ArgumentCaptor.forClass(Document.class);
-    verify(collection, atLeastOnce()).insertOne(captor.capture());
+    // Since saveAsset uses replaceOne, we check that no replaceOne was called for this ID
+    verify(collection, atLeastOnce())
+        .replaceOne(
+            any(Bson.class), captor.capture(), any(com.mongodb.client.model.ReplaceOptions.class));
 
     boolean readded = captor.getAllValues().stream().anyMatch(d -> id.equals(d.getString("_id")));
 
@@ -397,7 +416,9 @@ public class AssetServiceTest {
     assetService.backfillDefaults();
 
     ArgumentCaptor<Document> captor = ArgumentCaptor.forClass(Document.class);
-    verify(collection, atLeastOnce()).insertOne(captor.capture());
+    verify(collection, atLeastOnce())
+        .replaceOne(
+            any(Bson.class), captor.capture(), any(com.mongodb.client.model.ReplaceOptions.class));
 
     boolean readded = captor.getAllValues().stream().anyMatch(d -> id.equals(d.getString("_id")));
 
@@ -774,5 +795,120 @@ public class AssetServiceTest {
 
     assetService.saveCustomRotation(
         null, "Duplicate Name", 4, Arrays.asList(createValidRotation()));
+  }
+
+  @Test
+  public void testBackfillDefaults_DeletesOldHelmetAssets() {
+    Document oldHelmet =
+        new Document("_id", "default_old_helmet_99")
+            .append("name", "Helmet Old")
+            .append("is_default", true);
+
+    FindIterable<Document> helmetIterable = mock(FindIterable.class);
+
+    org.mockito.stubbing.Answer<Void> answer =
+        invocation -> {
+          java.util.function.Consumer<Document> consumer = invocation.getArgument(0);
+          consumer.accept(oldHelmet);
+          return null;
+        };
+    doAnswer(answer).when(helmetIterable).forEach(any());
+
+    when(collection.find(
+            org.mockito.ArgumentMatchers.<Bson>argThat(
+                bson -> bson != null && bson.toString().contains("Helmet"))))
+        .thenReturn(helmetIterable);
+
+    FindIterable<Document> singleDocIterable = mock(FindIterable.class);
+    when(singleDocIterable.first()).thenReturn(oldHelmet);
+    when(collection.find(
+            org.mockito.ArgumentMatchers.<Bson>argThat(
+                bson -> bson != null && bson.toString().contains("default_old_helmet_99"))))
+        .thenReturn(singleDocIterable);
+
+    assetService.backfillDefaults();
+
+    verify(collection, atLeastOnce())
+        .updateOne(
+            org.mockito.ArgumentMatchers.<Bson>argThat(
+                bson -> bson != null && bson.toString().contains("default_old_helmet_99")),
+            org.mockito.ArgumentMatchers.<Bson>argThat(
+                bson -> bson != null && bson.toString().contains("deleted")));
+  }
+
+  @Test
+  public void testBackfillDefaults_MigratesDriversWithOldHelmetUrls() {
+    org.bson.types.ObjectId driverId = new org.bson.types.ObjectId();
+    Document oldDriver =
+        new Document("_id", driverId).append("avatarUrl", "/assets/default_old_helmet_old.png");
+
+    org.bson.types.ObjectId validDriverId = new org.bson.types.ObjectId();
+    Document validDriver =
+        new Document("_id", validDriverId)
+            .append("avatarUrl", "/assets/default_black-blue_black-blue.png");
+
+    FindIterable<Document> driversIterable = mock(FindIterable.class);
+    when(driversCollection.find(any(Bson.class))).thenReturn(driversIterable);
+
+    org.mockito.stubbing.Answer<Void> answer =
+        invocation -> {
+          java.util.function.Consumer<Document> consumer = invocation.getArgument(0);
+          consumer.accept(oldDriver);
+          consumer.accept(validDriver);
+          return null;
+        };
+    doAnswer(answer).when(driversIterable).forEach(any());
+
+    assetService.backfillDefaults();
+
+    ArgumentCaptor<Bson> filterCaptor = ArgumentCaptor.forClass(Bson.class);
+    ArgumentCaptor<Bson> updateCaptor = ArgumentCaptor.forClass(Bson.class);
+    verify(driversCollection, times(1)).updateOne(filterCaptor.capture(), updateCaptor.capture());
+
+    Bson filter = filterCaptor.getValue();
+    Bson update = updateCaptor.getValue();
+
+    assertTrue("Should update old driver ID", filter.toString().contains(driverId.toHexString()));
+    assertTrue(
+        "Should set avatarUrl to fallback helmet",
+        update.toString().contains("default_black-blue_black-blue.png"));
+  }
+
+  @Test
+  public void testBackfillDefaults_MigratesTeamsWithOldHelmetUrls() {
+    org.bson.types.ObjectId teamId = new org.bson.types.ObjectId();
+    Document oldTeam =
+        new Document("_id", teamId).append("avatarUrl", "/assets/default_old_helmet_old.png");
+
+    org.bson.types.ObjectId validTeamId = new org.bson.types.ObjectId();
+    Document validTeam =
+        new Document("_id", validTeamId)
+            .append("avatarUrl", "/assets/default_black-blue_black-blue.png");
+
+    FindIterable<Document> teamsIterable = mock(FindIterable.class);
+    when(teamsCollection.find(any(Bson.class))).thenReturn(teamsIterable);
+
+    org.mockito.stubbing.Answer<Void> answer =
+        invocation -> {
+          java.util.function.Consumer<Document> consumer = invocation.getArgument(0);
+          consumer.accept(oldTeam);
+          consumer.accept(validTeam);
+          return null;
+        };
+    doAnswer(answer).when(teamsIterable).forEach(any());
+
+    assetService.backfillDefaults();
+
+    ArgumentCaptor<Bson> filterCaptor = ArgumentCaptor.forClass(Bson.class);
+    ArgumentCaptor<Bson> updateCaptor = ArgumentCaptor.forClass(Bson.class);
+    verify(teamsCollection, times(1)).updateOne(filterCaptor.capture(), updateCaptor.capture());
+
+    Bson filter = filterCaptor.getValue();
+    Bson update = updateCaptor.getValue();
+
+    assertTrue("Should update old team ID", filter.toString().contains(teamId.toHexString()));
+    assertTrue(
+        "Should set avatarUrl to fallback helmet",
+        update.toString().contains("default_black-blue_black-blue.png"));
   }
 }

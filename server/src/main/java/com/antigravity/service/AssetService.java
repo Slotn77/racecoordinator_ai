@@ -64,11 +64,35 @@ public class AssetService {
 
   static {
     DEFAULT_IMAGE_ASSETS.add(
-        new DefaultAsset(
-            "default_avatar_helmet_4", "default_avatar_helmet_4.png", "Helmet Futuristic 1"));
+        new DefaultAsset("default_black-blue", "black-blue.png", "Helmet Black-Blue"));
+    DEFAULT_IMAGE_ASSETS.add(
+        new DefaultAsset("default_black-grey", "black-grey.png", "Helmet Black-Grey"));
+    DEFAULT_IMAGE_ASSETS.add(
+        new DefaultAsset("default_black-purple", "black-purple.png", "Helmet Black-Purple"));
+    DEFAULT_IMAGE_ASSETS.add(
+        new DefaultAsset("default_black-white", "black-white.png", "Helmet Black-White"));
+    DEFAULT_IMAGE_ASSETS.add(
+        new DefaultAsset("default_black-white2", "black-white2.png", "Helmet Black-White2"));
+    DEFAULT_IMAGE_ASSETS.add(
+        new DefaultAsset("default_black-yellow", "black-yellow.png", "Helmet Black-Yellow"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_black", "black.png", "Helmet Black"));
+    DEFAULT_IMAGE_ASSETS.add(
+        new DefaultAsset("default_blue-green", "blue-green.png", "Helmet Blue-Green"));
+    DEFAULT_IMAGE_ASSETS.add(
+        new DefaultAsset("default_blue-green2", "blue-green2.png", "Helmet Blue-Green2"));
     DEFAULT_IMAGE_ASSETS.add(
         new DefaultAsset(
-            "default_avatar_helmet_5", "default_avatar_helmet_5.png", "Helmet Futuristic 2"));
+            "default_blue-purple-green", "blue-purple-green.png", "Helmet Blue-Purple-Green"));
+    DEFAULT_IMAGE_ASSETS.add(
+        new DefaultAsset(
+            "default_blue-red-silver", "blue-red-silver.png", "Helmet Blue-Red-Silver"));
+    DEFAULT_IMAGE_ASSETS.add(
+        new DefaultAsset("default_blue-white", "blue-white.png", "Helmet Blue-White"));
+    DEFAULT_IMAGE_ASSETS.add(
+        new DefaultAsset(
+            "default_blue-yellow-red", "blue-yellow-red.png", "Helmet Blue-Yellow-Red"));
+    DEFAULT_IMAGE_ASSETS.add(
+        new DefaultAsset("default_blue-yellow", "blue-yellow.png", "Helmet Blue-Yellow"));
     DEFAULT_IMAGE_ASSETS.add(
         new DefaultAsset("default_green-white", "green-white.png", "Helmet Green-White"));
     DEFAULT_IMAGE_ASSETS.add(
@@ -96,13 +120,6 @@ public class AssetService {
     DEFAULT_IMAGE_ASSETS.add(
         new DefaultAsset(
             "default_white-red-yellow", "white-red-yellow.png", "Helmet White-Red-Yellow"));
-    DEFAULT_IMAGE_ASSETS.add(
-        new DefaultAsset("default_black-grey", "black-grey.png", "Helmet Black-Grey"));
-    DEFAULT_IMAGE_ASSETS.add(
-        new DefaultAsset("default_black-white", "black-white.png", "Helmet Black-White"));
-    DEFAULT_IMAGE_ASSETS.add(
-        new DefaultAsset("default_black-white2", "black-white2.png", "Helmet Black-White2"));
-    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_black", "black.png", "Helmet Black"));
     DEFAULT_IMAGE_ASSETS.add(
         new DefaultAsset("default_flag_green", "flag_green.png", "Green Flag"));
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_flag_red", "flag_red.png", "Red Flag"));
@@ -322,7 +339,10 @@ public class AssetService {
       doc.append("is_default", true);
     }
 
-    collection.insertOne(doc);
+    collection.replaceOne(
+        com.mongodb.client.model.Filters.eq("_id", id),
+        doc,
+        new com.mongodb.client.model.ReplaceOptions().upsert(true));
 
     return documentToAsset(doc);
   }
@@ -986,18 +1006,30 @@ public class AssetService {
       List<ImageSetEntry> fuelImages = new ArrayList<>();
       long fuelTotalSize = 0;
 
+      // Clean up any old default helmet assets that are no longer in our code
+      List<String> validHelmetIds =
+          DEFAULT_IMAGE_ASSETS.stream()
+              .filter(a -> a.displayName.contains("Helmet") || a.id.contains("helmet"))
+              .map(a -> a.id)
+              .collect(java.util.stream.Collectors.toList());
+      collection
+          .find(
+              com.mongodb.client.model.Filters.and(
+                  com.mongodb.client.model.Filters.regex("_id", "^default_"),
+                  com.mongodb.client.model.Filters.regex("name", ".*Helmet.*"),
+                  com.mongodb.client.model.Filters.nin("_id", validHelmetIds)))
+          .forEach(
+              (java.util.function.Consumer<Document>) doc -> deleteAsset(doc.getString("_id")));
+
       for (DefaultAsset asset : DEFAULT_IMAGE_ASSETS) {
         Document existing = collection.find(Filters.eq("_id", asset.id)).first();
-        if (existing != null) {
-          if (!asset.displayName.equals(existing.getString("name"))) {
-            collection.updateOne(
-                Filters.eq("_id", asset.id), Updates.set("name", asset.displayName));
-          }
-          continue;
-        }
         try {
           byte[] data = readResource("/defaults/" + asset.filename);
           saveAsset(asset.id, asset.filename, "image", data);
+          if (existing != null && !asset.displayName.equals(existing.getString("name"))) {
+            collection.updateOne(
+                Filters.eq("_id", asset.id), Updates.set("name", asset.displayName));
+          }
         } catch (IOException | NumberFormatException e) {
           logger.error("Failed to backfill default asset {}", asset.filename, e);
         }
@@ -1240,6 +1272,47 @@ public class AssetService {
 
       // Ensure all themes have the new audio slot
       backfillThemeSlots();
+
+      // Generate a list of all valid default asset URLs for helmets
+      List<String> validHelmetUrls =
+          DEFAULT_IMAGE_ASSETS.stream()
+              .map(
+                  a -> {
+                    String safeName = a.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
+                    return "/assets/" + a.id + "_" + safeName;
+                  })
+              .collect(java.util.stream.Collectors.toList());
+
+      String fallbackHelmetUrl = "/assets/default_black-blue_black-blue.png";
+
+      // Migrate any drivers or teams that used the deleted helmet images
+      MongoCollection<org.bson.Document> drivers = database.getCollection("drivers");
+      drivers
+          .find(com.mongodb.client.model.Filters.regex("avatarUrl", "^/assets/default_"))
+          .forEach(
+              (java.util.function.Consumer<org.bson.Document>)
+                  doc -> {
+                    String url = doc.getString("avatarUrl");
+                    if (url != null && !validHelmetUrls.contains(url)) {
+                      drivers.updateOne(
+                          com.mongodb.client.model.Filters.eq("_id", doc.getObjectId("_id")),
+                          com.mongodb.client.model.Updates.set("avatarUrl", fallbackHelmetUrl));
+                    }
+                  });
+
+      MongoCollection<org.bson.Document> teams = database.getCollection("teams");
+      teams
+          .find(com.mongodb.client.model.Filters.regex("avatarUrl", "^/assets/default_"))
+          .forEach(
+              (java.util.function.Consumer<org.bson.Document>)
+                  doc -> {
+                    String url = doc.getString("avatarUrl");
+                    if (url != null && !validHelmetUrls.contains(url)) {
+                      teams.updateOne(
+                          com.mongodb.client.model.Filters.eq("_id", doc.getObjectId("_id")),
+                          com.mongodb.client.model.Updates.set("avatarUrl", fallbackHelmetUrl));
+                    }
+                  });
     } catch (Exception e) {
       logger.error("Error in backfillDefaults", e);
     }
