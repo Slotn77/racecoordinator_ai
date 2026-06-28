@@ -244,8 +244,8 @@ describe("RacedayLaneViewComponent", () => {
     });
     fixture.detectChanges();
 
-    const headerCell = fixture.nativeElement.querySelector(".header-cell");
-    expect(headerCell.style.getPropertyValue("--custom-column-font-size")).toBe(
+    const container = fixture.nativeElement.querySelector(".bottom-section");
+    expect(container.style.getPropertyValue("--custom-column-font-size")).toBe(
       "24px",
     );
 

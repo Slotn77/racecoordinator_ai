@@ -32,7 +32,7 @@
 
 .table-header-row {
   display: grid;
-  height: 36px;
+  min-height: 36px;
   gap: 2px;
   position: relative;
   z-index: 200;
@@ -52,8 +52,10 @@
   font-weight: bold;
   font-size: 24px;
   user-select: none;
-  height: 100%;
   line-height: 1;
+  text-align: center;
+  padding: 4px;
+  box-sizing: border-box;
 }
 
 .table-body {
@@ -430,6 +432,8 @@
   font-size: calc(var(--custom-column-font-size, 3.4cqh) * var(--widget-scale-factor, 1)) !important;
 }
 
+
+
 .widget-wrapper.scale-auto .anchor-top-left,
 .widget-wrapper.scale-auto .anchor-top-center,
 .widget-wrapper.scale-auto .anchor-top-right,
@@ -450,6 +454,8 @@
 .widget-wrapper.scale-fixed .header-cell {
   font-size: var(--custom-column-font-size, calc(1 * var(--widget-font-size))) !important;
 }
+
+
 
 .widget-wrapper.scale-fixed .anchor-top-left,
 .widget-wrapper.scale-fixed .anchor-top-center,

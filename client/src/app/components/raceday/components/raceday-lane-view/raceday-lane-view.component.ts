@@ -149,11 +149,4 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
       }
     }
   }
-
-  getHeaderHeight(): number {
-    const columnFontSize = this.widget()?.customSettings?.["columnFontSize"];
-    return columnFontSize
-      ? Math.max(36, Math.round(Number(columnFontSize) * 1.3 + 8))
-      : 36;
-  }
 }

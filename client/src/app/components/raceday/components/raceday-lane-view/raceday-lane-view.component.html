@@ -2,6 +2,11 @@
   <div
     class="bottom-section"
     [class.vertical-layout]="widget()?.customSettings?.['isVertical']"
+    [style.--custom-column-font-size]="
+      widget()?.customSettings?.['columnFontSize']
+        ? widget()?.customSettings?.['columnFontSize'] + 'px'
+        : null
+    "
     #laneViewContainer
   >
     <!-- Header -->
@@ -16,9 +21,6 @@
         widget()?.customSettings?.['isVertical']
           ? parent().gridTemplateRowsVertical
           : 'none'
-      "
-      [style.height.px]="
-        !widget()?.customSettings?.['isVertical'] ? getHeaderHeight() : null
       "
       [style.width]="widget()?.customSettings?.['isVertical'] ? 'auto' : null"
       cdkDropList
@@ -50,9 +52,6 @@
           [cdkDragDisabled]="!parent().isUIEditorMode()"
           [style.font-family]="
             widget()?.customSettings?.['columnFontFamily'] || null
-          "
-          [style.--custom-column-font-size.px]="
-            widget()?.customSettings?.['columnFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['columnTextColor'] || null"
           (dragover)="
@@ -294,10 +293,14 @@
                         ? widget()?.customSettings?.['dataFontFamily'] || null
                         : widget()?.customSettings?.['insetFontFamily'] || null
                     "
-                    [style.--custom-font-size.px]="
+                    [style.--custom-font-size]="
                       entry.anchor?.startsWith('center-')
-                        ? widget()?.customSettings?.['dataFontSize'] || null
-                        : widget()?.customSettings?.['insetFontSize'] || null
+                        ? widget()?.customSettings?.['dataFontSize']
+                          ? widget()?.customSettings?.['dataFontSize'] + 'px'
+                          : null
+                        : widget()?.customSettings?.['insetFontSize']
+                          ? widget()?.customSettings?.['insetFontSize'] + 'px'
+                          : null
                     "
                     [style.color]="
                       (entry.anchor?.startsWith('center-')

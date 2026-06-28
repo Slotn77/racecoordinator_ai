@@ -17,7 +17,7 @@
   [style.font-family]="widget().fontFamily || null"
   [style.color]="widget().textColor || null"
   [style.background-color]="widget().backgroundColor || null"
-  [style.--widget-font-size.px]="widget().fontSize || 24"
+  [style.--widget-font-size]="(widget().fontSize || 24) + 'px'"
   [style.--widget-scale-factor]="widget().textScaleFactor || 1"
   (pointerdown)="isCustomizing() ? bringToFront() : null"
   window-id="absolute-widget"
