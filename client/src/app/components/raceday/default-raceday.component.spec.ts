@@ -3291,6 +3291,47 @@ describe("DefaultRacedayComponent", () => {
       expect(component.formatValue("lapCount", 10.123, hd)).toBe("10.12"); // Rounded to 2
     });
 
+    it("should use inset settings when formatting lap counts as insets", () => {
+      component.currentRacedayLayout = {
+        widgets: [
+          {
+            widgetType: "lane-view",
+            customSettings: {
+              lapDecimalPlaces: 1,
+              insetLapDecimalPlaces: 3,
+            },
+          },
+        ],
+      } as any;
+      const hd: any = { reactionTime: 1.0 };
+
+      // Without anchor or with center-* anchor, it's NOT an inset. Uses lapDecimalPlaces (1)
+      expect(component.formatValue("lapCount", 10.1234, hd)).toBe("10.1");
+      expect(
+        component.formatValue(
+          "lapCount",
+          10.1234,
+          hd,
+          undefined,
+          "center-center",
+        ),
+      ).toBe("10.1");
+      expect(
+        component.formatValue(
+          "lapCount",
+          10.1234,
+          hd,
+          undefined,
+          "center-left",
+        ),
+      ).toBe("10.1");
+
+      // With an inset anchor, it IS an inset. Uses insetLapDecimalPlaces (3)
+      expect(
+        component.formatValue("lapCount", 10.1234, hd, undefined, "top-left"),
+      ).toBe("10.123");
+    });
+
     it("should display --.-- until reaction time, real laps, or adjustments are registered", () => {
       // 1. None registered
       const hdNoData: any = {
