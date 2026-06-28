@@ -60,6 +60,7 @@ fi
 # Setup a clean home for the test to avoid EPERM on .angular-config.json
 mkdir -p "$ISOLATED_DIR/test-home"
 HOME="$ISOLATED_DIR/test-home" npx -y playwright test "$@"
+TEST_EXIT_CODE=$?
 
 # If updating snapshots, copy them back to the original source directory
 if [[ "$*" == *"--update-snapshots"* ]]; then
@@ -74,4 +75,5 @@ if [[ "$*" == *"--update-snapshots"* ]]; then
     done
 fi
 
+exit $TEST_EXIT_CODE
 
