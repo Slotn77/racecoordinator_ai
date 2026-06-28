@@ -481,6 +481,13 @@ describe("UIEditorComponent", () => {
     expect(component.editingSettings.highlightRowOnLap).toBeFalse();
   });
 
+  it("should handle highlightPracticeRowOnLap change", () => {
+    component.editingSettings.highlightPracticeRowOnLap = true;
+    expect(component.editingSettings.highlightPracticeRowOnLap).toBeTrue();
+    component.editingSettings.highlightPracticeRowOnLap = false;
+    expect(component.editingSettings.highlightPracticeRowOnLap).toBeFalse();
+  });
+
   it("should include image sets in availableColumns correctly", () => {
     mockDataService.listAssets.and.returnValue(
       of([

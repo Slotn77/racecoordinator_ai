@@ -1056,7 +1056,10 @@ export class DefaultRacedayComponent
 
   private handleLapHighlight(lap: any) {
     const settings = this.settingsService.getSettings();
-    if (settings.highlightRowOnLap) {
+    const shouldHighlight = this.isPracticeLayout
+      ? settings.highlightPracticeRowOnLap
+      : settings.highlightRowOnLap;
+    if (shouldHighlight) {
       this.highlightedDrivers.add(lap.objectId!);
       if (!this.isDestroyed) {
         this.cdr.markForCheck();

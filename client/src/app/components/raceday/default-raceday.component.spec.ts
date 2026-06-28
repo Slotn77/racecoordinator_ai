@@ -1972,6 +1972,39 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
     }));
+
+    it("should highlight driver when lap is received and enabled (practice mode)", fakeAsync(() => {
+      component["race"] = { name: "Test Race", practice: true } as any;
+      mockSettings.highlightPracticeRowOnLap = true;
+      mockSettings.highlightRowOnLap = false; // To ensure practice setting is used
+
+      lapsSubject.next({
+        objectId: "hd1",
+        lapTime: 1.234,
+        bestLapTime: 1.0,
+      });
+      fixture.detectChanges();
+
+      expect(component["highlightedDrivers"].has("hd1")).toBeTrue();
+
+      tick(400);
+      expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
+    }));
+
+    it("should not highlight driver when lap is received but disabled (practice mode)", fakeAsync(() => {
+      component["race"] = { name: "Test Race", practice: true } as any;
+      mockSettings.highlightPracticeRowOnLap = false;
+      mockSettings.highlightRowOnLap = true; // To ensure practice setting is used
+
+      lapsSubject.next({
+        objectId: "hd1",
+        lapTime: 1.234,
+        bestLapTime: 1.0,
+      });
+      fixture.detectChanges();
+
+      expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
+    }));
   });
 
   describe("False Start", () => {

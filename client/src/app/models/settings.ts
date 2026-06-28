@@ -115,6 +115,7 @@ export class Settings {
 
   sortByStandings: boolean = true;
   highlightRowOnLap: boolean = true;
+  highlightPracticeRowOnLap: boolean = true;
   driverStateBackfilled: boolean = false;
   racedayColumns: string[] = Settings.DEFAULT_COLUMNS;
   columnAnchors: { [key: string]: AnchorPoint } = {};

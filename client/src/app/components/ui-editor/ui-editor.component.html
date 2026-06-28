@@ -271,19 +271,7 @@
                     >
                       <input
                         type="checkbox"
-                        [(ngModel)]="editingSettings.sortByStandings"
-                        (change)="captureState()"
-                      />
-                      <span class="checkmark"></span>
-                      {{ "UE_LABEL_SORT_STANDINGS" | translate }}
-                    </label>
-                    <label
-                      class="checkbox-container"
-                      style="margin: 0; white-space: nowrap"
-                    >
-                      <input
-                        type="checkbox"
-                        [(ngModel)]="editingSettings.highlightRowOnLap"
+                        [(ngModel)]="editingSettings.highlightPracticeRowOnLap"
                         (change)="captureState()"
                       />
                       <span class="checkmark"></span>

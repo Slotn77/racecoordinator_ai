@@ -39,6 +39,7 @@ describe("SettingsService", () => {
     expect(settings.language).toBe("");
     expect(settings.serverIp).toBe("");
     expect(settings.highlightRowOnLap).toBeTrue();
+    expect(settings.highlightPracticeRowOnLap).toBeTrue();
 
     // Verify new default for lapCount column
     expect(settings.columnLayouts["lapCount"]).toBeDefined();
@@ -55,6 +56,7 @@ describe("SettingsService", () => {
       serverPort: 8080,
       language: "es",
       highlightRowOnLap: false,
+      highlightPracticeRowOnLap: false,
     });
     service.saveSettings(settings);
 
@@ -62,6 +64,7 @@ describe("SettingsService", () => {
     expect(retrieved.language).toBe("es");
     expect(retrieved.serverIp).toBe("1.2.3.4");
     expect(retrieved.highlightRowOnLap).toBeFalse();
+    expect(retrieved.highlightPracticeRowOnLap).toBeFalse();
   });
 
   it("should backfill driver state to lapCount column if missing in stored settings", () => {

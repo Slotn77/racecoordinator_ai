@@ -694,6 +694,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     clone.practiceColumnVisibility = deepCopy(practiceVisibility);
 
     clone.highlightRowOnLap = s.highlightRowOnLap ?? true;
+    clone.highlightPracticeRowOnLap = s.highlightPracticeRowOnLap ?? true;
     clone.pageTransition = s.pageTransition || "slide";
 
     // Theme fields
@@ -743,6 +744,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       a.flagCheckered === b.flagCheckered &&
       a.sortByStandings === b.sortByStandings &&
       a.highlightRowOnLap === b.highlightRowOnLap &&
+      a.highlightPracticeRowOnLap === b.highlightPracticeRowOnLap &&
       a.pageTransition === b.pageTransition &&
       a.activeThemeId === b.activeThemeId &&
       a.lampRedOn === b.lampRedOn &&
