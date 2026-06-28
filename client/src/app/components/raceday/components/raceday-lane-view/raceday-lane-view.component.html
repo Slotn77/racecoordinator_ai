@@ -65,17 +65,7 @@
           "
         >
           @if (parent().isUIEditorMode()) {
-            <span
-              class="material-icons"
-              cdkDragHandle
-              style="
-                font-size: 16px;
-                opacity: 0.7;
-                cursor: grab;
-                position: absolute;
-                left: 4px;
-                z-index: 10;
-              "
+            <span class="material-icons col-drag-handle" cdkDragHandle
               >drag_indicator</span
             >
           }
@@ -131,29 +121,14 @@
             <div
               style="
                 display: flex;
-                flex-direction: column;
-                gap: 2px;
+                flex-direction: row;
+                gap: 4px;
                 position: absolute;
                 right: 4px;
                 z-index: 10;
-                align-items: flex-end;
+                align-items: center;
               "
             >
-              <button
-                class="delete-col-btn"
-                (click)="parent().deleteColumn(col)"
-                title="Delete Column"
-                style="
-                  border: none;
-                  background: transparent;
-                  color: inherit;
-                  font-size: 16px;
-                  cursor: pointer;
-                  padding: 0 4px;
-                "
-              >
-                ×
-              </button>
               <select
                 class="col-visibility-select"
                 [ngModel]="
@@ -162,18 +137,18 @@
                   ] || 'Always'
                 "
                 (ngModelChange)="parent().changeColumnVisibility(col, $event)"
-                style="
-                  font-size: 10px;
-                  background: rgba(0, 0, 0, 0.5);
-                  color: white;
-                  border: none;
-                  border-radius: 2px;
-                "
               >
                 <option value="Always">Always</option>
                 <option value="FuelRaceOnly">Fuel Race</option>
                 <option value="NonFuelRaceOnly">No Fuel Race</option>
               </select>
+              <button
+                class="delete-col-btn"
+                (click)="parent().deleteColumn(col)"
+                title="Delete Column"
+              >
+                ×
+              </button>
             </div>
           }
         </div>
