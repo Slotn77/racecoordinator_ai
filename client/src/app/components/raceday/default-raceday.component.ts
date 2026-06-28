@@ -2830,8 +2830,13 @@ export class DefaultRacedayComponent
       const width = isResizing ? remainingWidth : fixedWidths[baseKey] || 275;
       const anchor = this.currentColumnAnchors[key] || AnchorPoint.CenterCenter;
 
-      const renderer = (v: any, hd: DriverHeatData, col: ColumnDefinition) => {
-        return this.formatValue(primaryProp, v, hd, col);
+      const renderer = (
+        v: any,
+        hd: DriverHeatData,
+        col: ColumnDefinition,
+        anchor?: string,
+      ) => {
+        return this.formatValue(primaryProp, v, hd, col, anchor);
       };
 
       if (key.startsWith("imageset_")) {
@@ -3102,6 +3107,7 @@ export class DefaultRacedayComponent
     value: any,
     hd: DriverHeatData,
     column?: ColumnDefinition,
+    anchor?: string,
   ): string {
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
       (w: any) => w.widgetType === "lane-view",
@@ -3117,7 +3123,14 @@ export class DefaultRacedayComponent
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
       laneViewWidgetSettings: laneViewWidget?.customSettings,
     };
-    return RacedayFormatUtils.formatValue(propertyName, value, hd, column, ctx);
+    return RacedayFormatUtils.formatValue(
+      propertyName,
+      value,
+      hd,
+      column,
+      ctx,
+      anchor,
+    );
   }
 
   private getLabelKeyForColumn(

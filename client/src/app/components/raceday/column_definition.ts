@@ -1,13 +1,13 @@
 export enum AnchorPoint {
-  TopLeft = 'top-left',
-  TopCenter = 'top-center',
-  TopRight = 'top-right',
-  CenterLeft = 'center-left',
-  CenterCenter = 'center-center', // default
-  CenterRight = 'center-right',
-  BottomLeft = 'bottom-left',
-  BottomCenter = 'bottom-center',
-  BottomRight = 'bottom-right'
+  TopLeft = "top-left",
+  TopCenter = "top-center",
+  TopRight = "top-right",
+  CenterLeft = "center-left",
+  CenterCenter = "center-center", // default
+  CenterRight = "center-right",
+  BottomLeft = "bottom-left",
+  BottomCenter = "bottom-center",
+  BottomRight = "bottom-right",
 }
 
 /**
@@ -19,9 +19,14 @@ export class ColumnDefinition {
   readonly propertyName: string;
   readonly width: number;
   readonly scaleToFit: boolean;
-  readonly textAnchor: 'start' | 'middle' | 'end';
+  readonly textAnchor: "start" | "middle" | "end";
   readonly padding: number;
-  readonly formatter: (value: any, hd: any, column: ColumnDefinition) => string;
+  readonly formatter: (
+    value: any,
+    hd: any,
+    column: ColumnDefinition,
+    anchor?: string,
+  ) => string;
   readonly anchor: AnchorPoint;
   readonly layout: { [A in AnchorPoint]?: string };
 
@@ -30,11 +35,16 @@ export class ColumnDefinition {
     propertyName: string,
     width: number,
     scaleToFit: boolean = false,
-    textAnchor: 'start' | 'middle' | 'end' = 'middle',
+    textAnchor: "start" | "middle" | "end" = "middle",
     padding: number = 0,
     anchor: AnchorPoint = AnchorPoint.CenterCenter,
-    formatter: (value: any, hd: any, column: ColumnDefinition) => string = (v) => v?.toString() ?? '',
-    layout: { [A in AnchorPoint]?: string } = {}
+    formatter: (
+      value: any,
+      hd: any,
+      column: ColumnDefinition,
+      anchor?: string,
+    ) => string = (v) => v?.toString() ?? "",
+    layout: { [A in AnchorPoint]?: string } = {},
   ) {
     this.labelKey = labelKey;
     this.propertyName = propertyName;
@@ -46,5 +56,4 @@ export class ColumnDefinition {
     this.formatter = formatter;
     this.layout = layout;
   }
-
 }

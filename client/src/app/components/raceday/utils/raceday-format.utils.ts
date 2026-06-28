@@ -61,7 +61,7 @@ export class RacedayFormatUtils {
     if (!propertyName) return "";
     const baseKey = propertyName.split("_")[0];
 
-    const isInset = anchor ? anchor !== "center-center" : false;
+    const isInset = anchor ? !anchor.startsWith("center-") : false;
 
     const timeDecimals = isInset
       ? ctx.laneViewWidgetSettings?.insetTimeDecimalPlaces !== undefined
@@ -282,6 +282,7 @@ export class RacedayFormatUtils {
         RacedayFormatUtils.getPropertyValue(heatDriver, prop),
         heatDriver,
         column,
+        anchor,
       );
     }
     const value = RacedayFormatUtils.getPropertyValue(heatDriver, prop);
