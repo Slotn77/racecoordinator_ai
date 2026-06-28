@@ -1662,6 +1662,9 @@ export class DefaultRacedayComponent
 
   // Get translated column label
   getColumnLabel(column: ColumnDefinition): string {
+    if (column.propertyName === "driver.avatarUrl") {
+      return "";
+    }
     const translation = this.translationService.translate(column.labelKey);
     if (column.propertyName.startsWith("segmentTime")) {
       const segmentColumns = this.columns.filter((c) =>
