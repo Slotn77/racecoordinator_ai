@@ -357,7 +357,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
       },
     };
 
-    if (this.tracks && this.tracks.length === 1) {
+    if (this.tracks && this.tracks.length > 0) {
       (newRace as any).track_entity_id = (this.tracks[0] as any).entity_id;
     }
 

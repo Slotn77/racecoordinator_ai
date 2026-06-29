@@ -272,7 +272,7 @@ describe("RaceManagerComponent", () => {
       );
     });
 
-    it("should not auto-assign track if multiple tracks exist", () => {
+    it("should auto-assign track if multiple tracks exist", () => {
       component.tracks = [
         { entity_id: "t1", name: "Track 1" },
         { entity_id: "t2", name: "Track 2" },
@@ -283,7 +283,7 @@ describe("RaceManagerComponent", () => {
       component.createNewRace();
 
       const callArg = dataService.createRace.calls.mostRecent().args[0];
-      expect(callArg.track_entity_id).toBeUndefined();
+      expect(callArg.track_entity_id).toEqual("t1");
     });
   });
 

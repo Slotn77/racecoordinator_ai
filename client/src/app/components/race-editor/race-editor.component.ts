@@ -603,6 +603,16 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
               t.arduino_configs,
             ),
         );
+        if (
+          this.editingRace &&
+          this.editingRace.entity_id === "new" &&
+          !this.editingRace.track_entity_id &&
+          this.tracks.length > 0
+        ) {
+          this.editingRace.track_entity_id = this.tracks[0].entity_id;
+          this.originalRace = deepCopy(this.editingRace);
+          this.undoManager.initialize(this.editingRace);
+        }
         this.enforceFuelRules();
         // Safe to call here - triggered by async data load, not user input
         setTimeout(() => this.cdr.detectChanges(), 0);
@@ -702,7 +712,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.editingRace = {
       entity_id: "new",
       name: "",
-      track_entity_id: "",
+      track_entity_id: this.tracks.length > 0 ? this.tracks[0].entity_id : "",
       heat_rotation_type: "RoundRobin",
       heat_scoring: {
         finish_method: "Lap",
