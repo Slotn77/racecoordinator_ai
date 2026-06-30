@@ -256,6 +256,13 @@ export class Settings {
         height: 239,
         zIndex: 100,
         scaleMode: "auto",
+        customSettings: {
+          timeFontFamily: "",
+          timeFontSize: 100,
+          timeTextColor: "",
+          timeSubsecondThreshold: 10,
+          timeSubsecondDecimals: 2,
+        },
       },
       {
         id: "widget-records",
@@ -320,6 +327,8 @@ export class Settings {
           timeFontFamily: "",
           timeFontSize: 100,
           timeTextColor: "#ffffff",
+          timeSubsecondThreshold: 10,
+          timeSubsecondDecimals: 2,
         },
       },
       {

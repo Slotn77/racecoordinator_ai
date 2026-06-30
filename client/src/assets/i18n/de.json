@@ -1159,6 +1159,8 @@
   "UE_INSPECTOR_TEXT_COLOR": "Textfarbe",
   "UE_INSPECTOR_TEXT_SCALE_MULTIPLIER": "Text-Skalierungsfaktor",
   "UE_INSPECTOR_TIMER_TIME": "Zeiteinstellungen",
+  "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD": "Subsekunden-Timing",
+  "UE_INSPECTOR_TIMER_SUBSECOND_DECIMALS": "Dezimalstellen",
   "UE_INSPECTOR_TITLE": "Widget-Inspektor",
   "UE_INSPECTOR_UPCOMING_LANES": "Spureinstellungen",
   "UE_INSPECTOR_UPCOMING_TITLE": "Titeleinstellungen",

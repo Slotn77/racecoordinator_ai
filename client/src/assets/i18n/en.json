@@ -1159,6 +1159,8 @@
   "UE_INSPECTOR_TEXT_COLOR": "Text Color",
   "UE_INSPECTOR_TEXT_SCALE_MULTIPLIER": "Text Scale Multiplier",
   "UE_INSPECTOR_TIMER_TIME": "Time Settings",
+  "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD": "Sub-second Timing",
+  "UE_INSPECTOR_TIMER_SUBSECOND_DECIMALS": "Decimal places",
   "UE_INSPECTOR_TITLE": "Widget Inspector",
   "UE_INSPECTOR_UPCOMING_LANES": "Lane Settings",
   "UE_INSPECTOR_UPCOMING_TITLE": "Title Settings",

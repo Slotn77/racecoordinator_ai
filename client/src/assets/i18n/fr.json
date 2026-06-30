@@ -1159,6 +1159,8 @@
   "UE_INSPECTOR_TEXT_COLOR": "Couleur du Texte",
   "UE_INSPECTOR_TEXT_SCALE_MULTIPLIER": "Multiplicateur d'Échelle de Texte",
   "UE_INSPECTOR_TIMER_TIME": "Paramètres de temps",
+  "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD": "Chronométrage à la sous-seconde",
+  "UE_INSPECTOR_TIMER_SUBSECOND_DECIMALS": "Décimales",
   "UE_INSPECTOR_TITLE": "Inspecteur de Widget",
   "UE_INSPECTOR_UPCOMING_LANES": "Paramètres de Voie",
   "UE_INSPECTOR_UPCOMING_TITLE": "Paramètres du Titre",

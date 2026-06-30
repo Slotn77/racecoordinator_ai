@@ -922,8 +922,16 @@ export class DefaultRacedayComponent
         if (time > this.previousTime) {
           this.timeFormat = "1.0-0";
         } else if (time < this.previousTime) {
-          if (time < 10) {
-            this.timeFormat = "1.2-2";
+          const timerWidget = this.layout?.widgets?.find(
+            (w) => w.widgetType === "timer",
+          );
+          const threshold =
+            timerWidget?.customSettings?.["timeSubsecondThreshold"] ?? 10;
+          const decimals =
+            timerWidget?.customSettings?.["timeSubsecondDecimals"] ?? 2;
+
+          if (time < threshold && decimals > 0) {
+            this.timeFormat = `1.${decimals}-${decimals}`;
           } else {
             this.timeFormat = "1.0-0";
           }

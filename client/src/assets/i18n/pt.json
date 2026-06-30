@@ -1159,6 +1159,8 @@
   "UE_INSPECTOR_TEXT_COLOR": "Cor do Texto",
   "UE_INSPECTOR_TEXT_SCALE_MULTIPLIER": "Multiplicador de Escala de Texto",
   "UE_INSPECTOR_TIMER_TIME": "Configurações de tempo",
+  "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD": "Cronometragem de subsegundo",
+  "UE_INSPECTOR_TIMER_SUBSECOND_DECIMALS": "Casas decimais",
   "UE_INSPECTOR_TITLE": "Inspetor de Widgets",
   "UE_INSPECTOR_UPCOMING_LANES": "Configurações da Raia",
   "UE_INSPECTOR_UPCOMING_TITLE": "Configurações do Título",

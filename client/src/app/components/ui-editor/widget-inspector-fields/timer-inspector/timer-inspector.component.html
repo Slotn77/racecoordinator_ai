@@ -74,4 +74,53 @@
       }
     </div>
   </div>
+
+  <!-- Subsecond Settings -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD" | translate
+    }}</label>
+    <div style="display: flex; gap: 8px; align-items: center">
+      <input
+        type="number"
+        min="0"
+        step="1"
+        [ngModel]="settings().timeSubsecondThreshold ?? 10"
+        (ngModelChange)="
+          settings().timeSubsecondThreshold = $event; onSettingsChange()
+        "
+        style="
+          flex: 1;
+          padding: 4px;
+          background: var(--bg-level-3);
+          border: 1px solid var(--border-color);
+          color: var(--text-color);
+          border-radius: 4px;
+        "
+      />
+      <span class="inspector-label" style="margin-bottom: 0">sec</span>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_TIMER_SUBSECOND_DECIMALS" | translate
+      }}</label>
+      <span class="inspector-val-badge">{{
+        settings().timeSubsecondDecimals ?? 2
+      }}</span>
+    </div>
+    <input
+      type="range"
+      min="0"
+      max="3"
+      step="1"
+      [ngModel]="settings().timeSubsecondDecimals ?? 2"
+      (ngModelChange)="
+        settings().timeSubsecondDecimals = $event; onSettingsChange()
+      "
+      class="inspector-slider"
+    />
+  </div>
 }
