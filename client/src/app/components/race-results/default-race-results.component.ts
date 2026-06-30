@@ -377,7 +377,12 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   }
 
   exportPdf() {
-    this.printService.print("Race Results", true, this.raceStartTime);
+    const raceName = this.race?.name || "Race";
+    this.printService.print(
+      `${raceName}-RaceResults`,
+      true,
+      this.raceStartTime,
+    );
   }
 
   @HostListener("window:resize")

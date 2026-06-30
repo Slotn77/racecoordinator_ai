@@ -176,15 +176,10 @@ app-default-raceday {
   }
 
   @media print {
-    * {
-      text-shadow: none !important;
-      box-shadow: none !important;
-    }
-
     app-default-raceday {
       background: transparent !important;
-      width: auto !important;
-      height: auto !important;
+      width: 100% !important;
+      height: 100% !important;
     }
 
     .dashboard-wrapper {
@@ -209,24 +204,29 @@ app-default-raceday {
     }
 
     .bottom-section {
-      flex: none !important;
-      height: auto !important;
+      display: grid !important;
+      grid-template-rows: auto 1fr !important;
+      height: 100% !important;
+      margin: 0 !important;
     }
 
     .table-body {
-      height: auto !important;
+      display: grid !important;
+      grid-template-rows: repeat(var(--num-lanes, 6), 1fr) !important;
+      height: 100% !important;
       min-height: 0 !important;
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: visible !important;
+      overflow: hidden !important;
+      position: relative !important;
     }
 
     .table-row {
       position: relative !important;
       top: auto !important;
       left: auto !important;
+      height: 100% !important;
+      width: 100% !important;
       transform: none !important;
-      margin-bottom: 2px !important;
+      transition: none !important;
     }
 
     .unconfigured-lane {

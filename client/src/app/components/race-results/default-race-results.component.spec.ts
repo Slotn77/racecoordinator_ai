@@ -761,11 +761,12 @@ describe("DefaultRaceResultsComponent", () => {
       const p1 = createParticipant("d1", d1, 1, 5, 25.0, 4.5, 5.0, 5.0, 100, 1);
 
       participantsSubject.next([p1]);
+      component["race"] = { name: "Test Race" } as any;
 
       component["exportPdf"]();
 
       expect(mockPrintService.print).toHaveBeenCalledWith(
-        "Race Results",
+        "Test Race-RaceResults",
         true,
         jasmine.any(Date),
       );

@@ -310,7 +310,10 @@ describe("DefaultRacedayComponent", () => {
         { provide: LoggerService, useValue: mockLogger },
         {
           provide: PrintService,
-          useValue: jasmine.createSpyObj("PrintService", ["print"]),
+          useValue: jasmine.createSpyObj("PrintService", [
+            "print",
+            "formatExportTimestamp",
+          ]),
         },
         { provide: AuthService, useValue: mockAuthService },
         ChangeDetectorRef,
@@ -2156,6 +2159,13 @@ describe("DefaultRacedayComponent", () => {
 
   describe("onFileMenuSelect and onOptionsSelect", () => {
     it("should trigger CSV export when EXPORT_CSV is selected", fakeAsync(() => {
+      const printService = TestBed.inject(
+        PrintService,
+      ) as jasmine.SpyObj<PrintService>;
+      printService.formatExportTimestamp.and.returnValue(
+        "--2024-06-15--02-30-45_PM",
+      );
+
       mockDataService.exportRaceToCsv = jasmine
         .createSpy("exportRaceToCsv")
         .and.returnValue(of("CSV_DATA"));
@@ -2180,7 +2190,13 @@ describe("DefaultRacedayComponent", () => {
       tick(); // Let async file handler execute
 
       expect(mockDataService.exportRaceToCsv).toHaveBeenCalled();
-      expect((window as any).showSaveFilePicker).toHaveBeenCalled();
+      expect((window as any).showSaveFilePicker).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          suggestedName: jasmine.stringMatching(
+            /Grand Prix-RaceDay--\d{4}-\d{2}-\d{2}--\d{2}-\d{2}-\d{2}_(AM|PM)\.csv/,
+          ),
+        }),
+      );
     }));
 
     it("should trigger PDF export when EXPORT_PDF is selected", () => {
@@ -2188,7 +2204,11 @@ describe("DefaultRacedayComponent", () => {
         PrintService,
       ) as jasmine.SpyObj<PrintService>;
       component.onFileMenuSelect("EXPORT_PDF");
-      expect(printService.print).toHaveBeenCalledWith("RaceDay");
+      expect(printService.print).toHaveBeenCalledWith(
+        "Grand Prix-RaceDay",
+        false,
+        jasmine.any(Date),
+      );
     });
 
     it("should navigate to /ui-editor when CUSTOMIZE_UI is selected in options menu", () => {

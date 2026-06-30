@@ -2425,7 +2425,7 @@ export class DefaultRacedayComponent
     if (action === "EXPORT_CSV") {
       this.exportToCsv();
     } else if (action === "EXPORT_PDF") {
-      this.printService.print("RaceDay"); // Screen View only as requested
+      this.exportToPdf();
     } else if (action === "CUSTOMIZE_UI") {
       const returnUrl = this.router.url.split("?")[0];
       this.router.navigate(["/ui-editor"], {
@@ -2486,9 +2486,28 @@ export class DefaultRacedayComponent
     });
   }
 
+  getExportTimestamp(): Date {
+    if (this.viewerRaceEndedHandler?.raceHasEnded) {
+      const stats = (this.race as any)?.statistics;
+      if (stats?.endTime) {
+        return new Date(stats.endTime);
+      }
+    }
+    return new Date();
+  }
+
+  exportToPdf() {
+    const timestamp = this.getExportTimestamp();
+    const raceName = this.race?.name || "Race";
+    this.printService.print(`${raceName}-RaceDay`, false, timestamp);
+  }
+
   async exportToCsv() {
     try {
-      const suggestedName = `race_export_${this.race?.name || "data"}.csv`;
+      const timestamp = this.getExportTimestamp();
+      const timeStr = this.printService.formatExportTimestamp(timestamp);
+      const raceName = this.race?.name || "Race";
+      const suggestedName = `${raceName}-RaceDay${timeStr}.csv`;
       const handle = await (window as any).showSaveFilePicker({
         suggestedName: suggestedName,
         types: [
