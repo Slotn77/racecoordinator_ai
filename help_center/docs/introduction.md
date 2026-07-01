@@ -9,6 +9,7 @@ Race Coordinator AI supports an unlimited number of drivers per race and an unli
 ### Track Interface and Sensor Support
 
 Race Coordinator AI supports all the common operating systems, track interfaces and sensor types:
+
 - Windows PCs
 - Macs
 - Linux
