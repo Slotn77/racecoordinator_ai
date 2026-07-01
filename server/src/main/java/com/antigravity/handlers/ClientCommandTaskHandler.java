@@ -137,6 +137,8 @@ public class ClientCommandTaskHandler {
     app.post("/api/modify-heats", this::modifyHeats, Role.DIRECTOR);
     app.post("/api/regenerate-heats", this::regenerateHeats, Role.DIRECTOR);
     app.post("/api/finalize-modify-heats", this::finalizeModifyHeats, Role.DIRECTOR);
+    app.post("/api/track/power/main", this::setMainPower, Role.DIRECTOR);
+    app.post("/api/track/power/lane/{lane}", this::setLanePower, Role.DIRECTOR);
   }
 
   private void initializeRace(Context ctx) {
@@ -763,6 +765,41 @@ public class ClientCommandTaskHandler {
       ctx.status(200).result("Lane changed");
     } catch (Exception e) {
       logger.error("Error changing lane", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  private void setMainPower(Context ctx) {
+    try {
+      boolean on = Boolean.parseBoolean(ctx.queryParam("on"));
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+      race.setMainPower(on);
+      ctx.status(200).result("Main power set to " + on);
+    } catch (Exception e) {
+      logger.error("Error setting main power", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  private void setLanePower(Context ctx) {
+    try {
+      int lane = Integer.parseInt(ctx.pathParam("lane"));
+      boolean on = Boolean.parseBoolean(ctx.queryParam("on"));
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+      race.setLanePower(on, lane);
+      ctx.status(200).result("Lane " + lane + " power set to " + on);
+    } catch (Exception e) {
+      logger.error("Error setting lane power", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
   }

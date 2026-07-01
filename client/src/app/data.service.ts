@@ -646,6 +646,18 @@ export class DataService {
       );
   }
 
+  setMainPower(on: boolean): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/track/power/main?on=${on}`, {});
+  }
+
+  setLanePower(lane: number, on: boolean): Observable<any> {
+    // Note: server lane parameter is 0-indexed.
+    return this.http.post(
+      `${this.baseUrl}/api/track/power/lane/${lane}?on=${on}`,
+      {},
+    );
+  }
+
   restartHeat(): Observable<boolean> {
     const request = RestartHeatRequest.create({});
     const buffer = RestartHeatRequest.encode(request).finish();

@@ -49,6 +49,12 @@
           (windowsMenuSelect)="parentComponent().onWindowsMenuSelect($event)"
           (optionsMenuSelect)="parentComponent().onOptionsSelect($event)"
           (languageSelected)="parentComponent().onLanguageSelected()"
+          (trackPowerMainSelect)="
+            parentComponent().onTrackPowerMainSelect($event)
+          "
+          (trackPowerLaneSelect)="
+            parentComponent().onTrackPowerLaneSelect($event)
+          "
         ></app-raceday-menu-bar>
       }
       @case ("race-name") {

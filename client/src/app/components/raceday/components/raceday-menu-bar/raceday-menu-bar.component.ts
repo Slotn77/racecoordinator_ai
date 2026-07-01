@@ -47,15 +47,26 @@ export class RacedayMenuBarComponent {
   optionsMenuSelect = output<string>();
   languageSelected = output<void>();
 
+  trackPowerMainSelect = output<boolean>();
+  trackPowerLaneSelect = output<{ lane: number; on: boolean }>();
+
   isFileMenuOpen = false;
   isMenuOpen = false;
   isDriversStationOpen = false;
   isWindowsMenuOpen = false;
   isOptionsMenuOpen = false;
+  isTrackPowerMenuOpen = false;
 
   Role = Role;
 
   constructor(public authService: AuthService) {}
+
+  trackPowerShortcut(digit: number, off: boolean): string {
+    if (digit > 9) return "";
+    const key =
+      navigator.userAgent.toUpperCase().indexOf("MAC") >= 0 ? "Option" : "Alt";
+    return off ? `${key}-Shift-${digit}` : `${key}-${digit}`;
+  }
 
   toggleFileMenu() {
     this.isFileMenuOpen = !this.isFileMenuOpen;
@@ -65,6 +76,10 @@ export class RacedayMenuBarComponent {
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
     this.closeOthers("menu");
+  }
+
+  toggleTrackPowerMenu() {
+    this.isTrackPowerMenuOpen = !this.isTrackPowerMenuOpen;
   }
 
   toggleDriversStationMenu() {
@@ -95,6 +110,9 @@ export class RacedayMenuBarComponent {
       if (!this.isWindowsMenuOpen) {
         this.isDriversStationOpen = false;
       }
+      if (!this.isMenuOpen) {
+        this.isTrackPowerMenuOpen = false;
+      }
     }
   }
 
@@ -105,6 +123,16 @@ export class RacedayMenuBarComponent {
 
   onMenuSelect(action: string) {
     this.menuSelect.emit(action);
+    this.closeAll();
+  }
+
+  onTrackPowerSelect(action: string) {
+    this.trackPowerMainSelect.emit(action === "MAIN_ON");
+    this.closeAll();
+  }
+
+  onLanePowerSelect(laneIndex: number, on: boolean) {
+    this.trackPowerLaneSelect.emit({ lane: laneIndex, on });
     this.closeAll();
   }
 
@@ -142,7 +170,10 @@ export class RacedayMenuBarComponent {
 
   private closeOthers(active: string) {
     if (active !== "file") this.isFileMenuOpen = false;
-    if (active !== "menu") this.isMenuOpen = false;
+    if (active !== "menu") {
+      this.isMenuOpen = false;
+      this.isTrackPowerMenuOpen = false;
+    }
     if (active !== "windows") {
       this.isWindowsMenuOpen = false;
       this.isDriversStationOpen = false;
@@ -156,5 +187,6 @@ export class RacedayMenuBarComponent {
     this.isDriversStationOpen = false;
     this.isWindowsMenuOpen = false;
     this.isOptionsMenuOpen = false;
+    this.isTrackPowerMenuOpen = false;
   }
 }

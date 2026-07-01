@@ -981,6 +981,28 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
+  describe("Track Power", () => {
+    it("should call dataService.setMainPower on onTrackPowerMainSelect", () => {
+      mockDataService.setMainPower.and.returnValue(of(true));
+      component.onTrackPowerMainSelect(true);
+      expect(mockDataService.setMainPower).toHaveBeenCalledWith(true);
+
+      mockDataService.setMainPower.calls.reset();
+      component.onTrackPowerMainSelect(false);
+      expect(mockDataService.setMainPower).toHaveBeenCalledWith(false);
+    });
+
+    it("should call dataService.setLanePower on onTrackPowerLaneSelect", () => {
+      mockDataService.setLanePower.and.returnValue(of(true));
+      component.onTrackPowerLaneSelect({ lane: 1, on: true });
+      expect(mockDataService.setLanePower).toHaveBeenCalledWith(1, true);
+
+      mockDataService.setLanePower.calls.reset();
+      component.onTrackPowerLaneSelect({ lane: 2, on: false });
+      expect(mockDataService.setLanePower).toHaveBeenCalledWith(2, false);
+    });
+  });
+
   describe("viewer role restrictions", () => {
     beforeEach(() => {
       mockAuthService.currentRoleSubject.next(Role.VIEWER);

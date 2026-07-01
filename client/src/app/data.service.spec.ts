@@ -131,4 +131,30 @@ describe("DataService", () => {
     service.setConnectionIntent("preview");
     expect(service["connectionIntent"]).toBe("preview");
   });
+
+  it("should call setMainPower endpoint", (done) => {
+    service.setMainPower(true).subscribe((response) => {
+      expect(response).toBeTruthy();
+      done();
+    });
+
+    const req = httpMock.expectOne((request) =>
+      request.url.endsWith("/api/track/power/main?on=true"),
+    );
+    expect(req.request.method).toBe("POST");
+    req.flush({});
+  });
+
+  it("should call setLanePower endpoint", (done) => {
+    service.setLanePower(2, false).subscribe((response) => {
+      expect(response).toBeTruthy();
+      done();
+    });
+
+    const req = httpMock.expectOne((request) =>
+      request.url.endsWith("/api/track/power/lane/2?on=false"),
+    );
+    expect(req.request.method).toBe("POST");
+    req.flush({});
+  });
 });

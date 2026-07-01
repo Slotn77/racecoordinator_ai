@@ -101,4 +101,32 @@ describe("RacedayMenuBarComponent", () => {
       .find((t) => t.includes("RD_MENU_LOGIN"));
     expect(loginBtnText).toBeDefined();
   });
+
+  it("should emit trackPowerMainSelect when main power options are clicked", () => {
+    spyOn(component.trackPowerMainSelect, "emit");
+
+    component.onTrackPowerSelect("MAIN_ON");
+    expect(component.trackPowerMainSelect.emit).toHaveBeenCalledWith(true);
+    expect(component.isTrackPowerMenuOpen).toBeFalse();
+
+    component.onTrackPowerSelect("MAIN_OFF");
+    expect(component.trackPowerMainSelect.emit).toHaveBeenCalledWith(false);
+  });
+
+  it("should emit trackPowerLaneSelect when lane power options are clicked", () => {
+    spyOn(component.trackPowerLaneSelect, "emit");
+
+    component.onLanePowerSelect(1, true);
+    expect(component.trackPowerLaneSelect.emit).toHaveBeenCalledWith({
+      lane: 1,
+      on: true,
+    });
+    expect(component.isTrackPowerMenuOpen).toBeFalse();
+
+    component.onLanePowerSelect(2, false);
+    expect(component.trackPowerLaneSelect.emit).toHaveBeenCalledWith({
+      lane: 2,
+      on: false,
+    });
+  });
 });

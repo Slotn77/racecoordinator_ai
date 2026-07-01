@@ -521,6 +521,57 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
+  public void testSetMainPower_Success() throws Exception {
+    org.mockito.ArgumentCaptor<io.javalin.http.Handler> handlerCaptor =
+        org.mockito.ArgumentCaptor.forClass(io.javalin.http.Handler.class);
+    verify(app)
+        .post(
+            eq("/api/track/power/main"),
+            handlerCaptor.capture(),
+            eq(com.antigravity.auth.Role.DIRECTOR));
+    io.javalin.http.Handler setMainPowerHandler = handlerCaptor.getValue();
+
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.queryParam("on")).thenReturn("true");
+    when(mockCtx.status(anyInt())).thenReturn(mockCtx);
+
+    setMainPowerHandler.handle(mockCtx);
+
+    verify(mockRace).setMainPower(true);
+    verify(mockCtx).status(200);
+    verify(mockCtx).result("Main power set to true");
+  }
+
+  @Test
+  public void testSetLanePower_Success() throws Exception {
+    org.mockito.ArgumentCaptor<io.javalin.http.Handler> handlerCaptor =
+        org.mockito.ArgumentCaptor.forClass(io.javalin.http.Handler.class);
+    verify(app)
+        .post(
+            eq("/api/track/power/lane/{lane}"),
+            handlerCaptor.capture(),
+            eq(com.antigravity.auth.Role.DIRECTOR));
+    io.javalin.http.Handler setLanePowerHandler = handlerCaptor.getValue();
+
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.pathParam("lane")).thenReturn("1");
+    when(mockCtx.queryParam("on")).thenReturn("false");
+    when(mockCtx.status(anyInt())).thenReturn(mockCtx);
+
+    setLanePowerHandler.handle(mockCtx);
+
+    verify(mockRace).setLanePower(false, 1);
+    verify(mockCtx).status(200);
+    verify(mockCtx).result("Lane 1 power set to false");
+  }
+
+  @Test
   public void testToggleAnalytics_Localhost_IPv4_Success() throws Exception {
     ClientCommandTaskHandler spyHandler = spy(handler);
     Context mockCtx = mock(Context.class);

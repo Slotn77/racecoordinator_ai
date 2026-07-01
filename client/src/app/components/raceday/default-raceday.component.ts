@@ -2592,20 +2592,48 @@ export class DefaultRacedayComponent
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent) {
     const isCtrlOrCmd = event.ctrlKey || event.metaKey;
+    const inInputField =
+      document.activeElement &&
+      (document.activeElement.tagName === "INPUT" ||
+        document.activeElement.tagName === "TEXTAREA");
 
     // Space bar
     if (event.code === "Space") {
       // Don't trigger if typing in an input field
-      if (
-        document.activeElement &&
-        (document.activeElement.tagName === "INPUT" ||
-          document.activeElement.tagName === "TEXTAREA")
-      ) {
+      if (inInputField) {
         return;
       }
 
       event.preventDefault(); // Prevent page scroll
       return;
+    }
+
+    // Track Power Shortcuts (Alt + [0-9] for ON, Alt + Shift + [0-9] for OFF)
+    if (
+      !inInputField &&
+      !isCtrlOrCmd &&
+      event.altKey &&
+      event.code.startsWith("Digit")
+    ) {
+      const digit = parseInt(event.code.replace("Digit", ""), 10);
+      const isOn = !event.shiftKey;
+
+      // Viewers cannot change track power
+      if (this.authService.currentRole !== Role.VIEWER) {
+        if (digit === 0) {
+          event.preventDefault();
+          this.onTrackPowerMainSelect(isOn);
+          return;
+        } else if (
+          this.track &&
+          this.track.lanes &&
+          digit <= this.track.lanes.length
+        ) {
+          event.preventDefault();
+          this.onTrackPowerLaneSelect({ lane: digit, on: isOn });
+          return;
+        }
+      }
     }
 
     // Ctrl+S or Cmd+S for Start/Resume
@@ -2659,6 +2687,19 @@ export class DefaultRacedayComponent
   }
 
   // Menu State Helpers
+
+  public onTrackPowerMainSelect(on: boolean) {
+    this.dataService.setMainPower(on).subscribe({
+      error: (err) => this.logger.error("Error setting main power", err),
+    });
+  }
+
+  public onTrackPowerLaneSelect(event: { lane: number; on: boolean }) {
+    this.dataService.setLanePower(event.lane, event.on).subscribe({
+      error: (err) => this.logger.error("Error setting lane power", err),
+    });
+  }
+
   public get isStartResumeDisabled(): boolean {
     if (this.authService.currentRole === Role.VIEWER) {
       return true;

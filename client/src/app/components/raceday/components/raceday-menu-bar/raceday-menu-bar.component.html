@@ -109,6 +109,55 @@
         >
           {{ "RD_MENU_MODIFY" | translate }}
         </div>
+        @if ((authService.currentRole$ | async) !== Role.VIEWER) {
+          <div class="menu-separator"></div>
+          <div
+            class="menu-item has-submenu"
+            (click)="toggleTrackPowerMenu(); $event.stopPropagation()"
+          >
+            {{ "RD_MENU_TRACK_POWER" | translate }}
+            <span class="submenu-arrow">▶</span>
+            @if (isTrackPowerMenuOpen) {
+              <div class="menu-dropdown submenu">
+                <div class="menu-item" (click)="onTrackPowerSelect('MAIN_ON')">
+                  <span>{{ "RD_MENU_MAIN_POWER_ON" | translate }}</span>
+                  <span class="menu-shortcut">{{
+                    trackPowerShortcut(0, false)
+                  }}</span>
+                </div>
+                <div class="menu-item" (click)="onTrackPowerSelect('MAIN_OFF')">
+                  <span>{{ "RD_MENU_MAIN_POWER_OFF" | translate }}</span>
+                  <span class="menu-shortcut">{{
+                    trackPowerShortcut(0, true)
+                  }}</span>
+                </div>
+                @if (track() && track()!.lanes) {
+                  @for (lane of track()!.lanes; track lane; let i = $index) {
+                    <div class="menu-item" (click)="onLanePowerSelect(i, true)">
+                      <span>{{
+                        "RD_MENU_LANE_POWER_ON" | translate: { lane: i + 1 }
+                      }}</span>
+                      <span class="menu-shortcut">{{
+                        trackPowerShortcut(i + 1, false)
+                      }}</span>
+                    </div>
+                    <div
+                      class="menu-item"
+                      (click)="onLanePowerSelect(i, false)"
+                    >
+                      <span>{{
+                        "RD_MENU_LANE_POWER_OFF" | translate: { lane: i + 1 }
+                      }}</span>
+                      <span class="menu-shortcut">{{
+                        trackPowerShortcut(i + 1, true)
+                      }}</span>
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </div>
+        }
         @if ((authService.currentRole$ | async) === Role.VIEWER) {
           <div class="menu-separator"></div>
           <div class="menu-item" (click)="onMenuSelect('LOGIN')">
