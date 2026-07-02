@@ -1,16 +1,14 @@
 export abstract class HeatResultsHarnessBase {
-  static readonly hostSelector = 'app-heat-results';
+  static readonly hostSelector = "app-heat-results";
 
   static readonly selectors = {
-    rankingsGraph: '.rankings-graph',
-    laptimesGraph: '.laptimes-graph',
-    legend: '.legend',
-    legendItems: '.legend g',
-    rankLines: '.rankings-graph path',
-    lapLines: '.laptimes-graph path'
+    heatDriverExpander: "app-heat-driver-expander",
+    twinGraphs: "app-twin-graphs",
+    legendItem: ".legend-item",
+    loaderOverlay: ".loader-overlay",
   };
 
-  abstract getRankingsGraph(): Promise<any>;
-  abstract getLaptimesGraph(): Promise<any>;
-  abstract getLegendItemCount(): Promise<number>;
+  abstract hasHeatDriverExpander(): Promise<boolean>;
+  abstract hasTwinGraphs(): Promise<boolean>;
+  abstract getHeatDriverExpanderCount(): Promise<number>;
 }

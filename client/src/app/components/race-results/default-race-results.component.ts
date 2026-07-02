@@ -10,6 +10,7 @@ import {
 import { Router, RouterModule } from "@angular/router";
 import { Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import { TwinGraphsComponent } from "@app/components/shared/twin-graphs/twin-graphs.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
@@ -81,6 +82,7 @@ const NEON_COLORS = [
   templateUrl: "./default-race-results.component.html",
   styleUrls: ["./default-race-results.component.css"],
   imports: [
+    TwinGraphsComponent,
     CommonModule,
     DecimalPipe,
     TranslatePipe,
@@ -148,9 +150,6 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   protected driverLines: DriverLine[] = [];
   protected recordData: IRecordData | null = null;
   private subscriptions: Subscription[] = [];
-  protected hiddenDriverKeys = new Set<string>();
-  protected hoveredDriverId: string | null = null;
-  private clickTimeout: any = null;
   private raceStartTime: Date = new Date();
 
   protected getDriverId(d: any): string {
@@ -200,60 +199,6 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     return (d?.nickname || d?.name || d?.model?.name || "")
       .trim()
       .toLowerCase();
-  }
-
-  protected isDriverVisible(driver: any): boolean {
-    if (typeof driver === "string") {
-      return !this.hiddenDriverKeys.has(driver);
-    }
-    const key = this.getDriverKey(driver);
-    return !this.hiddenDriverKeys.has(key);
-  }
-
-  protected toggleDriverVisibility(objectId: string) {
-    if (this.hiddenDriverKeys.has(objectId)) {
-      this.hiddenDriverKeys.delete(objectId);
-    } else {
-      this.hiddenDriverKeys.add(objectId);
-    }
-    this.cdr.detectChanges();
-  }
-
-  protected showOnlyDriver(objectId: string) {
-    const allDriverKeys = this.driverLines.map((line) => line.objectId);
-    const visibleCount = allDriverKeys.length - this.hiddenDriverKeys.size;
-
-    if (visibleCount === 1 && !this.hiddenDriverKeys.has(objectId)) {
-      this.hiddenDriverKeys.clear();
-    } else {
-      this.hiddenDriverKeys.clear();
-      allDriverKeys.forEach((key) => {
-        if (key !== objectId) {
-          this.hiddenDriverKeys.add(key);
-        }
-      });
-    }
-    this.cdr.detectChanges();
-  }
-
-  protected onLegendClick(objectId: string) {
-    if (this.clickTimeout) {
-      clearTimeout(this.clickTimeout);
-      this.clickTimeout = null;
-    }
-
-    this.clickTimeout = setTimeout(() => {
-      this.toggleDriverVisibility(objectId);
-      this.clickTimeout = null;
-    }, 250);
-  }
-
-  protected onLegendDblClick(objectId: string) {
-    if (this.clickTimeout) {
-      clearTimeout(this.clickTimeout);
-      this.clickTimeout = null;
-    }
-    this.showOnlyDriver(objectId);
   }
 
   // SVG Dimensions
@@ -844,13 +789,6 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
 
     // Generate SVG path strings and legend positions
     this.driverLines.forEach((line, i) => {
-      if (line.points.length > 0) {
-        line.pathData = this.generatePath(line.points, false);
-      }
-      if (line.rankPoints.length > 0) {
-        line.rankPathData = this.generatePath(line.rankPoints, true);
-      }
-
       const r = Math.floor(i / itemsPerRow);
       const col = i % itemsPerRow;
 
@@ -865,49 +803,6 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     });
 
     this.cdr.detectChanges();
-  }
-
-  private generatePath(points: GraphPoint[], isRank: boolean): string {
-    if (points.length === 0) return "";
-
-    return points
-      .map((point, index) => {
-        const x = isRank ? this.scaleXLeft(point.x) : this.scaleXRight(point.x);
-        const y = isRank ? this.scaleYLeft(point.y) : this.scaleY(point.y);
-        return (index === 0 ? "M" : "L") + ` ${x} ${y}`;
-      })
-      .join(" ");
-  }
-
-  protected scaleXLeft(x: number): number {
-    const graphWidth =
-      (this.width - this.padding.left - this.padding.right - 80) / 2;
-    return this.padding.left + (x / this.maxX) * graphWidth;
-  }
-
-  protected scaleXRight(x: number): number {
-    const graphWidth =
-      (this.width - this.padding.left - this.padding.right - 80) / 2;
-    const offset = this.padding.left + graphWidth + 80;
-    return offset + (x / this.maxX) * graphWidth;
-  }
-
-  protected scaleYLeft(rank: number): number {
-    const graphHeight = this.height - this.padding.top - this.padding.bottom;
-    const N = this.driverLines.length || 4;
-    if (N <= 1) return this.padding.top + graphHeight / 2;
-    return this.padding.top + ((rank - 1) / (N - 1)) * graphHeight;
-  }
-
-  protected scaleX(x: number): number {
-    const graphWidth = this.width - this.padding.left - this.padding.right;
-    return this.padding.left + (x / this.maxX) * graphWidth;
-  }
-
-  protected scaleY(y: number): number {
-    const graphHeight = this.height - this.padding.top - this.padding.bottom;
-    // Invert Y for SVG coord system (0,0 is top-left)
-    return this.height - this.padding.bottom - (y / this.maxY) * graphHeight;
   }
 
   // Grid helpers

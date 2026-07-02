@@ -1,69 +1,19 @@
 import { expect, test } from "@playwright/test";
-import { RaceData } from "@app/proto/antigravity";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
+
+import { HeatResultsHarnessE2e } from "./testing/heat-results.harness.e2e";
+import { HeatResultsHelper } from "./testing/heat-results_helper";
 
 test.describe("Heat Results Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.disableAnimations(page);
+    await page.setViewportSize({ width: 1600, height: 900 });
   });
 
   test("should display dual charts for heat results", async ({ page }) => {
-    // Setup Mock Race and Heat data with Laps populated
-    const mockData = {
-      race: {
-        race: {
-          name: "Mock Race",
-          track: {
-            lanes: [
-              { backgroundColor: "#ef4444", foregroundColor: "#ffffff" },
-              { backgroundColor: "#3b82f6", foregroundColor: "#ffffff" },
-              { backgroundColor: "#10b981", foregroundColor: "#ffffff" },
-            ],
-          },
-        },
-        currentHeat: {
-          heatNumber: 1,
-          heatDrivers: [
-            {
-              objectId: "hd1",
-              driver: {
-                objectId: "rp1",
-                driver: { name: "Alice", nickname: "Ally" },
-              },
-              actualDriver: { name: "Alice", nickname: "Ally" },
-              laps: [{ lapTime: 10.5 }, { lapTime: 10.2 }, { lapTime: 10.4 }],
-            },
-            {
-              objectId: "hd2",
-              driver: {
-                objectId: "rp2",
-                driver: { name: "Bob", nickname: "Bobby" },
-              },
-              actualDriver: { name: "Bob", nickname: "Bobby" },
-              laps: [{ lapTime: 11.1 }, { lapTime: 10.8 }, { lapTime: 10.7 }],
-            },
-            {
-              objectId: "hd3",
-              driver: {
-                objectId: "rp3",
-                driver: { name: "Charlie", nickname: "Chuck" },
-              },
-              actualDriver: { name: "Charlie", nickname: "Chuck" },
-              laps: [{ lapTime: 12.0 }, { lapTime: 11.2 }, { lapTime: 11.5 }],
-            },
-          ],
-        },
-      },
-    };
-
-    // Encode and inject over init-state buffer delivery
-    const buffer = RaceData.encode(mockData).finish();
-    const dataArray = Array.from(buffer);
-    await page.addInitScript((data) => {
-      // @ts-ignore
-      window.mockRaceDataBuffer = new Uint8Array(data).buffer;
-    }, dataArray);
+    const mockData = HeatResultsHelper.createMockHeatData();
+    await HeatResultsHelper.injectMockRaceData(page, mockData);
 
     await TestSetupHelper.waitForLocalization(
       page,
@@ -71,12 +21,50 @@ test.describe("Heat Results Visuals", () => {
       page.goto("/heat-results"),
     );
 
+    const harness = new HeatResultsHarnessE2e(page.locator("app-heat-results"));
+
+    // Verify page structure is rendered
+    expect(await harness.hasTwinGraphs()).toBe(true);
+    await expect(
+      page.locator("app-heat-driver-expander").first(),
+    ).toBeVisible();
+
     // Verify Loader not covering canvas
     await expect(page.locator(".loader-overlay")).not.toBeVisible();
 
     // Visual screenshot verification
     await expect(page).toHaveScreenshot("heat-results-charts.png", {
       maxDiffPixelRatio: 0.05, // allowance for dynamic elements triggers.
+    });
+  });
+
+  test("should highlight driver graph when hovering over a name on the legend", async ({
+    page,
+  }) => {
+    const mockData = HeatResultsHelper.createMockHeatData();
+    await HeatResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/heat-results"),
+    );
+
+    const harness = new HeatResultsHarnessE2e(page.locator("app-heat-results"));
+
+    expect(await harness.hasTwinGraphs()).toBe(true);
+
+    // Verify Loader not covering canvas
+    await expect(page.locator(".loader-overlay")).not.toBeVisible();
+
+    // Hover over the "Bob" legend item
+    await harness.hoverLegendItem("Bob");
+
+    await page.waitForTimeout(400);
+
+    // Verify Bob's graph is highlighted, and others are faded
+    await expect(page).toHaveScreenshot("heat-results-bob-hovered.png", {
+      maxDiffPixelRatio: 0.05,
     });
   });
 });

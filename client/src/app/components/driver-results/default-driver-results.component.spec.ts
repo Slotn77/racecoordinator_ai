@@ -301,91 +301,6 @@ describe("DefaultDriverResultsComponent", () => {
     });
   });
 
-  describe("Lap Performance Chart and Stacked Segments", () => {
-    it("should calculate correct heights using getLapBarHeight with a floor", () => {
-      expect(component["getLapBarHeight"](10, 0)).toBe(0);
-      expect(component["getLapBarHeight"](10, 10)).toBe(100);
-      expect(component["getLapBarHeight"](1, 10)).toBe(23.5);
-    });
-
-    it("should return the correct neon segment color based on index", () => {
-      expect(component["getSegmentColor"](0)).toBe("#00e5ff");
-      expect(component["getSegmentColor"](1)).toBe("#d500f9");
-      expect(component["getSegmentColor"](2)).toBe("#ff9100");
-      expect(component["getSegmentColor"](3)).toBe("#00e676");
-      expect(component["getSegmentColor"](4)).toBe("#00e5ff");
-    });
-
-    it("should render lap chart box, guidelined container, sequential bars and tooltips", async () => {
-      const d1 = createDriver("d1", "Alice", "Ally");
-      const heat = createHeatWithLaps("h1", 1, [
-        { driver: d1, laps: [10.0, 12.0, 8.0] },
-      ]);
-
-      const hd = heat.heatDrivers[0];
-      hd["_lapsWithDetails"] = [
-        {
-          time: 10.0,
-          driverId: "d1",
-          isDrift: false,
-          segments: [3.0, 4.0, 3.0],
-        },
-        {
-          time: 12.0,
-          driverId: "d1",
-          isDrift: false,
-          segments: [4.0, 5.0, 3.0],
-        },
-        { time: 8.0, driverId: "d1", isDrift: false, segments: [] },
-      ];
-
-      heatsSubject.next([heat]);
-      component["expandedHeats"].add("h1");
-
-      // Simulate hover on the first lap bar by setting activeTooltip state
-      component["activeTooltip"] = {
-        lap: hd["_lapsWithDetails"][0],
-        lapIdx: 0,
-        left: 50,
-        top: 20,
-        heatId: "h1",
-      };
-
-      fixture.detectChanges();
-
-      expect(await harness.hasLapChartSection()).toBeTrue();
-      expect(await harness.getGridLineCount()).toBe(4);
-      expect(await harness.getLapBarCount()).toBe(3);
-
-      const compiled = fixture.nativeElement as HTMLElement;
-      const lapBars = compiled.querySelectorAll(".lap-bar");
-
-      const lap2Bar = lapBars[1] as HTMLElement;
-      expect(lap2Bar.style.height).toBe("100%");
-
-      const lap1Segments = lapBars[0].querySelectorAll(".lap-bar-segment");
-      expect(lap1Segments.length).toBe(3);
-
-      expect((lap1Segments[0] as HTMLElement).style.height).toBe("30%");
-      expect((lap1Segments[1] as HTMLElement).style.height).toBe("40%");
-      expect((lap1Segments[2] as HTMLElement).style.height).toBe("30%");
-
-      const lap3Solid = lapBars[2].querySelector(".lap-bar-solid");
-      expect(lap3Solid).toBeTruthy();
-
-      const lap1Tooltip = compiled.querySelector(
-        ".lap-bar-tooltip",
-      ) as HTMLElement;
-      expect(lap1Tooltip).toBeTruthy();
-      expect(
-        lap1Tooltip.querySelector(".tooltip-header")?.textContent,
-      ).toContain("LAP 1");
-      expect(
-        lap1Tooltip.querySelector(".total-row .tooltip-val")?.textContent,
-      ).toContain("10.000s");
-    });
-  });
-
   describe("PDF Export Functionality", () => {
     it("should call printService.print with correct driver details and fullScroll", () => {
       const d1 = createDriver("d1", "Alice", "Ally");
@@ -466,19 +381,6 @@ describe("DefaultDriverResultsComponent", () => {
       const badges = compiled.querySelectorAll(".team-driver-badge");
       expect(badges[0].textContent.trim()).toBe("Sarah");
       expect(badges[1].textContent.trim()).toBe("Ally");
-
-      // Assert tooltip renders driver name row
-      component["activeTooltip"] = {
-        lap: hd["_lapsWithDetails"][0],
-        lapIdx: 0,
-        left: 50,
-        top: 20,
-        heatId: "h1",
-      };
-      fixture.detectChanges();
-
-      expect(await harness.hasTooltipDriver()).toBeTrue();
-      expect((await harness.getTooltipDriverText()).trim()).toBe("Sarah");
     });
   });
 

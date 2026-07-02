@@ -1,0 +1,160 @@
+/* Inline Twin SVG Graphs Bottom Section */
+.graphs-container {
+  margin-top: 40px;
+  margin-bottom: 20px;
+  background: rgba(10, 16, 26, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 229, 255, 0.15);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.02), 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+}
+
+.graphs-section-title {
+  font-size: 26px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: #00e5ff;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+  margin-top: 0;
+  margin-bottom: 25px;
+  text-align: center;
+  border-bottom: 1px dashed rgba(0, 229, 255, 0.2);
+  padding-bottom: 15px;
+}
+
+.results-svg-graphs {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Grid & Axes */
+.grid-line {
+  stroke: #1e293b;
+  stroke-width: 1px;
+  stroke-dasharray: 4, 4;
+}
+
+.axis-line {
+  stroke: #475569;
+  stroke-width: 2px;
+}
+
+.tick-text {
+  fill: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Inter', 'Tahoma', sans-serif;
+}
+
+.tick-text-rank {
+  fill: #f1f5f9;
+  font-size: 14px;
+  font-weight: bold;
+  font-family: 'Inter', 'Tahoma', sans-serif;
+}
+
+.axis-title {
+  fill: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: 'Inter', 'Tahoma', sans-serif;
+}
+
+.graph-header-text {
+  fill: #00e5ff;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: 'Inter', 'Tahoma', sans-serif;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+}
+
+/* Graph paths with glowing filter variables */
+.graph-path-rank,
+.graph-path-lap {
+  stroke-width: 4px;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: d 800ms cubic-bezier(0.35, 0, 0.25, 1), stroke 300ms ease-out;
+  filter: drop-shadow(0 0 6px var(--line-color));
+}
+
+.graph-point-circle {
+  stroke-width: 2px;
+  transition: cx 800ms cubic-bezier(0.35, 0, 0.25, 1), cy 800ms cubic-bezier(0.35, 0, 0.25, 1), fill 300ms ease-out;
+}
+
+/* Legend items */
+.legend-item {
+  cursor: pointer;
+  pointer-events: all;
+  user-select: none;
+}
+
+.legend-item:hover .legend-rect {
+  filter: drop-shadow(0 0 5px var(--hover-color));
+  opacity: 0.95;
+}
+
+.legend-item:hover .legend-text {
+  fill: #ffffff;
+}
+
+.legend-rect {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+  transition: fill 200ms ease-in-out, stroke 200ms ease-in-out;
+}
+
+.legend-text {
+  fill: #f1f5f9;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', 'Tahoma', sans-serif;
+  user-select: none;
+  transition: fill 200ms ease-in-out, opacity 200ms ease-in-out;
+}
+
+.legend-text-hidden {
+  fill: #475569 !important;
+  opacity: 0.5;
+}
+
+/* Highlight/Fade hover actions for driver graphs */
+.driver-group {
+  transition: opacity 250ms ease, filter 250ms ease;
+}
+
+.graph-highlight {
+  z-index: 100;
+  opacity: 1 !important;
+}
+
+.graph-highlight .graph-path-rank,
+.graph-highlight .graph-path-lap {
+  stroke-width: 6px;
+  stroke: var(--line-color) !important;
+  filter: drop-shadow(0 0 12px var(--line-color));
+}
+
+.graph-highlight .graph-point-circle {
+  r: 7px;
+  fill: var(--line-color) !important;
+  stroke: #ffffff !important;
+  stroke-width: 2.5px;
+}
+
+.graph-faded {
+  opacity: 0.15;
+  filter: grayscale(0.5);
+  pointer-events: none;
+}

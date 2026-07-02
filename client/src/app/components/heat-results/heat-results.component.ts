@@ -1,4 +1,3 @@
-import { DecimalPipe } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -10,8 +9,18 @@ import {
 import { Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import {
+  HeatDriverExpanderComponent,
+  HeatExpanderData,
+  HeatStandingsRow,
+} from "@app/components/shared/heat-driver-expander/heat-driver-expander.component";
+import {
+  DriverLine,
+  TwinGraphsComponent,
+} from "@app/components/shared/twin-graphs/twin-graphs.component";
 import { DataService } from "@app/data.service";
 import { Race } from "@app/models/race";
+import { RaceParticipant } from "@app/models/race_participant";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
@@ -21,30 +30,17 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { TranslationService } from "@app/services/translation.service";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
-interface GraphPoint {
-  x: number;
-  y: number;
-  isOwnLap?: boolean;
-}
-
-interface DriverLine {
-  objectId: string;
-  driverId: string;
-  driverName: string;
-  color: string;
-  backgroundColor: string;
-  points: GraphPoint[];
-  pathData: string;
-  rankPoints: GraphPoint[];
-  rankPathData: string;
-}
-
 @Component({
   standalone: true,
   selector: "app-heat-results",
   templateUrl: "./heat-results.component.html",
   styleUrls: ["./heat-results.component.css"],
-  imports: [DecimalPipe, TranslatePipe, AcknowledgementModalComponent],
+  imports: [
+    TranslatePipe,
+    AcknowledgementModalComponent,
+    HeatDriverExpanderComponent,
+    TwinGraphsComponent,
+  ],
 })
 export class HeatResultsComponent implements OnInit, OnDestroy {
   private dataService = inject(DataService);
@@ -100,6 +96,21 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription[] = [];
   protected heat?: Heat;
+  protected heatData: HeatExpanderData[] = [];
+  protected expandedHeats = new Set<string>();
+  protected participants: RaceParticipant[] = [];
+
+  protected toggleHeat(driverId: string) {
+    if (this.expandedHeats.has(driverId)) {
+      this.expandedHeats.delete(driverId);
+    } else {
+      this.expandedHeats.add(driverId);
+    }
+  }
+
+  protected isTeam(): boolean {
+    return this.participants.some((p) => !!p.team);
+  }
   protected race?: Race;
   protected driverLines: DriverLine[] = [];
   private driverResultsWindows: Window[] = [];
@@ -143,6 +154,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.translationService.getCurrentLanguage().subscribe(() => {
         this.updateGraph();
+        this.calculateHeatStandings();
         this.cdr.detectChanges();
       }),
     );
@@ -151,17 +163,26 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
       this.raceService.currentHeat$.subscribe(() => {
         this.loadRaceData();
         this.updateGraph();
+        this.calculateHeatStandings();
       }),
     );
 
     this.subscriptions.push(
       this.raceConnectionService.laps$.subscribe(() => {
         this.updateGraph();
+        this.calculateHeatStandings();
+      }),
+    );
+
+    this.subscriptions.push(
+      this.raceService.participants$.subscribe((participants) => {
+        this.participants = participants;
       }),
     );
 
     this.loadRaceData();
     this.updateGraph();
+    this.calculateHeatStandings();
   }
 
   ngOnDestroy() {
@@ -200,6 +221,145 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     this.printService.print("Heat Results");
   }
 
+  private calculateHeatStandings() {
+    try {
+      if (!this.heat || !this.heat.heatDrivers) return;
+      this.heatData = [];
+
+      const validHeatDrivers = this.heat.heatDrivers.filter((hd: any) => {
+        const dName =
+          hd.actualDriver?.name ?? hd.driver?.name ?? hd.driver?.driver?.name;
+        const isValid =
+          dName &&
+          dName.trim().toLowerCase() !== "empty" &&
+          dName.trim() !== "";
+        return isValid;
+      });
+
+      console.log(
+        `[HeatStandings] validHeatDrivers length: ${validHeatDrivers.length}`,
+      );
+
+      const sortedHeatDrivers = [...validHeatDrivers].sort((a, b) => {
+        const lapsA = a.adjustedLapCount;
+        const lapsB = b.adjustedLapCount;
+        if (lapsA !== lapsB) return lapsB - lapsA;
+        return a.totalTime - b.totalTime;
+      });
+
+      this.heat.heatDrivers.forEach((heatDriver) => {
+        const dName =
+          heatDriver.actualDriver?.name ??
+          heatDriver.driver?.name ??
+          (heatDriver as any).driver?.driver?.name;
+        const isSkip =
+          !dName ||
+          dName.trim().toLowerCase() === "empty" ||
+          dName.trim() === "";
+        console.log(
+          `[HeatStandings] Loop processing driver ${heatDriver?.driver?.name}, isSkip: ${isSkip}`,
+        );
+        if (isSkip) return;
+
+        const idx = sortedHeatDrivers.findIndex(
+          (hd) => hd.objectId === heatDriver.objectId,
+        );
+        const lead = sortedHeatDrivers[0];
+
+        let gap1st: number | null = 0;
+        let gapAhead: number | null = 0;
+
+        if (idx > 0 && lead) {
+          const leadLaps = lead.adjustedLapCount;
+          const leadTime = lead.totalTime;
+          const currLaps = heatDriver.adjustedLapCount;
+          const currTime = heatDriver.totalTime;
+          const currAvg = heatDriver.averageLapTime;
+
+          if (currLaps === leadLaps) gap1st = currTime - leadTime;
+          else if (currLaps === 0) gap1st = leadTime;
+          else
+            gap1st =
+              Math.min(currAvg, currTime - leadTime) +
+              currAvg * (leadLaps - currLaps);
+
+          const prev = sortedHeatDrivers[idx - 1];
+          const prevLaps = prev.adjustedLapCount;
+          const prevTime = prev.totalTime;
+          if (currLaps === prevLaps) gapAhead = currTime - prevTime;
+          else if (currLaps === 0) gapAhead = prevTime;
+          else
+            gapAhead =
+              Math.min(currAvg, currTime - prevTime) +
+              currAvg * (prevLaps - currLaps);
+        }
+
+        const row: HeatStandingsRow = {
+          rank: idx !== -1 ? idx + 1 : 1,
+          objectId: heatDriver.objectId,
+          laps: heatDriver.adjustedLapCount,
+          averageLapTime: heatDriver.averageLapTime,
+          medianLapTime: heatDriver.medianLapTime,
+          bestLapTime: heatDriver.bestLapTime,
+          totalTime: heatDriver.totalTime,
+          gap1st,
+          gapAhead,
+          reactionTime: heatDriver.reactionTime,
+        };
+
+        let foreground = "#ffffff";
+        let background = "#333333";
+        let name = `Lane ${heatDriver.laneIndex + 1}`;
+        if (
+          this.race?.track?.lanes &&
+          this.race.track.lanes[heatDriver.laneIndex]
+        ) {
+          const lane = this.race.track.lanes[heatDriver.laneIndex];
+          foreground = lane.foreground_color || foreground;
+          background = lane.background_color || background;
+        }
+        const maxLapTime =
+          heatDriver.lapsWithDetails && heatDriver.lapsWithDetails.length > 0
+            ? Math.max(...heatDriver.lapsWithDetails.map((l) => l.time))
+            : 0;
+
+        const actual = heatDriver.actualDriver;
+        const driver = heatDriver.participant?.driver;
+        const team = heatDriver.participant?.team;
+        let participantName = "";
+        if (team) participantName = team.name;
+        else if (actual) participantName = actual.nickname || actual.name;
+        else if (driver) participantName = driver.nickname || driver.name;
+        else
+          participantName =
+            heatDriver.driver?.nickname ||
+            heatDriver.driver?.name ||
+            (heatDriver as any).driver?.driver?.name;
+
+        this.heatData.push({
+          heat: this.heat!,
+          heatDriver,
+          row,
+          laneColor: { foreground, background, name },
+          maxLapTime,
+          driverName: participantName,
+        });
+        this.expandedHeats.add(heatDriver.objectId); // Default expand all
+      });
+
+      // Sort by lane index
+      this.heatData.sort(
+        (a, b) => a.heatDriver.laneIndex - b.heatDriver.laneIndex,
+      );
+      console.log(
+        "Heat Data successfully populated with length",
+        this.heatData.length,
+      );
+    } catch (e) {
+      console.error("ERROR in calculateHeatStandings", e);
+    }
+  }
+
   private loadRaceData() {
     this.race = this.raceService.getRace();
     this.heat = this.raceService.getCurrentHeat();
@@ -210,25 +370,43 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     if (!this.heat || !this.heat.heatDrivers) return;
 
     this.driverLines = this.heat.heatDrivers
-      .filter(
-        (hd) =>
-          hd.driver &&
-          hd.driver.name &&
-          hd.driver.name.trim().toLowerCase() !== "empty" &&
-          hd.driver.name.trim() !== "",
-      )
-      .map((hd) => {
-        const driverName = hd.driver.nickname || hd.driver.name;
-        const driverId = hd.driver.entity_id || hd.driver.objectId || "";
+      .filter((hd: any) => {
+        const dName =
+          hd.actualDriver?.name ?? hd.driver?.name ?? hd.driver?.driver?.name;
+        return (
+          dName && dName.trim().toLowerCase() !== "empty" && dName.trim() !== ""
+        );
+      })
+      .map((hd: any) => {
+        const team = hd.participant?.team;
+        const actual = hd.actualDriver;
+        const driver = hd.participant?.driver;
+
+        let driverName = "";
+        if (team) driverName = team.name;
+        else if (actual) driverName = actual.nickname || actual.name;
+        else if (driver) driverName = driver.nickname || driver.name;
+        else
+          driverName =
+            hd.driver?.nickname ||
+            hd.driver?.name ||
+            hd.driver?.driver?.nickname ||
+            hd.driver?.driver?.name;
+        const driverId =
+          hd.actualDriver?.entity_id ||
+          hd.driver?.entity_id ||
+          hd.driver?.objectId ||
+          hd.driver?.driver?.model?.entityId ||
+          "";
         const lane = this.race?.track?.lanes[hd.laneIndex];
         const color = lane?.foreground_color || "#ffffff";
         const backgroundColor = lane?.background_color || "#333333";
 
         const laps = hd.lapTimes; // Uses our new getter
         let currentAbsoluteTime = 0;
-        const points: GraphPoint[] = [];
+        const points: any[] = [];
 
-        laps.forEach((lapTime) => {
+        laps.forEach((lapTime: number) => {
           currentAbsoluteTime += lapTime;
           points.push({ x: currentAbsoluteTime, y: lapTime });
         });
@@ -271,7 +449,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     // Track active laps completed counts
     const lapsCount: { [id: string]: number } = {};
     const lastLapTime: { [id: string]: number } = {};
-    const rankingHistory: { [id: string]: GraphPoint[] } = {};
+    const rankingHistory: { [id: string]: any[] } = {};
 
     this.driverLines.forEach((line) => {
       lapsCount[line.objectId] = 0;
@@ -312,7 +490,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
       }
 
       // Filter to keep only the points when 1 or more positions change, or when it's the driver's own completed lap (and boundary start/end points)
-      const filtered: GraphPoint[] = [];
+      const filtered: any[] = [];
       if (history.length > 0) {
         filtered.push(history[0]);
         for (let idx = 1; idx < history.length - 1; idx++) {
@@ -337,6 +515,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
 
     if (allX.length > 0) {
       this.maxX = Math.max(...allX) * 1.05; // 5% padding
+      console.log(`[HeatResults] Set maxX to: ${this.maxX}`);
     } else {
       this.maxX = 10;
     }
@@ -347,60 +526,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
       this.maxY = 5;
     }
 
-    // Generate SVG path strings
-    this.driverLines.forEach((line) => {
-      if (line.points.length > 0) {
-        line.pathData = this.generatePath(line.points, false);
-      }
-      if (line.rankPoints.length > 0) {
-        line.rankPathData = this.generatePath(line.rankPoints, true);
-      }
-    });
-
-    this.cdr.detectChanges();
-  }
-
-  private generatePath(points: GraphPoint[], isRank: boolean): string {
-    if (points.length === 0) return "";
-
-    return points
-      .map((point, index) => {
-        const x = isRank ? this.scaleXLeft(point.x) : this.scaleXRight(point.x);
-        const y = isRank ? this.scaleYLeft(point.y) : this.scaleY(point.y);
-        return (index === 0 ? "M" : "L") + ` ${x} ${y}`;
-      })
-      .join(" ");
-  }
-
-  protected scaleXLeft(x: number): number {
-    const graphWidth =
-      (this.width - this.padding.left - this.padding.right - 80) / 2;
-    return this.padding.left + (x / this.maxX) * graphWidth;
-  }
-
-  protected scaleXRight(x: number): number {
-    const graphWidth =
-      (this.width - this.padding.left - this.padding.right - 80) / 2;
-    const offset = this.padding.left + graphWidth + 80;
-    return offset + (x / this.maxX) * graphWidth;
-  }
-
-  protected scaleYLeft(rank: number): number {
-    const graphHeight = this.height - this.padding.top - this.padding.bottom;
-    const N = this.driverLines.length || 4;
-    if (N <= 1) return this.padding.top + graphHeight / 2;
-    return this.padding.top + ((rank - 1) / (N - 1)) * graphHeight;
-  }
-
-  protected scaleX(x: number): number {
-    const graphWidth = this.width - this.padding.left - this.padding.right;
-    return this.padding.left + (x / this.maxX) * graphWidth;
-  }
-
-  protected scaleY(y: number): number {
-    const graphHeight = this.height - this.padding.top - this.padding.bottom;
-    // Invert Y for SVG coord system (0,0 is top-left)
-    return this.height - this.padding.bottom - (y / this.maxY) * graphHeight;
+    this.cdr.markForCheck();
   }
 
   // Grid helpers

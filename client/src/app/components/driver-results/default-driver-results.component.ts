@@ -2,6 +2,10 @@ import { CommonModule, DecimalPipe } from "@angular/common";
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute, RouterModule } from "@angular/router";
 import { Subscription } from "rxjs";
+import {
+  HeatDriverExpanderComponent,
+  HeatStandingsRow,
+} from "@app/components/shared/heat-driver-expander/heat-driver-expander.component";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
@@ -32,25 +36,13 @@ interface StandingsRow {
   avatarUrl: string;
 }
 
-interface HeatStandingsRow {
-  rank: number;
-  objectId: string;
-  laps: number;
-  averageLapTime: number;
-  medianLapTime: number;
-  bestLapTime: number;
-  totalTime: number;
-  gap1st: number | null;
-  gapAhead: number | null;
-  reactionTime: number;
-}
-
 @Component({
   standalone: true,
   selector: "app-default-driver-results",
   templateUrl: "./default-driver-results.component.html",
   styleUrls: ["./default-driver-results.component.css"],
   imports: [
+    HeatDriverExpanderComponent,
     CommonModule,
     DecimalPipe,
     TranslatePipe,
@@ -76,13 +68,6 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
   protected participants: RaceParticipant[] = [];
   protected heats: Heat[] = [];
-  protected activeTooltip: {
-    lap: any;
-    lapIdx: number;
-    left: number;
-    top: number;
-    heatId: string;
-  } | null = null;
 
   protected driverStats: any = null;
   protected raceState: RaceState = RaceState.UNKNOWN_STATE;
@@ -249,22 +234,6 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
     return `${sign}${gap.toFixed(3)}`;
   }
 
-  protected getLapBarHeight(lapTime: number, maxLapTime: number): number {
-    if (maxLapTime === 0) return 0;
-    const minHeight = 15;
-    return minHeight + (lapTime / maxLapTime) * (100 - minHeight);
-  }
-
-  protected getSegmentColor(idx: number): string {
-    const colors = [
-      "#00e5ff", // Segment 1: Neon Cyan
-      "#d500f9", // Segment 2: Neon Purple/Magenta
-      "#ff9100", // Segment 3: Neon Orange/Gold
-      "#00e676", // Segment 4: Neon Green
-    ];
-    return colors[idx % colors.length];
-  }
-
   private recalculateAll() {
     if (!this.driverId) return;
 
@@ -272,22 +241,31 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
 
     // 1. Resolve Driver Object
     const p = this.participants.find(
-      (curr) => curr.driver && curr.driver.entity_id === this.driverId,
+      (curr) =>
+        (curr.driver && curr.driver.entity_id === this.driverId) ||
+        (curr.team && curr.team.entity_id === this.driverId),
     );
     if (p) {
-      this.driver = p.driver;
+      this.driver =
+        p.team && p.team.entity_id === this.driverId
+          ? (p.team as any)
+          : (p.driver as any);
     } else {
       // Look through heats to see if driver model is loaded there
       for (const heat of this.heats) {
         const hd = heat.heatDrivers.find(
-          (d) =>
-            (d.participant?.driver &&
-              d.participant.driver.entity_id === this.driverId) ||
-            (d.participant?.team &&
-              d.participant.team.entity_id === this.driverId),
+          (curr) =>
+            (curr.participant?.driver &&
+              curr.participant.driver.entity_id === this.driverId) ||
+            (curr.participant?.team &&
+              curr.participant.team.entity_id === this.driverId),
         );
-        if (hd) {
-          this.driver = hd.participant.driver;
+        if (hd && hd.participant) {
+          this.driver =
+            hd.participant.team &&
+            hd.participant.team.entity_id === this.driverId
+              ? (hd.participant.team as any)
+              : (hd.participant.driver as any);
           break;
         }
       }
@@ -309,7 +287,7 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
     }
 
     const sorted = [...this.participants]
-      .filter((p) => p && p.driver && !Driver.isEmpty(p.driver))
+      .filter((p) => p && ((p.driver && !Driver.isEmpty(p.driver)) || p.team))
       .sort((a, b) => {
         if (a.rank !== b.rank) {
           if (a.rank === 0) return 1;
@@ -381,7 +359,7 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
 
       return {
         rank: curr.rank || i + 1,
-        driver: curr.driver,
+        driver: (curr.driver || curr.team) as any,
         score: curr.rankValue || 0,
         laps: curr.totalLaps || 0,
         averageLapTime: curr.averageLapTime || 0,
@@ -390,7 +368,7 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
         totalTime: curr.totalTime || 0,
         gap1st,
         gapAhead,
-        avatarUrl: curr.driver.avatarUrl || "",
+        avatarUrl: curr.driver?.avatarUrl || "",
       };
     });
 
@@ -597,42 +575,19 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
     for (const heat of this.heats) {
       if (heat.heatDrivers) {
         const hd = heat.heatDrivers.find(
-          (d) => d.driver && d.driver.entity_id === driverId,
+          (d) =>
+            (d.driver && d.driver.entity_id === driverId) ||
+            (d.actualDriver && d.actualDriver.entity_id === driverId),
         );
-        if (hd && hd.driver) return hd.driver.nickname || hd.driver.name;
+        if (hd) {
+          if (hd.actualDriver && hd.actualDriver.entity_id === driverId)
+            return hd.actualDriver.nickname || hd.actualDriver.name;
+          if (hd.driver && hd.driver.entity_id === driverId)
+            return hd.driver.nickname || hd.driver.name;
+        }
       }
     }
     return "Unknown";
-  }
-
-  protected showTooltip(
-    event: MouseEvent,
-    lap: any,
-    lapIdx: number,
-    heatId: string,
-  ) {
-    const barEl = event.currentTarget as HTMLElement;
-    const chartBoxEl = barEl.closest(".lap-chart-box") as HTMLElement;
-    if (!chartBoxEl) return;
-
-    const barRect = barEl.getBoundingClientRect();
-    const chartRect = chartBoxEl.getBoundingClientRect();
-
-    // Calculate position of bar center relative to the chart container
-    const left = barRect.left - chartRect.left + barRect.width / 2;
-    const top = barRect.top - chartRect.top;
-
-    this.activeTooltip = {
-      lap,
-      lapIdx,
-      left,
-      top,
-      heatId,
-    };
-  }
-
-  protected hideTooltip() {
-    this.activeTooltip = null;
   }
 
   protected exportPdf() {

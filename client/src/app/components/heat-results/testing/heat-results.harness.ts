@@ -1,23 +1,29 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { HeatResultsHarnessBase } from './heat-results.harness.base';
+import { HeatResultsHarnessBase } from "./heat-results.harness.base";
 
-export class HeatResultsHarness extends ComponentHarness implements HeatResultsHarnessBase {
+export class HeatResultsHarness
+  extends ComponentHarness
+  implements HeatResultsHarnessBase
+{
   static hostSelector = HeatResultsHarnessBase.hostSelector;
 
-  protected getRankingsGraphEl = this.locatorForOptional(HeatResultsHarnessBase.selectors.rankingsGraph);
-  protected getLaptimesGraphEl = this.locatorForOptional(HeatResultsHarnessBase.selectors.laptimesGraph);
-  protected getLegendItemsEl = this.locatorForAll(HeatResultsHarnessBase.selectors.legendItems);
+  protected getHeatDriverExpandersEl = this.locatorForAll(
+    HeatResultsHarnessBase.selectors.heatDriverExpander,
+  );
+  protected getTwinGraphsEl = this.locatorForOptional(
+    HeatResultsHarnessBase.selectors.twinGraphs,
+  );
 
-  async getRankingsGraph(): Promise<any> {
-    return await this.getRankingsGraphEl();
+  async hasHeatDriverExpander(): Promise<boolean> {
+    return (await this.getHeatDriverExpandersEl()).length > 0;
   }
 
-  async getLaptimesGraph(): Promise<any> {
-    return await this.getLaptimesGraphEl();
+  async hasTwinGraphs(): Promise<boolean> {
+    return (await this.getTwinGraphsEl()) !== null;
   }
 
-  async getLegendItemCount(): Promise<number> {
-    return (await this.getLegendItemsEl()).length;
+  async getHeatDriverExpanderCount(): Promise<number> {
+    return (await this.getHeatDriverExpandersEl()).length;
   }
 }

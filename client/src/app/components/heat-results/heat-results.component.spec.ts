@@ -46,6 +46,7 @@ describe("HeatResultsComponent", () => {
       "getCurrentHeat",
     ]);
     mockRaceService.currentHeat$ = of(null);
+    mockRaceService.participants$ = of([]);
 
     // Mock Setup Data
     const mockDriver1 = new Driver("d1", "Alice", "Ally", "");
