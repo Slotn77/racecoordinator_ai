@@ -105,11 +105,11 @@
             [class.graph-faded]="
               hoveredDriverId !== null && hoveredDriverId !== line.objectId
             "
-            [style.--line-color]="line.color"
+            [style.--line-color]="line.backgroundColor"
           >
             <path
               [attr.d]="line.rankPathData"
-              [attr.stroke]="line.color"
+              [attr.stroke]="line.backgroundColor"
               class="graph-path-rank"
             />
             @for (p of line.rankPoints; track $index) {
@@ -227,11 +227,11 @@
             [class.graph-faded]="
               hoveredDriverId !== null && hoveredDriverId !== line.objectId
             "
-            [style.--line-color]="line.color"
+            [style.--line-color]="line.backgroundColor"
           >
             <path
               [attr.d]="line.pathData"
-              [attr.stroke]="line.color"
+              [attr.stroke]="line.backgroundColor"
               class="graph-path-lap"
             />
             @for (p of line.points; track $index) {
@@ -264,7 +264,7 @@
           (dblclick)="onLegendDblClick(line.objectId)"
           (mouseenter)="hoveredDriverId = line.objectId"
           (mouseleave)="hoveredDriverId = null"
-          [style.--hover-color]="line.color"
+          [style.--hover-color]="line.backgroundColor"
         >
           <!-- Invisible background rect for larger click target -->
           <rect
