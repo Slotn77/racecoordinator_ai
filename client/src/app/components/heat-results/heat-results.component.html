@@ -32,7 +32,7 @@
               <app-heat-driver-expander
                 [heatData]="dh"
                 [isExpanded]="expandedHeats.has(dh.heatDriver.objectId)"
-                [isTeam]="!!dh.heatDriver.participant?.team"
+                [isTeam]="!!dh.heatDriver.participant.team"
                 [participants]="participants"
                 [allHeats]="[dh.heat]"
                 [customStatsTitle]="dh.driverName"

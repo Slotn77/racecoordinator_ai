@@ -282,7 +282,7 @@
         <app-heat-driver-expander
           [heatData]="dh"
           [isExpanded]="expandedHeats.has(dh.heat.objectId)"
-          [isTeam]="!!dh.heatDriver?.participant?.team"
+          [isTeam]="!!dh.heatDriver.participant.team"
           [participants]="participants"
           [allHeats]="heats"
           (toggle)="toggleHeat(dh.heat.objectId)"
