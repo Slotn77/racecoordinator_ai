@@ -159,4 +159,30 @@ test.describe("Race Results Visuals", () => {
       maxDiffPixelRatio: 0.05,
     });
   });
+
+  test("should render correctly in print layout without being cut off", async ({
+    page,
+  }) => {
+    const mockData = RaceResultsHelper.createMockRaceData();
+    await RaceResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-results"),
+    );
+
+    const harness = new RaceResultsHarnessE2e(page.locator("app-race-results"));
+    expect(await harness.hasResultsTableBody()).toBe(true);
+
+    // Emulate print media and add the class that PrintService uses
+    await page.emulateMedia({ media: "print" });
+    await page.evaluate(() => document.body.classList.add("print-full-scroll"));
+
+    // Ensure the page doesn't get clipped (fullPage: true)
+    await expect(page).toHaveScreenshot("race-results-print-layout.png", {
+      maxDiffPixelRatio: 0.05,
+      fullPage: true,
+    });
+  });
 });
