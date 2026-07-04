@@ -119,13 +119,31 @@
             <span class="submenu-arrow">▶</span>
             @if (isTrackPowerMenuOpen) {
               <div class="menu-dropdown submenu">
-                <div class="menu-item" (click)="onTrackPowerSelect('MAIN_ON')">
+                <div
+                  class="menu-item"
+                  [class.disabled]="!hasMainRelay()"
+                  [title]="
+                    !hasMainRelay()
+                      ? ('RD_MENU_NO_MAIN_RELAYS_TOOLTIP' | translate)
+                      : ''
+                  "
+                  (click)="onTrackPowerSelect('MAIN_ON')"
+                >
                   <span>{{ "RD_MENU_MAIN_POWER_ON" | translate }}</span>
                   <span class="menu-shortcut">{{
                     trackPowerShortcut(0, false)
                   }}</span>
                 </div>
-                <div class="menu-item" (click)="onTrackPowerSelect('MAIN_OFF')">
+                <div
+                  class="menu-item"
+                  [class.disabled]="!hasMainRelay()"
+                  [title]="
+                    !hasMainRelay()
+                      ? ('RD_MENU_NO_MAIN_RELAYS_TOOLTIP' | translate)
+                      : ''
+                  "
+                  (click)="onTrackPowerSelect('MAIN_OFF')"
+                >
                   <span>{{ "RD_MENU_MAIN_POWER_OFF" | translate }}</span>
                   <span class="menu-shortcut">{{
                     trackPowerShortcut(0, true)
@@ -133,7 +151,16 @@
                 </div>
                 @if (track() && track()!.lanes) {
                   @for (lane of track()!.lanes; track lane; let i = $index) {
-                    <div class="menu-item" (click)="onLanePowerSelect(i, true)">
+                    <div
+                      class="menu-item"
+                      [class.disabled]="!hasPerLaneRelays()"
+                      [title]="
+                        !hasPerLaneRelays()
+                          ? ('RD_MENU_NO_PER_LANE_RELAYS_TOOLTIP' | translate)
+                          : ''
+                      "
+                      (click)="onLanePowerSelect(i, true)"
+                    >
                       <span>{{
                         "RD_MENU_LANE_POWER_ON" | translate: { lane: i + 1 }
                       }}</span>
@@ -143,6 +170,12 @@
                     </div>
                     <div
                       class="menu-item"
+                      [class.disabled]="!hasPerLaneRelays()"
+                      [title]="
+                        !hasPerLaneRelays()
+                          ? ('RD_MENU_NO_PER_LANE_RELAYS_TOOLTIP' | translate)
+                          : ''
+                      "
                       (click)="onLanePowerSelect(i, false)"
                     >
                       <span>{{

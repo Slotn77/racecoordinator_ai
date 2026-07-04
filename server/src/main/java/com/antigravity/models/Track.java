@@ -90,6 +90,57 @@ public class Track extends Model {
     return false;
   }
 
+  @JsonProperty("has_per_lane_relays")
+  public boolean hasPerLaneRelays() {
+    int base = PinBehavior.BEHAVIOR_RELAY_BASE.getNumber();
+    int max = base + Math.max(1, this.lanes.size());
+
+    for (ArduinoConfig config : this.arduinoConfigs) {
+      if (config != null) {
+        if (config.digitalIds != null) {
+          for (Integer code : config.digitalIds) {
+            if (code != null && code >= base && code < max) {
+              return true;
+            }
+          }
+        }
+        if (config.analogIds != null) {
+          for (Integer code : config.analogIds) {
+            if (code != null && code >= base && code < max) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  @JsonProperty("has_main_relay")
+  public boolean hasMainRelay() {
+    int mainRelay = PinBehavior.BEHAVIOR_RELAY.getNumber();
+
+    for (ArduinoConfig config : this.arduinoConfigs) {
+      if (config != null) {
+        if (config.digitalIds != null) {
+          for (Integer code : config.digitalIds) {
+            if (code != null && code == mainRelay) {
+              return true;
+            }
+          }
+        }
+        if (config.analogIds != null) {
+          for (Integer code : config.analogIds) {
+            if (code != null && code == mainRelay) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   public List<Lane> getLanes() {
     return lanes;
   }

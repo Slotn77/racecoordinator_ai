@@ -189,4 +189,49 @@ public class TrackTest {
     assertEquals(
         "#FFFF00", syncedLs.ledLaneColorOverrides.get(1)); // Auto-populated with Lane 2 color
   }
+
+  @Test
+  public void testHasPerLaneRelays() {
+    Lane lane1 = new Lane("#FF0000", "#FFFFFF", 10);
+    Lane lane2 = new Lane("#00FF00", "#FFFFFF", 10);
+    List<Lane> lanes = Arrays.asList(lane1, lane2);
+
+    ArduinoConfig config = new ArduinoConfig();
+    config.digitalIds = new ArrayList<>(Collections.nCopies(60, 0));
+    config.analogIds = new ArrayList<>(Collections.nCopies(16, 0));
+
+    Track track = new Track("Test", lanes, Collections.singletonList(config), "t1", null);
+    assertEquals(false, track.hasPerLaneRelays());
+
+    // Set a relay for Lane 1 (index 0)
+    config.digitalIds.set(5, com.antigravity.proto.PinBehavior.BEHAVIOR_RELAY_BASE_VALUE + 0);
+    assertEquals(true, track.hasPerLaneRelays());
+
+    // Set a relay for Lane 2 (index 1) in analog
+    config.digitalIds.set(5, 0); // clear digital
+    config.analogIds.set(2, com.antigravity.proto.PinBehavior.BEHAVIOR_RELAY_BASE_VALUE + 1);
+    assertEquals(true, track.hasPerLaneRelays());
+  }
+
+  @Test
+  public void testHasMainRelay() {
+    Lane lane1 = new Lane("#FF0000", "#FFFFFF", 10);
+    List<Lane> lanes = Collections.singletonList(lane1);
+
+    ArduinoConfig config = new ArduinoConfig();
+    config.digitalIds = new ArrayList<>(Collections.nCopies(60, 0));
+    config.analogIds = new ArrayList<>(Collections.nCopies(16, 0));
+
+    Track track = new Track("Test", lanes, Collections.singletonList(config), "t1", null);
+    assertEquals(false, track.hasMainRelay());
+
+    // Set main relay
+    config.digitalIds.set(4, com.antigravity.proto.PinBehavior.BEHAVIOR_RELAY_VALUE);
+    assertEquals(true, track.hasMainRelay());
+
+    // Clear digital and set analog
+    config.digitalIds.set(4, 0);
+    config.analogIds.set(3, com.antigravity.proto.PinBehavior.BEHAVIOR_RELAY_VALUE);
+    assertEquals(true, track.hasMainRelay());
+  }
 }

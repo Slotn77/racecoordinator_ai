@@ -1,6 +1,7 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { BehaviorSubject } from "rxjs";
+import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
@@ -15,11 +16,21 @@ describe("RacedayMenuBarComponent", () => {
   let fixture: ComponentFixture<RacedayMenuBarComponent>;
   let harness: RacedayMenuBarHarness;
   let mockAuthService: any;
+  let mockDataService: any;
   let roleSubject: BehaviorSubject<Role>;
 
   beforeEach(async () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
     roleSubject = new BehaviorSubject<Role>(Role.DIRECTOR);
+
+    mockDataService = {
+      getSystemStateValue: jasmine
+        .createSpy("getSystemStateValue")
+        .and.returnValue({
+          hasMainRelay: false,
+          hasPerLaneRelays: false,
+        }),
+    };
 
     mockAuthService = {
       currentRoleSubject: roleSubject,
@@ -36,6 +47,7 @@ describe("RacedayMenuBarComponent", () => {
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: TranslationService, useValue: mockTranslationService },
+        { provide: DataService, useValue: mockDataService },
       ],
     }).compileComponents();
 
@@ -103,6 +115,10 @@ describe("RacedayMenuBarComponent", () => {
   });
 
   it("should emit trackPowerMainSelect when main power options are clicked", () => {
+    mockDataService.getSystemStateValue.and.returnValue({
+      hasMainRelay: true,
+      hasPerLaneRelays: false,
+    });
     spyOn(component.trackPowerMainSelect, "emit");
 
     component.onTrackPowerSelect("MAIN_ON");
@@ -114,6 +130,10 @@ describe("RacedayMenuBarComponent", () => {
   });
 
   it("should emit trackPowerLaneSelect when lane power options are clicked", () => {
+    mockDataService.getSystemStateValue.and.returnValue({
+      hasMainRelay: false,
+      hasPerLaneRelays: true,
+    });
     spyOn(component.trackPowerLaneSelect, "emit");
 
     component.onLanePowerSelect(1, true);
@@ -128,5 +148,25 @@ describe("RacedayMenuBarComponent", () => {
       lane: 2,
       on: false,
     });
+  });
+
+  it("should return correct relay state from data service", () => {
+    mockDataService.getSystemStateValue.and.returnValue({
+      hasMainRelay: true,
+      hasPerLaneRelays: false,
+    });
+    expect(component.hasMainRelay()).toBeTrue();
+    expect(component.hasPerLaneRelays()).toBeFalse();
+
+    mockDataService.getSystemStateValue.and.returnValue({
+      hasMainRelay: false,
+      hasPerLaneRelays: true,
+    });
+    expect(component.hasMainRelay()).toBeTrue();
+    expect(component.hasPerLaneRelays()).toBeTrue();
+
+    mockDataService.getSystemStateValue.and.returnValue(null);
+    expect(component.hasMainRelay()).toBeFalse();
+    expect(component.hasPerLaneRelays()).toBeFalse();
   });
 });

@@ -21,6 +21,8 @@ public class TrackConverter {
           .setName(track.getName())
           .setNumTrackSections(track.getNumTrackSections())
           .setHasDigitalFuel(hasDigitalFuel(track))
+          .setHasPerLaneRelays(hasPerLaneRelays(track))
+          .setHasMainRelay(hasMainRelay(track))
           .addAllArduinoConfigs(
               track.getArduinoConfigs().stream()
                   .map(ArduinoConfigConverter::toProto)
@@ -35,5 +37,13 @@ public class TrackConverter {
 
   private static boolean hasDigitalFuel(Track track) {
     return track.hasDigitalFuel();
+  }
+
+  private static boolean hasPerLaneRelays(Track track) {
+    return track.hasPerLaneRelays();
+  }
+
+  private static boolean hasMainRelay(Track track) {
+    return track.hasMainRelay();
   }
 }

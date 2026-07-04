@@ -42,6 +42,8 @@ export class TrackConverter {
           (proto.arduinoConfigs || []).map((ac) =>
             ArduinoConfigConverter.fromProto(ac),
           ),
+          proto.hasPerLaneRelays ?? false,
+          proto.hasMainRelay ?? false,
         );
       },
       () => {

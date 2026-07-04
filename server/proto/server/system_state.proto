@@ -8,4 +8,6 @@ option java_multiple_files = true;
 message SystemState {
   string resource_lock_state = 1;
   string owner_id = 2;
+  bool has_main_relay = 3;
+  bool has_per_lane_relays = 4;
 }

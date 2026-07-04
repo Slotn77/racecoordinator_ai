@@ -7,6 +7,7 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
+import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -59,13 +60,26 @@ export class RacedayMenuBarComponent {
 
   Role = Role;
 
-  constructor(public authService: AuthService) {}
+  constructor(
+    public authService: AuthService,
+    public dataService: DataService,
+  ) {}
 
   trackPowerShortcut(digit: number, off: boolean): string {
     if (digit > 9) return "";
     const key =
       navigator.userAgent.toUpperCase().indexOf("MAC") >= 0 ? "Option" : "Alt";
     return off ? `${key}-Shift-${digit}` : `${key}-${digit}`;
+  }
+
+  hasMainRelay(): boolean {
+    const s = this.dataService.getSystemStateValue();
+    return s ? !!s.hasMainRelay || !!s.hasPerLaneRelays : false;
+  }
+
+  hasPerLaneRelays(): boolean {
+    const s = this.dataService.getSystemStateValue();
+    return s ? !!s.hasPerLaneRelays : false;
   }
 
   toggleFileMenu() {
@@ -127,11 +141,13 @@ export class RacedayMenuBarComponent {
   }
 
   onTrackPowerSelect(action: string) {
+    if (!this.hasMainRelay()) return;
     this.trackPowerMainSelect.emit(action === "MAIN_ON");
     this.closeAll();
   }
 
   onLanePowerSelect(laneIndex: number, on: boolean) {
+    if (!this.hasPerLaneRelays()) return;
     this.trackPowerLaneSelect.emit({ lane: laneIndex, on });
     this.closeAll();
   }

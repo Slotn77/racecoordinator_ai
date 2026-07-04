@@ -423,4 +423,74 @@ public class ClientSubscriptionManagerTest {
 
     assertNull("Race should be immediately cleared by forceStopRace", manager.getRace());
   }
+
+  @Test
+  public void testBroadcastSystemState_PopulatesRelaysFromRace() throws Exception {
+    Race mockRace = mock(Race.class);
+    com.antigravity.race.RaceHardwareManager mockHardwareManager =
+        mock(com.antigravity.race.RaceHardwareManager.class);
+    when(mockRace.getHardwareManager()).thenReturn(mockHardwareManager);
+    when(mockHardwareManager.hasMainRelay()).thenReturn(true);
+    when(mockHardwareManager.hasPerLaneRelays()).thenReturn(false);
+
+    manager.setRace(mockRace);
+
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    when(mockSession.isOpen()).thenReturn(true);
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    Field sessionsField = ClientSubscriptionManager.class.getDeclaredField("sessions");
+    sessionsField.setAccessible(true);
+    ((Set<WsContext>) sessionsField.get(manager)).add(mockContext);
+
+    manager.broadcastSystemState("UNLOCKED", "owner1");
+
+    org.mockito.ArgumentCaptor<java.nio.ByteBuffer> captor =
+        org.mockito.ArgumentCaptor.forClass(java.nio.ByteBuffer.class);
+    verify(mockContext).send(captor.capture());
+
+    byte[] bytes = new byte[captor.getValue().remaining()];
+    captor.getValue().get(bytes);
+    com.antigravity.proto.RaceData sentData = com.antigravity.proto.RaceData.parseFrom(bytes);
+    assertTrue("Should have main relay", sentData.getSystemState().getHasMainRelay());
+    assertFalse("Should not have per lane relays", sentData.getSystemState().getHasPerLaneRelays());
+  }
+
+  @Test
+  public void testBroadcastSystemState_PopulatesRelaysFromProtocol() throws Exception {
+    ProtocolDelegate mockProtocol = mock(ProtocolDelegate.class);
+    when(mockProtocol.hasMainRelay()).thenReturn(false);
+    when(mockProtocol.hasPerLaneRelays()).thenReturn(true);
+
+    manager.setProtocol(mockProtocol);
+    manager.setRace(null);
+
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    when(mockSession.isOpen()).thenReturn(true);
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    Field sessionsField = ClientSubscriptionManager.class.getDeclaredField("sessions");
+    sessionsField.setAccessible(true);
+    ((Set<WsContext>) sessionsField.get(manager)).add(mockContext);
+
+    manager.broadcastSystemState("UNLOCKED", "owner1");
+
+    org.mockito.ArgumentCaptor<java.nio.ByteBuffer> captor =
+        org.mockito.ArgumentCaptor.forClass(java.nio.ByteBuffer.class);
+    verify(mockContext).send(captor.capture());
+
+    byte[] bytes = new byte[captor.getValue().remaining()];
+    captor.getValue().get(bytes);
+    com.antigravity.proto.RaceData sentData = com.antigravity.proto.RaceData.parseFrom(bytes);
+    assertFalse("Should not have main relay", sentData.getSystemState().getHasMainRelay());
+    assertTrue("Should have per lane relays", sentData.getSystemState().getHasPerLaneRelays());
+  }
 }

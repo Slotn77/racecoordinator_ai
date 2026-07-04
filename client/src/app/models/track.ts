@@ -17,6 +17,8 @@ export class Track implements Model {
   readonly num_track_sections: number;
   readonly lanes: Lane[];
   readonly has_digital_fuel: boolean;
+  readonly has_per_lane_relays: boolean;
+  readonly has_main_relay: boolean;
   readonly arduino_configs: ArduinoConfig[];
 
   constructor(
@@ -26,6 +28,8 @@ export class Track implements Model {
     lanes: Lane[],
     has_digital_fuel: boolean = false,
     arduino_configs?: ArduinoConfig[],
+    has_per_lane_relays: boolean = false,
+    has_main_relay: boolean = false,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -33,6 +37,8 @@ export class Track implements Model {
     this.lanes = lanes;
     this.has_digital_fuel = has_digital_fuel;
     this.arduino_configs = arduino_configs || [];
+    this.has_per_lane_relays = has_per_lane_relays;
+    this.has_main_relay = has_main_relay;
   }
 
   get objectId(): string {

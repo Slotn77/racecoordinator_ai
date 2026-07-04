@@ -1469,6 +1469,10 @@ export class DataService {
     return this.systemStateSubject.asObservable();
   }
 
+  public getSystemStateValue(): SystemState | null {
+    return this.systemStateSubject.getValue();
+  }
+
   public changeActualDriver(
     lane: number,
     driverId: string,
