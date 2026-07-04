@@ -475,8 +475,8 @@ public abstract class DefaultProtocol implements IProtocol {
 
   @Override
   public boolean isHealthy() {
-    if (lastHeartbeatTimeMs == 0) {
-      return false; // No heartbeat yet
+    if (!isConnected() || lastHeartbeatTimeMs == 0) {
+      return false; // Not connected or no heartbeat yet
     }
     // Healthy if we received a heartbeat in the last 2 seconds
     return (now() - lastHeartbeatTimeMs) < 2000;

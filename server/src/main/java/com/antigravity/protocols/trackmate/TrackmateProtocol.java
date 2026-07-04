@@ -295,13 +295,4 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   protected boolean requiresHeartbeat() {
     return true;
   }
-
-  @Override
-  public boolean isHealthy() {
-    // TODO(aufderheide): Add check to make sure we've received data. We should
-    // get time messages something like every 100 or 200ms so if we haven't
-    // gotten data in a few seconds we must have lost the connection. For now
-    // just check the serial connection.
-    return isConnected();
-  }
 }
