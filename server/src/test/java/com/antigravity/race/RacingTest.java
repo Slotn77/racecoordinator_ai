@@ -801,8 +801,8 @@ public class RacingTest {
     com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
     when(mockRace.getRaceModel()).thenReturn(mockModel);
     when(mockModel.getHeatScoring()).thenReturn(new HeatScoring());
-    when(mockRace.getTrack())
-        .thenReturn(new Track("Test", Arrays.asList(new Lane("red", "black", 100))));
+    com.antigravity.models.Track mockTrack = mock(com.antigravity.models.Track.class);
+    when(mockRace.getTrack()).thenReturn(mockTrack);
 
     com.antigravity.race.Heat mockHeat = mock(com.antigravity.race.Heat.class);
     when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
