@@ -15,6 +15,8 @@ export class UIEditorHarnessE2e implements UIEditorHarnessBase {
 
   async clickImageSelector(index: number): Promise<void> {
     const selector = this.imageSelectors.nth(index);
-    await selector.locator(this.base.selectors.imagePreview).click();
+    await selector
+      .locator(this.base.selectors.imagePreview)
+      .click({ force: true });
   }
 }

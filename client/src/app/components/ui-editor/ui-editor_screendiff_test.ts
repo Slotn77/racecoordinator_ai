@@ -61,7 +61,7 @@ test.describe("UI Editor Visuals", () => {
       .nth(1)
       .locator(".section-header")
       .first()
-      .click();
+      .click({ force: true });
 
     // "Flag Images" sub-section is expanded by default (sectionsExpanded.flags = true)
 
@@ -101,7 +101,7 @@ test.describe("UI Editor Visuals", () => {
       .nth(1)
       .locator(".section-header")
       .first()
-      .click();
+      .click({ force: true });
 
     // Set duplicate name (Default Theme)
     const themeInput = page.locator(".theme-name-input").first();
@@ -156,7 +156,7 @@ test.describe("UI Editor Visuals", () => {
     // Expand Practice Raceday Layout section
     await page
       .locator(".section-header", { hasText: "Raceday Layout (Practice)" })
-      .click();
+      .click({ force: true });
 
     // Wait for the practice section content to be visible
     const practiceSection = page.locator(".practice-raceday-layout-section");

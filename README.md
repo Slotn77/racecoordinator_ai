@@ -115,6 +115,14 @@ Run Playwright-based visual tests to detect UI regressions:
 - **Linux/Mac**: `./run_client_screendiff_tests.sh`
 - **Windows**: `.\run_client_screendiff_tests.ps1`
 
+**Important Note on Docker & Performance:**
+To ensure identical rendering across different operating systems, these visual tests run inside an isolated **Docker container**. 
+- Docker Desktop must be installed and running before executing the script.
+- By default, the tests use `2` workers inside the container to prevent overloading the Docker VM. 
+- To speed up test execution, you can scale the number of workers. **We recommend setting `PWTEST_WORKERS="50%"`** to utilize half of your Docker VM's CPU cores. 
+  - **Linux/Mac**: `PWTEST_WORKERS="50%" ./run_client_screendiff_tests.sh`
+  - **Windows**: `$env:PWTEST_WORKERS="50%"; .\run_client_screendiff_tests.ps1`
+- *Warning*: Do not set workers to `100%`. Running at 100% CPU capacity causes thread contention and CPU starvation, leading to layout-thrashing loops and flaky `ResizeObserver` timeouts in complex UI components.
 #### Accepting Changes (Updating Snapshots)
 If you have intentionally modified the UI and need to update the expected screenshots, you have two options:
 
