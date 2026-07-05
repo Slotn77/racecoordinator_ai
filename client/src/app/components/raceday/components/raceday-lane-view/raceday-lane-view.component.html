@@ -93,7 +93,8 @@
           >
             {{ parent().getColumnLabel(col) }}
             @if (
-              parent().isNameProperty(col.propertyName) &&
+              (parent().isNameProperty(col.propertyName) ||
+                col.propertyName === "laneNumber") &&
               parent().race?.practice &&
               (parent().authService.currentRole$ | async) !==
                 parent().Role.VIEWER
@@ -485,7 +486,17 @@
                       !parent().isNameProperty(entry.property) ||
                       !parent().isTeam(hd)
                     ) {
-                      <span>
+                      <span
+                        [style.padding-right]="
+                          parent().race?.practice &&
+                          (parent().isNameProperty(entry.property) ||
+                            entry.property === 'laneNumber') &&
+                          (parent().authService.currentRole$ | async) !==
+                            parent().Role.VIEWER
+                            ? '44px'
+                            : '0px'
+                        "
+                      >
                         {{
                           parent().formatColumnValue(
                             hd,
@@ -495,6 +506,34 @@
                           )
                         }}
                       </span>
+                      @if (
+                        parent().race?.practice &&
+                        (parent().isNameProperty(entry.property) ||
+                          entry.property === "laneNumber") &&
+                        (parent().authService.currentRole$ | async) !==
+                          parent().Role.VIEWER
+                      ) {
+                        <button
+                          class="material-icons reset-lane-btn"
+                          title="{{ 'RD_RESET_LANE_TOOLTIP' | translate }}"
+                          style="
+                            position: absolute;
+                            right: 4px;
+                            bottom: 0;
+                            background: none;
+                            border: none;
+                            color: inherit;
+                            font-size: 36px;
+                            cursor: pointer;
+                            margin: 0;
+                            padding: 0;
+                            z-index: 10;
+                          "
+                          (click)="parent().resetLane(hd.laneIndex, $event)"
+                        >
+                          refresh
+                        </button>
+                      }
                     }
                   </div>
                 }

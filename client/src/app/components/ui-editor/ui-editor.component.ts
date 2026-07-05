@@ -1602,8 +1602,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     const targetW = window.innerWidth;
     const targetH = window.innerHeight;
-    const oldWidth = 1920;
-    const oldHeight = 1080;
+    const oldWidth = layout.baseWidth || 1920;
+    const oldHeight = layout.baseHeight || 1080;
 
     const scaleX = targetW / oldWidth;
     const scaleY = targetH / oldHeight;
