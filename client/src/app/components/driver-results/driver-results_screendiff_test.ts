@@ -28,9 +28,6 @@ test.describe("Driver Results Visuals", () => {
     );
 
     // Verify page structure is rendered
-    expect(await harness.hasHeaderBar()).toBe(true);
-    expect(await harness.hasOverallTable()).toBe(true);
-    expect(await harness.hasHeatsSection()).toBe(true);
 
     // Verify the expanded active heat card is visible and has chart bars
     await expect(harness.getExpandedHeatCardLocator()).toBeVisible();

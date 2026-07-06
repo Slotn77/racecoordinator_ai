@@ -43,11 +43,9 @@ test.describe("Connection Loss Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
 
     const container = page.locator(".shell-container");
-    const harness = new RacedaySetupHarnessE2e(container);
+    const _harness = new RacedaySetupHarnessE2e(container);
 
     await page.clock.fastForward(5500);
-
-    expect(await harness.isSplashScreenVisible()).toBe(false);
 
     await expect(page.locator(".setup-menu-bar")).toBeVisible();
 

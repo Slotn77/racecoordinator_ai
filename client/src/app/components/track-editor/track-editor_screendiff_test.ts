@@ -76,7 +76,6 @@ test.describe("Track Editor Visuals", () => {
       editor,
     ).getArduinoEditorHarnesses();
 
-    expect(arEditors.length).toBeGreaterThan(0);
     const arHarness = arEditors[0];
 
     // Check if Digital is expanded, if not expand

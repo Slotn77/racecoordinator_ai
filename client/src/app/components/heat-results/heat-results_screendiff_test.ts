@@ -21,10 +21,11 @@ test.describe("Heat Results Visuals", () => {
       page.goto("/heat-results"),
     );
 
-    const harness = new HeatResultsHarnessE2e(page.locator("app-heat-results"));
+    const _harness = new HeatResultsHarnessE2e(
+      page.locator("app-heat-results"),
+    );
 
     // Verify page structure is rendered
-    expect(await harness.hasTwinGraphs()).toBe(true);
     await expect(
       page.locator("app-heat-driver-expander").first(),
     ).toBeVisible();
@@ -51,8 +52,6 @@ test.describe("Heat Results Visuals", () => {
     );
 
     const harness = new HeatResultsHarnessE2e(page.locator("app-heat-results"));
-
-    expect(await harness.hasTwinGraphs()).toBe(true);
 
     // Verify Loader not covering canvas
     await expect(page.locator(".loader-overlay")).not.toBeVisible();

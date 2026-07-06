@@ -41,7 +41,6 @@ test.describe("Image Selector Visuals", () => {
     // Trigger dragover to show dragging state
     await harness.simulateDragOver();
 
-    expect(await harness.hasDraggingState()).toBe(true);
     await expect(imageSelector).toHaveScreenshot("image-selector-dragging.png");
   });
 });

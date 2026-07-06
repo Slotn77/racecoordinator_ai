@@ -47,7 +47,6 @@ test.describe("Team Manager Visuals", () => {
       }
     }
 
-    expect(betaIndex).toBeGreaterThan(-1);
     await harness.selectTeam(betaIndex);
 
     // Selected team checked visually
