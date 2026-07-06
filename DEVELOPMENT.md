@@ -84,6 +84,20 @@ All required dependencies are installed automatically by the application's build
 #### 3. Building and Running the Application
 To run the application, you need to start both the Java backend server and the Angular frontend client. We provide PowerShell scripts to streamline this.
 
+> [!IMPORTANT]
+> As a beta tester, there are only 3 commands you will ever need to run, and in general they should be run in this order:
+> 1. `git pull`
+> 2. `.\run_server_headless.ps1`
+> 3. `.\run_client.ps1`
+
+##### Update the Codebase
+Before starting the server and client, it is highly recommended to update your local codebase with the latest changes.
+1. Open a terminal tab inside the Google Antigravity IDE.
+2. Run the following command:
+   ```powershell
+   git pull
+   ```
+   
 ##### Run the Headless Server
 The server manages the application logic, databases, and connection ports.
 1. Open a terminal tab inside the Google Antigravity IDE (by default this will be a PowerShell terminal on Windows).
