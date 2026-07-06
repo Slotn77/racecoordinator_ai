@@ -26,6 +26,10 @@ export class UndoManager<T> {
   private _snapshot: T | null = null;
   private snapshotGetter: () => T | undefined;
 
+  public getInitialState(): T | undefined {
+    return this.initialState;
+  }
+
   private textChange$ = new Subject<void>();
   public stateCommitted$ = new Subject<UndoEvent>();
   private subscriptions: Subscription[] = [];

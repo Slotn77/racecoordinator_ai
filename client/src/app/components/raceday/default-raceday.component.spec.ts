@@ -4319,11 +4319,14 @@ describe("DefaultRacedayComponent", () => {
       spyOn(component.layoutChanged, "emit");
 
       const element = document.createElement("div");
+      spyOnProperty(element, "offsetWidth", "get").and.returnValue(1920);
+      spyOnProperty(element, "offsetHeight", "get").and.returnValue(1080);
+
       spyOn(element, "getBoundingClientRect").and.returnValue({
-        left: 0,
-        top: 0,
-        width: 1920,
-        height: 1080,
+        left: 50,
+        top: 20,
+        width: 960, // 0.5 scale
+        height: 540,
       } as DOMRect);
 
       spyOn(component["el"].nativeElement, "querySelector").and.returnValue(
@@ -4332,8 +4335,8 @@ describe("DefaultRacedayComponent", () => {
 
       const event = {
         preventDefault: jasmine.createSpy("preventDefault"),
-        clientX: 100,
-        clientY: 200,
+        clientX: 250, // 50 (left) + 200 (distance on screen)
+        clientY: 120, // 20 (top) + 100 (distance on screen)
       } as any;
 
       component.onCanvasDrop(event);
@@ -4342,6 +4345,15 @@ describe("DefaultRacedayComponent", () => {
       const droppedWidget = component.layout.widgets[0];
       expect(droppedWidget.widgetType).toBe("timer");
       expect(droppedWidget.scaleMode).toBe("auto");
+
+      // Expected logic:
+      // scaleX = 960 / 1920 = 0.5
+      // scaleY = 540 / 1080 = 0.5
+      // x = (250 - 50) / 0.5 - (400 / 2) = 200 / 0.5 - 200 = 400 - 200 = 200
+      // y = (120 - 20) / 0.5 = 100 / 0.5 = 200
+      expect(droppedWidget.x).toBe(200);
+      expect(droppedWidget.y).toBe(200);
+
       expect(component.layoutChanged.emit).toHaveBeenCalledWith(
         component.layout,
       );

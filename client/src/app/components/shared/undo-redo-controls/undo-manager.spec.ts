@@ -152,4 +152,17 @@ describe("UndoManager", () => {
     expect(currentItem.name).toBe("Start");
     expect(manager.hasChanges()).toBeTrue(); // Different from 'A'
   });
+
+  it("should return the initial state", () => {
+    const initialState = manager.getInitialState();
+    expect(initialState).toBeDefined();
+    expect(initialState?.name).toBe("Start");
+
+    // After resetTracking, the new state should be the initial state
+    currentItem.name = "A";
+    manager.resetTracking(currentItem);
+
+    const newInitialState = manager.getInitialState();
+    expect(newInitialState?.name).toBe("A");
+  });
 });

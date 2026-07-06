@@ -1671,6 +1671,54 @@ describe("UIEditorComponent", () => {
       expect(mockSettingsService.saveSettings).toHaveBeenCalled();
     }));
 
+    it("should only call updateTheme for themes that have changed", fakeAsync(async () => {
+      component.isLoading = false;
+      (component as any).isSaving = false;
+
+      const themeUnchanged = {
+        entity_id: "t1",
+        is_default: false,
+        name: "Unchanged",
+        slots: {},
+      } as Theme;
+      const themeChanged = {
+        entity_id: "t2",
+        is_default: false,
+        name: "Changed",
+        slots: {},
+      } as Theme;
+
+      component.editingState.themes = [themeUnchanged, themeChanged];
+      component.refreshDisplayProperties();
+      component.undoManager.initialize(component.editingState);
+
+      // Modify themeChanged
+      component.editingState.themes[1] = {
+        ...themeChanged,
+        name: "Changed New",
+      };
+      component.refreshDisplayProperties();
+
+      // Force hasChanges() to be true by also changing a setting
+      component.editingSettings.sortByStandings =
+        !component.editingSettings.sortByStandings;
+      component.captureState();
+      tick();
+
+      mockDataService.updateTheme.and.returnValue(of({}));
+
+      const promise = (component as any).autoSaveState();
+      tick(600);
+      await promise;
+
+      // Ensure updateTheme was only called for t2, not t1
+      expect(mockDataService.updateTheme).toHaveBeenCalledTimes(1);
+      expect(mockDataService.updateTheme).toHaveBeenCalledWith(
+        "t2",
+        jasmine.any(Object),
+      );
+    }));
+
     it("should reject and log an error if updateTheme fails", async () => {
       const logger = TestBed.inject(LoggerService);
       component.isLoading = false;

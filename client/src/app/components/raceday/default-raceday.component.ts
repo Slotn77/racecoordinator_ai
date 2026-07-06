@@ -3962,28 +3962,34 @@ export class DefaultRacedayComponent
     if (!scalableContent) return;
 
     const rect = scalableContent.getBoundingClientRect();
-    const scale = this.visualScale || 1;
-    let x = (event.clientX - rect.left) / scale;
-    let y = (event.clientY - rect.top) / scale;
-
     const isLeaderboardOrDeck =
       this.draggedWidgetType === "leaderboard" ||
       this.draggedWidgetType === "group-leaderboard" ||
       this.draggedWidgetType === "on-deck" ||
       this.draggedWidgetType === "next-heat" ||
       this.draggedWidgetType === "image";
+
+    const width = isLeaderboardOrDeck ? 384 : 400;
+    const height =
+      this.draggedWidgetType === "leaderboard" ||
+      this.draggedWidgetType === "group-leaderboard" ||
+      this.draggedWidgetType === "image"
+        ? 239
+        : 300;
+
+    const scaleX = rect.width / scalableContent.offsetWidth || 1;
+    const scaleY = rect.height / scalableContent.offsetHeight || 1;
+
+    let x = (event.clientX - rect.left) / scaleX - width / 2;
+    let y = (event.clientY - rect.top) / scaleY;
+
     const newWidget: any = {
       id: "widget-" + Date.now(),
       widgetType: this.draggedWidgetType as any,
       x: Math.round(x),
       y: Math.round(y),
-      width: isLeaderboardOrDeck ? 384 : 400,
-      height:
-        this.draggedWidgetType === "leaderboard" ||
-        this.draggedWidgetType === "group-leaderboard" ||
-        this.draggedWidgetType === "image"
-          ? 239
-          : 300,
+      width: width,
+      height: height,
       zIndex: this.getNextZIndex(),
       scaleMode: "auto",
     };

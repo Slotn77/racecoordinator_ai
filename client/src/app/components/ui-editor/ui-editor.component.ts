@@ -996,11 +996,27 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
       // 2. Save changed Themes
       const savePromises = [];
+      const initialState = this.undoManager.getInitialState();
+
       for (const theme of this.displayThemes) {
         if (!theme.is_default) {
-          savePromises.push(
-            this.dataService.updateTheme(theme.entity_id, theme),
-          );
+          let hasChanged = true;
+          if (initialState && initialState.themes) {
+            const initialTheme = initialState.themes.find(
+              (t) => t.entity_id === theme.entity_id,
+            );
+            if (
+              initialTheme &&
+              JSON.stringify(initialTheme) === JSON.stringify(theme)
+            ) {
+              hasChanged = false;
+            }
+          }
+          if (hasChanged) {
+            savePromises.push(
+              this.dataService.updateTheme(theme.entity_id, theme),
+            );
+          }
         }
       }
 
