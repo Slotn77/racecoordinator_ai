@@ -57,10 +57,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Create Dummy Analytics Properties
+      - name: Create Analytics Properties
         run: |
           mkdir -p server/src/main/resources
-          echo "analytics.key=placeholder" > server/src/main/resources/analytics.properties
+          echo "analytics.key=${{ secrets.ANALYTICS_KEY }}" > server/src/main/resources/analytics.properties
 
       - name: Build Artifacts
         run: ./create_installers.sh
