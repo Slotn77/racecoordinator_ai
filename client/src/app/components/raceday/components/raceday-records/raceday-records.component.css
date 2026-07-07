@@ -6,6 +6,7 @@
   box-sizing: border-box;
   font-size: 19px;
   color: #eee;
+  gap: 4px;
 }
 
 .record-group {
@@ -14,37 +15,29 @@
   justify-content: center;
   flex: 1;
   box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  padding: 6px 12px;
+  min-height: var(--row-height, 30px);
+  transition: background 0.2s ease;
 }
 
-.record-group.stripe,
-.record-header.stripe,
-.record-row.stripe {
-  background: #222;
+.record-group:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .record-header {
-  padding-left: 12px;
   font-size: 17px;
-}
-
-.record-header.no-stripe {
-  background: transparent;
-}
-
-.record-header:not(:first-child) {
-  margin-top: 5px;
 }
 
 .record-row {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 12px;
-  padding: 0 10px;
-  margin-bottom: 5px;
 }
 
 .record-row.first-row {
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 .record-val {

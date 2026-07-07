@@ -334,10 +334,7 @@
 }
 
 /* Fixed scaling for next-heat & on-deck */
-.widget-wrapper.scale-fixed .next-heat-panel,
-.widget-wrapper.scale-fixed .on-deck-panel {
-  padding: 0 calc(0.5 * var(--widget-font-size)) calc(0.5 * var(--widget-font-size)) calc(0.5 * var(--widget-font-size)) !important;
-}
+
 
 .widget-wrapper.scale-fixed .next-heat-title,
 .widget-wrapper.scale-fixed .on-deck-title {
@@ -372,10 +369,7 @@
 }
 
 /* Auto scaling for next-heat & on-deck */
-.widget-wrapper.scale-auto .next-heat-panel,
-.widget-wrapper.scale-auto .on-deck-panel {
-  padding: 0 var(--heat-drivers-padding-x, calc(4cqh * var(--widget-scale-factor, 1))) var(--heat-drivers-padding-y, calc(4cqh * var(--widget-scale-factor, 1))) var(--heat-drivers-padding-x, calc(4cqh * var(--widget-scale-factor, 1))) !important;
-}
+
 
 .widget-wrapper.scale-auto .next-heat-title,
 .widget-wrapper.scale-auto .on-deck-title {

@@ -100,7 +100,7 @@ public class App {
 
   private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-  public static final String SERVER_VERSION = "0.0.0.25_main_1";
+  public static final String SERVER_VERSION = "0.0.0_dev";
 
   static boolean shouldUseEmbeddedMongo(String[] args) {
     boolean useEmbeddedMongo = true;
@@ -621,7 +621,8 @@ public class App {
         Files.createDirectories(Paths.get(dataDir));
       }
 
-      // If port is already in use, try to free it by terminating the process listening on it
+      // If port is already in use, try to free it by terminating the process
+      // listening on it
       if (isPortInUse(MONGO_PORT)) {
         logger.warn("MongoDB port {} is already in use. Attempting to free it...", MONGO_PORT);
         freePort(MONGO_PORT);
