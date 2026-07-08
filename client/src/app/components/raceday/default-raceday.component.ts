@@ -1805,16 +1805,26 @@ export class DefaultRacedayComponent
   }
 
   getDriverGroupRanking(hd: DriverHeatData): number | undefined {
-    const d = hd.actualDriver || hd.driver;
-    const driverId = d?.entity_id || d?.name;
+    let entityId: string | undefined;
+
+    if (hd.participant?.team) {
+      entityId = hd.participant.team.entity_id || hd.participant.team.name;
+    } else {
+      const d = hd.actualDriver || hd.driver;
+      entityId = d?.entity_id || d?.name;
+    }
+
     const entry = this.groupLeaderboardEntries?.find(
-      (e) => e.entityId === driverId,
+      (e) => e.entityId === entityId,
     );
     if (entry && entry.rank > 0) return entry.rank;
 
-    const match = this.groupParticipants?.find(
-      (p) => p.driver?.entity_id === driverId || p.driver?.name === driverId,
-    );
+    const match = this.groupParticipants?.find((p) => {
+      if (hd.participant?.team) {
+        return p.team?.entity_id === entityId || p.team?.name === entityId;
+      }
+      return p.driver?.entity_id === entityId || p.driver?.name === entityId;
+    });
     return match?.rank && match.rank > 0 ? match.rank : undefined;
   }
 

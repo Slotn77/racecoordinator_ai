@@ -146,7 +146,6 @@ public class HeatStandings {
     return Comparator.<DriverHeatData, Boolean>comparing(
             d -> d.getActualDriver() == null || d.getActualDriver().isEmpty())
         .thenComparing(comparator)
-        .thenComparing(d -> d.getReactionTime() <= 0 ? Double.MAX_VALUE : d.getReactionTime())
         .thenComparing(getTieBreakerComparator());
   }
 

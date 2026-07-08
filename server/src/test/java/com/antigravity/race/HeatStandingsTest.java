@@ -210,21 +210,26 @@ public class HeatStandingsTest {
   }
 
   @Test
-  public void testReactionTimeTiebreaker() {
+  public void testReactionTimeDoesNotAffectStandings() {
     RaceParticipant p1 = createDriver("p1");
-    RaceParticipant p2 = createDriver("p3");
-    RaceParticipant p3 = createDriver("p2");
+    RaceParticipant p2 = createDriver("p2");
+    RaceParticipant p3 = createDriver("p3");
 
+    // All drivers have identical laps and times
     DriverHeatData d1 = new DriverHeatData(p1);
-    d1.setReactionTime(0.5); // Fastest reaction
+    d1.addLap(10.0, false);
+    d1.setReactionTime(0.1); // Fastest reaction
 
     DriverHeatData d2 = new DriverHeatData(p2);
-    d2.setReactionTime(1.0); // Slower reaction
+    d2.addLap(10.0, false);
+    d2.setReactionTime(0.5); // Slower reaction
 
     DriverHeatData d3 = new DriverHeatData(p3);
-    d3.setReactionTime(0.0); // No reaction yet (worst)
+    d3.addLap(10.0, false);
+    d3.setReactionTime(1.0); // Slowest reaction
 
     List<DriverHeatData> data = new ArrayList<>();
+    // Add in reverse order of reaction time
     data.add(d3);
     data.add(d2);
     data.add(d1);
@@ -235,11 +240,13 @@ public class HeatStandingsTest {
             new HeatScoring(
                 FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
             false);
+
     List<String> results = standings.getStandings();
 
-    assertEquals(d1.getObjectId(), results.get(0));
+    // Since reaction time is no longer a tiebreaker, their original insertion order is preserved
+    assertEquals(d3.getObjectId(), results.get(0));
     assertEquals(d2.getObjectId(), results.get(1));
-    assertEquals(d3.getObjectId(), results.get(2));
+    assertEquals(d1.getObjectId(), results.get(2));
   }
 
   @Test
@@ -279,46 +286,6 @@ public class HeatStandingsTest {
         assertEquals(1, pos.getRank()); // Real driver ranked 1
       } else if (pos.getObjectId().equals(d2.getObjectId())) {
         assertEquals(99, pos.getRank()); // Empty lane ranked 99
-      }
-    }
-  }
-
-  @Test
-  public void testStandingsStabilityAfterReactionTime() {
-    RaceParticipant p1 = createDriver("p1");
-    RaceParticipant p2 = new RaceParticipant(Driver.EMPTY_DRIVER, "empty");
-
-    DriverHeatData d1 = new DriverHeatData(p1);
-    DriverHeatData d2 = new DriverHeatData(p2);
-
-    List<DriverHeatData> data = new ArrayList<>();
-    data.add(d1);
-    data.add(d2);
-
-    HeatStandings standings =
-        new HeatStandings(
-            data,
-            new HeatScoring(
-                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
-            false);
-
-    // Initially, d1 should be first
-    assertEquals(d1.getObjectId(), standings.getStandings().get(0));
-
-    // d1 gets a reaction time
-    d1.setReactionTime(0.5);
-    standings.updateStandings();
-
-    // d1 should still be first
-    assertEquals(d1.getObjectId(), standings.getStandings().get(0));
-
-    // Verify ranks
-    com.antigravity.proto.StandingsUpdate update = standings.updateStandings();
-    for (com.antigravity.proto.HeatPositionUpdate pos : update.getUpdatesList()) {
-      if (pos.getObjectId().equals(d1.getObjectId())) {
-        assertEquals(1, pos.getRank());
-      } else if (pos.getObjectId().equals(d2.getObjectId())) {
-        assertEquals(99, pos.getRank());
       }
     }
   }
@@ -386,49 +353,6 @@ public class HeatStandingsTest {
     // Gap calculation: avgLapTime * lapDiff = 10 * 0.25 = 2.5s
     assertEquals(2.5, d2.getGapLeader(), 0.001);
     assertEquals(2.5, d2.getGapPosition(), 0.001);
-  }
-
-  @Test
-  public void testFalseStartReactionTimeTiebreaker() {
-    RaceParticipant p1 = createDriver("p1");
-    RaceParticipant p2 = createDriver("p2");
-    RaceParticipant p3 = createDriver("p3");
-
-    // p1: real reaction 0.5s
-    DriverHeatData d1 = new DriverHeatData(p1);
-    d1.setReactionTime(0.5);
-
-    // p2: false start reaction 0.0s (should be worse than 0.5s)
-    DriverHeatData d2 = new DriverHeatData(p2);
-    d2.setReactionTime(0.0);
-
-    // p3: no reaction -1.0s (should be same as 0.0s or at least worse than 0.5s)
-    DriverHeatData d3 = new DriverHeatData(p3);
-    d3.setReactionTime(-1.0);
-
-    List<DriverHeatData> data = new ArrayList<>();
-    data.add(d2);
-    data.add(d3);
-    data.add(d1);
-
-    HeatStandings standings =
-        new HeatStandings(
-            data,
-            new HeatScoring(
-                HeatScoring.FinishMethod.Lap,
-                0,
-                HeatScoring.HeatRanking.LAP_COUNT,
-                HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME),
-            false);
-
-    List<String> results = standings.getStandings();
-
-    // d1 should be first because 0.5 > 0.0 (or -1.0) in the tie-breaker logic
-    // where <= 0 becomes Double.MAX_VALUE
-    assertEquals(d1.getObjectId(), results.get(0));
-
-    // d2 and d3 are both Double.MAX_VALUE, so they maintain their relative order
-    // or sort by name/objectId.
   }
 
   @Test

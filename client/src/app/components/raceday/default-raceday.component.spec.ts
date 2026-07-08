@@ -1192,6 +1192,37 @@ describe("DefaultRacedayComponent", () => {
       expect(component.getDriverGroupRanking(hd2)).toBe(4);
     });
 
+    it("should return raw rank from group participants list for team", () => {
+      (component as any).groupLeaderboardEntries = [
+        { entityId: "t1", rank: 3 } as any,
+        { entityId: "t2", rank: 4 } as any,
+      ];
+      const hd1 = {
+        driver: { entity_id: "d1" },
+        participant: { team: { entity_id: "t1" }, rank: 10 },
+      } as any;
+      const hd2 = {
+        driver: { entity_id: "d2" },
+        participant: { team: { entity_id: "t2" }, rank: 10 },
+      } as any;
+
+      expect(component.getDriverGroupRanking(hd1)).toBe(3);
+      expect(component.getDriverGroupRanking(hd2)).toBe(4);
+    });
+
+    it("should fallback to groupParticipants list for team if groupLeaderboardEntries doesn't have rank", () => {
+      (component as any).groupLeaderboardEntries = [];
+      component["groupParticipants"] = [
+        { team: { entity_id: "t1" }, rank: 3 } as any,
+      ];
+      const hd1 = {
+        driver: { entity_id: "d1" },
+        participant: { team: { entity_id: "t1" }, rank: 10 },
+      } as any;
+
+      expect(component.getDriverGroupRanking(hd1)).toBe(3);
+    });
+
     it("should return undefined if not found in group list", () => {
       component["groupParticipants"] = [];
       const hd = {
