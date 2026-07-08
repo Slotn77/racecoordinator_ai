@@ -65,12 +65,6 @@ export class HeatConverter {
             hd.isRefueling = !!dProto.isRefueling;
             hd.currentLocation = dProto.currentLocation ?? -1;
             hd.flag = dProto.flag || 0;
-            if (dProto.segments) {
-              dProto.segments.forEach((seg, i) => {
-                hd.addSegmentTime(i, seg);
-              });
-            }
-
             if (dProto.laps) {
               dProto.laps.forEach((lap: any, i) => {
                 const time =
@@ -100,6 +94,12 @@ export class HeatConverter {
                   undefined,
                   segments,
                 );
+              });
+            }
+
+            if (dProto.segments) {
+              dProto.segments.forEach((seg, i) => {
+                hd.addSegmentTime(i, seg);
               });
             }
 

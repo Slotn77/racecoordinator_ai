@@ -100,4 +100,36 @@ describe("HeatConverter", () => {
     expect(driverData.isRefueling).toBe(true);
     expect(driverData.currentLocation).toBe(100);
   });
+
+  it("should preserve currentLapSegments when both laps and segments are present in proto", () => {
+    const proto: IHeat = {
+      objectId: "heat1",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          laps: [
+            {
+              lapTime: 2.5,
+              segments: [1.0, 1.5],
+            },
+          ],
+          segments: [0.5, 0.75],
+        } as any,
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    const driverData = heat.heatDrivers[0]!;
+
+    expect(driverData.lapTimes.length).toBe(1);
+    expect(driverData.lapTimes[0]).toBe(2.5);
+
+    // Because segments are processed after laps, the currentLapSegments should be preserved
+    expect(driverData.currentLapSegments).toEqual([0.5, 0.75]);
+  });
 });
