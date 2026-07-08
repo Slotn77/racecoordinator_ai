@@ -465,18 +465,11 @@
                             ? 'column'
                             : 'row'
                         "
-                        [style.justify-content]="'space-between'"
+                        [style.justify-content]="'center'"
                         [style.align-items]="'center'"
-                        [style.width]="
-                          widget()?.customSettings?.['isVertical']
-                            ? 'auto'
-                            : '100%'
-                        "
-                        [style.height]="
-                          widget()?.customSettings?.['isVertical']
-                            ? '100%'
-                            : 'auto'
-                        "
+                        [style.gap]="'12px'"
+                        [style.width]="'max-content'"
+                        [style.height]="'max-content'"
                       >
                         @for (
                           lapObj of parent().getLastLaps(hd, col, entry.anchor);
@@ -484,11 +477,7 @@
                         ) {
                           <div
                             [style.display]="'flex'"
-                            [style.flex-direction]="
-                              widget()?.customSettings?.['isVertical']
-                                ? 'row'
-                                : 'column'
-                            "
+                            [style.flex-direction]="'row'"
                             [style.align-items]="'center'"
                             [style.gap]="'4px'"
                             [style.padding-bottom]="
@@ -520,49 +509,21 @@
                             @if (lapObj.segments.length > 0) {
                               <div
                                 [style.display]="'flex'"
-                                [style.flex-direction]="
-                                  widget()?.customSettings?.['isVertical']
-                                    ? 'column'
-                                    : 'row'
-                                "
-                                [style.gap]="'4px'"
-                                [style.font-size]="'0.7em'"
+                                [style.flex-direction]="'column'"
+                                [style.justify-content]="'space-evenly'"
+                                [style.height]="'1em'"
+                                [style.gap]="'0px'"
                                 [style.opacity]="'0.8'"
                               >
                                 @for (seg of lapObj.segments; track $index) {
                                   <span
-                                    [style.padding-bottom]="
-                                      !$last &&
-                                      widget()?.customSettings?.['isVertical']
-                                        ? '2px'
-                                        : '0'
+                                    [style.font-size]="
+                                      'calc(1em / ' +
+                                      lapObj.segments.length +
+                                      ')'
                                     "
-                                    [style.padding-right]="
-                                      !$last &&
-                                      !widget()?.customSettings?.['isVertical']
-                                        ? '4px'
-                                        : '0'
-                                    "
-                                    [style.border-bottom]="
-                                      !$last &&
-                                      widget()?.customSettings?.['isVertical']
-                                        ? '1px solid ' +
-                                          parent().getLaneColor(
-                                            hd,
-                                            'font_color'
-                                          )
-                                        : null
-                                    "
-                                    [style.border-right]="
-                                      !$last &&
-                                      !widget()?.customSettings?.['isVertical']
-                                        ? '1px solid ' +
-                                          parent().getLaneColor(
-                                            hd,
-                                            'font_color'
-                                          )
-                                        : null
-                                    "
+                                    [style.line-height]="'1'"
+                                    [style.white-space]="'nowrap'"
                                     >{{ seg }}</span
                                   >
                                 }
