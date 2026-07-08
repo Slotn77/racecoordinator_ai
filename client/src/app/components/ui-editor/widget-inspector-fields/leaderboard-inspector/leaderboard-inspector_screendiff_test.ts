@@ -150,17 +150,47 @@ test.describe("Leaderboard Inspector Visuals", () => {
     const sliders = inspectorFields.locator("input[type='range']");
     const colorPickers = inspectorFields.locator("input[type='color']");
 
-    await selects.nth(0).selectOption({ value: "2" }); // Decimal places
-    await sliders.nth(0).fill("28"); // Title font size
-    await sliders.nth(1).fill("20"); // Subtitle font size
-    await colorPickers.nth(1).fill("#ff0000"); // Subtitle color to Red
-    await sliders.nth(2).fill("24"); // Overall leader font size
-    await sliders.nth(3).fill("18"); // Rest font size
+    await selects.nth(0).evaluate((el: HTMLSelectElement) => {
+      el.value = "2";
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
 
-    // Blur any active element and move mouse to remove hover states
+    await sliders.nth(0).evaluate((el: HTMLInputElement) => {
+      el.value = "28";
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    await sliders.nth(1).evaluate((el: HTMLInputElement) => {
+      el.value = "20";
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    await colorPickers.nth(1).evaluate((el: HTMLInputElement) => {
+      el.value = "#ff0000";
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    await sliders.nth(2).evaluate((el: HTMLInputElement) => {
+      el.value = "24";
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    await sliders.nth(3).evaluate((el: HTMLInputElement) => {
+      el.value = "18";
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    // Blur any active element to remove focus rings
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
     await page.mouse.move(0, 0);
-    await page.waitForTimeout(500);
+
+    // Ensure the DOM and Angular have settled
+    await page.waitForTimeout(1000);
 
     // Take screenshot of the inspector panel
     await expect(inspectorPanel).toHaveScreenshot(
