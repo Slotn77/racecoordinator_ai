@@ -67,6 +67,9 @@ test.describe("Leaderboard Inspector Visuals", () => {
     await page.mouse.move(0, 0);
     await page.waitForTimeout(500);
 
+    // Scroll the inspector panel back to the top to ensure consistent screenshot
+    await inspectorPanel.evaluate((el) => el.scrollTo(0, 0));
+
     // Take screenshot of the inspector panel
     await expect(inspectorPanel).toHaveScreenshot(
       "leaderboard-inspector-options.png",
@@ -191,6 +194,9 @@ test.describe("Leaderboard Inspector Visuals", () => {
 
     // Ensure the DOM and Angular have settled
     await page.waitForTimeout(1000);
+
+    // Scroll the inspector panel back to the top to ensure consistent screenshot
+    await inspectorPanel.evaluate((el) => el.scrollTo(0, 0));
 
     // Take screenshot of the inspector panel
     await expect(inspectorPanel).toHaveScreenshot(
