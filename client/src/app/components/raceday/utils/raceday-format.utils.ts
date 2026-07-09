@@ -87,12 +87,15 @@ export class RacedayFormatUtils {
       lapDecimals > 0 ? "--." + "-".repeat(lapDecimals) : "--";
 
     if (RacedayFormatUtils.isEmptyDriver(hd)) {
-      if (
-        baseKey === "seed" ||
-        baseKey === "rankHeat" ||
-        baseKey === "rankOverall"
-      ) {
+      if (baseKey === "seed") {
         return "";
+      }
+      if (
+        baseKey === "rankHeat" ||
+        baseKey === "rankOverall" ||
+        baseKey === "rankGroup"
+      ) {
+        return "--";
       }
       if (baseKey === "gapLeader" || baseKey === "gapPosition") {
         return timePlaceholder;
@@ -181,17 +184,17 @@ export class RacedayFormatUtils {
       const seed = hd.participant?.seed ?? (hd.driver as any)?.seed;
       return seed ? `(${seed})` : "--";
     } else if (baseKey === "rankHeat") {
-      if (RacedayFormatUtils.isEmptyDriver(hd)) return "";
+      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
       const rank = ctx.getDriverRanking(hd.objectId);
       return rank ? `${rank}` : "--";
     } else if (baseKey === "rankOverall") {
-      if (RacedayFormatUtils.isEmptyDriver(hd)) return "";
+      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
       const rank = ctx.getDriverOverallRanking
         ? ctx.getDriverOverallRanking(hd)
         : (hd.participant?.rank ?? (hd.driver as any)?.rank);
       return rank ? `${rank}` : "--";
     } else if (baseKey === "rankGroup") {
-      if (RacedayFormatUtils.isEmptyDriver(hd)) return "";
+      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
       let rank: number | undefined;
       if (ctx.getDriverGroupRanking) {
         rank = ctx.getDriverGroupRanking(hd);

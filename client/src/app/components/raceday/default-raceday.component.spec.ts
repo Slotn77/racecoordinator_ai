@@ -1394,6 +1394,14 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBe("10");
     });
 
+    it("should return '--' for rankHeat, rankOverall, and rankGroup when lane is empty", () => {
+      expect(component.formatValue("rankHeat", null, null as any)).toBe("--");
+      expect(component.formatValue("rankOverall", null, null as any)).toBe(
+        "--",
+      );
+      expect(component.formatValue("rankGroup", null, null as any)).toBe("--");
+    });
+
     it("should format segmentTime based on hd.currentLapSegments when useIndex is true", () => {
       mockHd.currentLapSegments = [1.111, 2.222, 3.333];
 
