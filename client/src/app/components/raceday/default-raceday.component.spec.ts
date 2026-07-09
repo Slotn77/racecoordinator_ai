@@ -4413,6 +4413,17 @@ describe("DefaultRacedayComponent", () => {
       expect(component["heatBestNickname"]).toBe("Peach");
       expect(component["heatBestTime"]).toBe(2.012);
     });
+
+    it("should populate laneQrCodeCache with mock QR codes", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      fixture.detectChanges();
+
+      component["setupMockDataForEditor"]();
+
+      expect((component as any).laneQrCodeCache.size).toBeGreaterThan(0);
+      const firstQrCode = (component as any).laneQrCodeCache.get(0);
+      expect(firstQrCode).toContain("data:image/svg+xml");
+    });
   });
 
   describe("Layout Source of Truth", () => {

@@ -196,7 +196,8 @@ export class RacedayLayoutUtils {
       base === "driver.avatarUrl" ||
       base.startsWith("imageset") ||
       base === "fuel-gauge-builtin" ||
-      base === "flag"
+      base === "flag" ||
+      base === "qrCode"
     );
   }
 
@@ -253,6 +254,7 @@ export class RacedayLayoutUtils {
       segmentTime: "RD_COL_SEGMENT_TIME",
       "driver.avatarUrl": "RD_COL_AVATAR",
       flag: "",
+      qrCode: "RD_COL_LANE_QR",
       laneNumber: "RD_COL_LANE",
     };
     return labels[baseKey] ?? "UNKNOWN";

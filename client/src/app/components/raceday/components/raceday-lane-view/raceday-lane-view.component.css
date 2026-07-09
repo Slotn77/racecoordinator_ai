@@ -267,9 +267,10 @@
 }
 
 /* Specific scaling for corner/edge anchors to fit in their 1/3 area */
-.body-cell [class*="anchor-"]:not(.anchor-center-center) img {
+.body-cell [class*="anchor-"] img {
   width: 100%;
   height: 100%;
+  image-rendering: pixelated;
 }
 
 .anchor-top-left img {

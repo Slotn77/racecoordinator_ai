@@ -225,7 +225,9 @@ describe("UIEditorComponent", () => {
     ]);
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
+      "getTranslationsLoaded",
     ]);
+    mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
     const mockActivatedRoute = {
       queryParams: of({}),
       snapshot: {
@@ -358,6 +360,25 @@ describe("UIEditorComponent", () => {
     expect(mockFileSystem.clearCustomFolder).toHaveBeenCalled();
     expect(component.customDirectoryName).toBeNull();
   });
+
+  it("should sort available columns when translations are loaded", fakeAsync(() => {
+    const loadedSubject = new BehaviorSubject<boolean>(false);
+    mockTranslationService.getTranslationsLoaded.and.returnValue(
+      loadedSubject.asObservable(),
+    );
+
+    const localFixture = TestBed.createComponent(UIEditorComponent);
+    const localComponent = localFixture.componentInstance;
+
+    spyOn<any>(localComponent, "sortAvailableColumns").and.callThrough();
+
+    localFixture.detectChanges(); // triggers ngOnInit
+
+    loadedSubject.next(true);
+    tick();
+
+    expect(localComponent["sortAvailableColumns"]).toHaveBeenCalled();
+  }));
 
   it("should save settings and reset tracking", fakeAsync(() => {
     component.save();

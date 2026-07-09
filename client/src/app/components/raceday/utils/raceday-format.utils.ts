@@ -22,6 +22,7 @@ export interface FormatContext {
   laneViewWidgetSettings?: any;
   getDriverOverallRanking?: (hd: DriverHeatData) => number | undefined;
   getDriverGroupRanking?: (hd: DriverHeatData) => number | undefined;
+  getLaneQrCodeUrl?: (laneIndex: number) => string;
 }
 
 export class RacedayFormatUtils {
@@ -277,6 +278,8 @@ export class RacedayFormatUtils {
       baseKey === "fuel-gauge-builtin"
     ) {
       return ctx.getImageSetUrl(hd, propertyName);
+    } else if (baseKey === "qrCode") {
+      return ctx.getLaneQrCodeUrl ? ctx.getLaneQrCodeUrl(hd.laneIndex) : "";
     }
 
     return value?.toString() ?? "";

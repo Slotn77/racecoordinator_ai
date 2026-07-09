@@ -575,9 +575,7 @@
                         entry.property,
                         entry.anchor
                       );
-                    @if (
-                      imageUrl || !parent().isAvatarProperty(entry.property)
-                    ) {
+                    @if (imageUrl) {
                       <img [src]="imageUrl" alt="" />
                     }
                   </div>

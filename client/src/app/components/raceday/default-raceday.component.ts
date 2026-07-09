@@ -160,6 +160,8 @@ export class DefaultRacedayComponent
   protected groupParticipants: RaceParticipant[] = [];
   protected currentGroup: number = 0;
   protected qrCodeUrl?: string;
+  protected serverUrlBase: string = window?.location?.origin || "";
+  protected laneQrCodeCache = new Map<number, string>();
 
   get groupEnabled(): boolean {
     return this.race?.group_options?.enabled || false;
@@ -895,9 +897,14 @@ export class DefaultRacedayComponent
           if (ip) {
             const port = window.location.port;
             const url = `${window.location.protocol}//${ip}${port ? ":" + port : ""}`;
-            QRCode.toDataURL(url, { margin: 1, width: 80 })
+            if (this.serverUrlBase !== url) {
+              this.serverUrlBase = url;
+              this.laneQrCodeCache.clear();
+            }
+            QRCode.toDataURL(url, { margin: 1 })
               .then((dataUrl) => {
                 this.qrCodeUrl = dataUrl;
+                this.generateAllLaneQrCodes();
                 if (!this.isDestroyed) {
                   this.cdr.markForCheck();
                 }
@@ -1306,6 +1313,12 @@ export class DefaultRacedayComponent
     this.qrCodeUrl =
       "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' fill='white'/><rect x='10' y='10' width='20' height='20' fill='black'/><rect x='50' y='10' width='20' height='20' fill='black'/><rect x='10' y='50' width='20' height='20' fill='black'/><rect x='40' y='40' width='10' height='10' fill='black'/><rect x='30' y='30' width='20' height='20' fill='black'/></svg>";
 
+    // Populate mock lane QR codes for UI Editor
+    this.laneQrCodeCache.clear();
+    for (let i = 0; i < (this.track?.lanes?.length || 8); i++) {
+      this.laneQrCodeCache.set(i, this.qrCodeUrl);
+    }
+
     // Populate mock data for the 4 race records
     this.raceRecordLapNickname = "Mario";
     this.raceRecordLapTime = 1.842;
@@ -1642,6 +1655,7 @@ export class DefaultRacedayComponent
       );
       this.race = race;
       this.track = race.track;
+      this.generateAllLaneQrCodes();
 
       if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
         this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
@@ -1832,6 +1846,29 @@ export class DefaultRacedayComponent
     return RacedayFormatUtils.getPropertyValue(heatDriver, propertyPath);
   }
 
+  generateAllLaneQrCodes(): void {
+    if (!this.serverUrlBase || !this.track?.lanes) return;
+
+    this.track.lanes.forEach((lane, index) => {
+      QRCode.toDataURL(`${this.serverUrlBase}/driver-station/${index + 1}`, {
+        margin: 1,
+      })
+        .then((dataUrl) => {
+          this.laneQrCodeCache.set(index, dataUrl);
+          if (!this.isDestroyed) {
+            this.cdr.markForCheck();
+          }
+        })
+        .catch((err) =>
+          this.logger.error("Lane QR Code generation failed", err),
+        );
+    });
+  }
+
+  getLaneQrCodeUrl(laneIndex: number): string {
+    return this.laneQrCodeCache.get(laneIndex) || "";
+  }
+
   formatColumnValue(
     heatDriver: DriverHeatData,
     column: ColumnDefinition,
@@ -1853,6 +1890,7 @@ export class DefaultRacedayComponent
       laneViewWidgetSettings: laneViewWidget?.customSettings,
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
+      getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
     };
     return RacedayFormatUtils.formatColumnValue(
       heatDriver,
@@ -3291,6 +3329,7 @@ export class DefaultRacedayComponent
       laneViewWidgetSettings: laneViewWidget?.customSettings,
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
+      getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
     };
     return RacedayFormatUtils.formatValue(
       propertyName,

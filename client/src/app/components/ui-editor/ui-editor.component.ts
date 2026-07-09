@@ -162,6 +162,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     { key: "fph", label: "RD_COL_FPH" },
     { key: "segmentTime", label: "RD_COL_SEGMENT_TIME" },
     { key: "flag", label: "RD_COL_DRIVER_STATE" },
+    { key: "qrCode", label: "RD_COL_LANE_QR" },
     { key: "laneNumber", label: "RD_COL_LANE" },
   ];
   availableTransitions = [
@@ -629,6 +630,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   /* eslint-disable max-lines-per-function */
   ngOnInit() {
+    this.sortAvailableColumns();
     this.updateScale();
     this.loadExpanderState();
     this.loadData();
@@ -641,6 +643,17 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         this.autoSaveState();
       });
     }
+
+    this.dataSubscription = this.translationService
+      .getTranslationsLoaded()
+      .subscribe((loaded) => {
+        if (loaded) {
+          this.sortAvailableColumns();
+          if (!this.isDestroyed) {
+            this.cdr.markForCheck();
+          }
+        }
+      });
   }
 
   ngOnDestroy() {
@@ -747,9 +760,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           { key: "fph", label: "RD_COL_FPH" },
           { key: "segmentTime", label: "RD_COL_SEGMENT_TIME" },
           { key: "flag", label: "RD_COL_DRIVER_STATE" },
+          { key: "qrCode", label: "RD_COL_LANE_QR" },
           { key: "laneNumber", label: "RD_COL_LANE" },
           ...imageSetColumns,
         ];
+        this.sortAvailableColumns();
 
         this.customDirectoryName = result.dirHandle?.name || null;
         const themes = result.themes || [];
@@ -1210,6 +1225,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.assets.filter(
       (a) => a.type === "sound" || a.type === "audio_set",
     );
+  }
+
+  private sortAvailableColumns() {
+    this.availableColumns.sort((a, b) => {
+      const labelA = this.translationService.translate(a.label) || a.label;
+      const labelB = this.translationService.translate(b.label) || b.label;
+      return labelA.localeCompare(labelB);
+    });
   }
 
   /**
