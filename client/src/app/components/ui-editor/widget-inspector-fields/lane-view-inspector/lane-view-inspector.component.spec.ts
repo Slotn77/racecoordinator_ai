@@ -40,6 +40,16 @@ describe("LaneViewInspectorComponent", () => {
       insetFontSize: 24,
       insetTextColor: "",
     });
+    fixture.componentRef.setInput("globalSettings", {
+      racedayColumns: ["col1", "col2"],
+      practiceRacedayColumns: ["pcol1"],
+      columnVisibility: { col1: "Always" },
+      practiceColumnVisibility: { pcol1: "FuelRaceOnly" },
+    });
+    fixture.componentRef.setInput("availableColumns", [
+      { key: "col1", label: "Col 1" },
+    ]);
+    fixture.componentRef.setInput("isPracticeMode", false);
 
     changeSpy = spyOn(component.change, "emit");
     fixture.detectChanges();
@@ -108,5 +118,66 @@ describe("LaneViewInspectorComponent", () => {
     sliders.forEach((slider: HTMLInputElement) => {
       expect(slider.disabled).toBeTrue();
     });
+  });
+
+  it("should get current columns based on practice mode", () => {
+    expect(component.currentColumns).toEqual(["col1", "col2"]);
+    fixture.componentRef.setInput("isPracticeMode", true);
+    expect(component.currentColumns).toEqual(["pcol1"]);
+  });
+
+  it("should handle deleteColumn", () => {
+    component.deleteColumn("col1");
+    expect(component.globalSettings()?.racedayColumns).toEqual(["col2"]);
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should handle changeColumnVisibility", () => {
+    component.changeColumnVisibility("col2", "NonFuelRaceOnly");
+    expect(component.globalSettings()?.columnVisibility["col2"]).toBe(
+      "NonFuelRaceOnly" as any,
+    );
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should return the correct column label", () => {
+    expect(component.getColumnLabel("col1")).toBe("Col 1");
+    expect(component.getColumnLabel("unknown")).toBe("unknown");
+  });
+
+  it("should handle drag drop reordering", () => {
+    const event = {
+      previousIndex: 0,
+      currentIndex: 1,
+    } as any;
+    component.drop(event);
+    // current columns were ['col1', 'col2']. after drop they become ['col2', 'col1']
+    expect(component.currentColumns).toEqual(["col2", "col1"]);
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should handle onDragStart", () => {
+    const dataTransferSpy = jasmine.createSpyObj("DataTransfer", ["setData"]);
+    const event = { dataTransfer: dataTransferSpy } as any;
+    component.onDragStart(event, { key: "newCol", label: "New Column" });
+    expect(dataTransferSpy.setData).toHaveBeenCalledWith(
+      "application/json",
+      JSON.stringify({
+        type: "new-column",
+        key: "newCol",
+        label: "New Column",
+      }),
+    );
+    expect(dataTransferSpy.effectAllowed).toBe("copy");
+  });
+
+  it("should set and get custom label", () => {
+    fixture.componentRef.setInput("widget", { customSettings: {} });
+    component.setCustomLabel("col1", "Custom Label");
+    expect(component.widget()?.customSettings["columnLabels"]["col1"]).toBe(
+      "Custom Label",
+    );
+    expect(changeSpy).toHaveBeenCalled();
+    expect(component.getCustomLabel("col1")).toBe("Custom Label");
   });
 });

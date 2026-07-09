@@ -169,4 +169,12 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
       }
     }
   }
+
+  getColumnLabel(col: any): string {
+    const customLabels = this.widget()?.customSettings?.["columnLabels"];
+    if (customLabels && customLabels[col.propertyName] !== undefined) {
+      return customLabels[col.propertyName];
+    }
+    return this.parent().getColumnLabel(col);
+  }
 }

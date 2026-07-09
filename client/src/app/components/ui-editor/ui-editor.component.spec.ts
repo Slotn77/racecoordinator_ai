@@ -73,16 +73,6 @@ class MockEditorTitleComponent {
 }
 
 @Component({
-  selector: "app-column-toolbox",
-  standalone: true,
-  template: "",
-})
-class MockColumnToolboxComponent {
-  availableColumns = input<any[]>([]);
-  scale = input<number>(1);
-}
-
-@Component({
   selector: "app-toolbar",
   standalone: true,
   template: "",
@@ -300,7 +290,6 @@ describe("UIEditorComponent", () => {
         UIEditorComponent,
         MockImageSelectorComponent,
         MockEditorTitleComponent,
-        MockColumnToolboxComponent,
 
         MockAssetPreviewComponent,
         MockToolbarComponent,

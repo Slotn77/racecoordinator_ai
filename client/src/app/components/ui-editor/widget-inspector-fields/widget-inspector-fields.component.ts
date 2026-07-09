@@ -1,6 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component, input, output } from "@angular/core";
-import { AbsoluteWidgetNode } from "@app/models/settings";
+import { AbsoluteWidgetNode, Settings } from "@app/models/settings";
 
 import { ImageInspectorComponent } from "./image-inspector/image-inspector.component";
 import { LaneViewInspectorComponent } from "./lane-view-inspector/lane-view-inspector.component";
@@ -29,6 +29,9 @@ import { UpcomingInspectorComponent } from "./upcoming-inspector/upcoming-inspec
 })
 export class WidgetInspectorFieldsComponent {
   widget = input.required<AbsoluteWidgetNode>();
+  globalSettings = input<Settings>();
+  availableColumns = input<{ key: string; label: string }[]>([]);
+  isPracticeMode = input<boolean>(false);
   change = output<void>();
 
   onSettingsChange() {

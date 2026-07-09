@@ -41,7 +41,6 @@ export interface UIEditorState {
   themes: Theme[];
 }
 
-import { ColumnToolboxComponent } from "./column-toolbox/column-toolbox.component";
 import { WidgetInspectorFieldsComponent } from "./widget-inspector-fields/widget-inspector-fields.component";
 import { WIDGET_REGISTRY } from "./widget-registry";
 
@@ -62,7 +61,6 @@ import { WIDGET_REGISTRY } from "./widget-registry";
     TranslatePipe,
     AcknowledgementModalComponent,
     DefaultRacedayComponent,
-    ColumnToolboxComponent,
     WidgetInspectorFieldsComponent,
   ],
   schemas: [NO_ERRORS_SCHEMA],

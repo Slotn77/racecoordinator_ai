@@ -249,4 +249,151 @@
       class="inspector-slider"
     />
   </div>
+
+  <!-- Columns Management Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_LANE_VIEW_MANAGE_COLUMNS_SECTION" | translate }}
+  </div>
+
+  <div
+    class="inspector-column-list"
+    cdkDropList
+    (cdkDropListDropped)="drop($event)"
+  >
+    @for (col of currentColumns; track col) {
+      <div class="inspector-column-item" cdkDrag>
+        <span class="material-icons col-drag-handle" cdkDragHandle
+          >drag_indicator</span
+        >
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding-right: 8px;
+          "
+        >
+          <span class="col-label" style="font-size: 11px; color: #888">{{
+            getColumnLabel(col) | translate
+          }}</span>
+          <input
+            type="text"
+            class="inspector-input"
+            style="width: 100%; margin-top: 2px"
+            [placeholder]="getColumnLabel(col) | translate"
+            [ngModel]="getCustomLabel(col)"
+            (ngModelChange)="setCustomLabel(col, $event)"
+          />
+        </div>
+
+        <div
+          class="col-actions"
+          style="
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            width: 100%;
+            margin-top: 4px;
+          "
+        >
+          <div class="select-container select-sm" style="flex: 1">
+            <select
+              [ngModel]="columnVisibility[col] || 'Always'"
+              (change)="changeColumnVisibility(col, $any($event.target).value)"
+            >
+              <option value="Always">
+                {{ "UE_COL_VIS_ALWAYS" | translate }}
+              </option>
+              <option value="FuelRaceOnly">
+                {{ "UE_COL_VIS_FUEL" | translate }}
+              </option>
+              <option value="NonFuelRaceOnly">
+                {{ "UE_COL_VIS_NONFUEL" | translate }}
+              </option>
+            </select>
+          </div>
+          <button
+            class="icon-btn delete-btn"
+            style="
+              color: #ef4444;
+              background: none;
+              border: none;
+              cursor: pointer;
+              padding: 4px;
+              display: flex;
+            "
+            (click)="deleteColumn(col)"
+            title="Remove Column"
+          >
+            <span class="material-icons" style="font-size: 18px">delete</span>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (unusedColumns.length > 0) {
+    <div class="inspector-section" style="margin-top: 20px">
+      <div class="inspector-section-title" style="margin-bottom: 8px">
+        {{ "UE_INSPECTOR_LANE_VIEW_AVAILABLE_COLUMNS" | translate }}
+      </div>
+      <div
+        class="toolbox-subtitle"
+        style="font-size: 11px; color: #666; margin-bottom: 8px"
+      >
+        {{ "UE_HINT_DRAG_COLUMNS_DOCK" | translate }}
+      </div>
+      <div
+        class="toolbox-widget-list"
+        style="
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          padding: 4px;
+          background: #eee;
+          border-radius: 4px;
+        "
+      >
+        @for (col of unusedColumns; track col.key) {
+          <div
+            class="toolbox-widget-item"
+            draggable="true"
+            (dragstart)="onDragStart($event, col)"
+            title="{{ 'UE_HINT_DRAG_COLUMNS_DOCK' | translate }}"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              padding: 4px 8px;
+              background: #fff;
+              border: 1px solid #ccc;
+              border-radius: 4px;
+              cursor: grab;
+            "
+          >
+            <span
+              class="material-icons drag-indicator-icon"
+              style="font-size: 16px; color: #999"
+              >drag_indicator</span
+            >
+            <span
+              class="material-icons toolbox-widget-icon"
+              style="font-size: 16px; color: #666"
+              >view_column</span
+            >
+            <span
+              class="toolbox-widget-label"
+              style="
+                font-size: 12px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              "
+              >{{ col.label | translate }}</span
+            >
+          </div>
+        }
+      </div>
+    </div>
+  }
 }

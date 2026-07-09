@@ -37,6 +37,10 @@
   @case ("lane-view") {
     <app-lane-view-inspector
       [settings]="widget().customSettings"
+      [widget]="widget()"
+      [globalSettings]="globalSettings()"
+      [availableColumns]="availableColumns()"
+      [isPracticeMode]="isPracticeMode()"
       [disableFontSizes]="widget().scaleMode === 'auto'"
       (change)="onSettingsChange()"
     ></app-lane-view-inspector>

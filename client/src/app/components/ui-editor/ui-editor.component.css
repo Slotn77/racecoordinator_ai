@@ -726,7 +726,6 @@
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 20px rgba(255, 215, 0, 0.5), 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(255, 215, 0, 0.2);
   animation: slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  max-height: 608px;
   overflow-y: auto;
   color: #000;
 }

@@ -188,7 +188,10 @@
 
                   <!-- Widget Inspector Sidebar -->
                   @if (selectedWidget) {
-                    <div class="widget-inspector-panel">
+                    <div
+                      class="widget-inspector-panel"
+                      [style.height.px]="getPreviewContainerHeight(false)"
+                    >
                       <div class="inspector-header">
                         <h2>{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
                         <button
@@ -246,6 +249,9 @@
 
                         <app-widget-inspector-fields
                           [widget]="selectedWidget"
+                          [globalSettings]="editingSettings"
+                          [availableColumns]="availableColumns"
+                          [isPracticeMode]="false"
                           (change)="captureState()"
                         ></app-widget-inspector-fields>
                       </div>
@@ -254,16 +260,6 @@
                 </div>
               </div>
             </div>
-
-            <!-- Column Toolbox (inside the expander) -->
-            @if (hasLaneViewWidget) {
-              <app-column-toolbox
-                [availableColumns]="availableColumns"
-                [scale]="scale"
-                [settings]="editingSettings"
-                (settingsChanged)="onColumnsChanged()"
-              ></app-column-toolbox>
-            }
           </div>
         }
       </div>
@@ -442,7 +438,10 @@
 
                   <!-- Widget Inspector Sidebar -->
                   @if (selectedPracticeWidget) {
-                    <div class="widget-inspector-panel">
+                    <div
+                      class="widget-inspector-panel"
+                      [style.height.px]="getPreviewContainerHeight(true)"
+                    >
                       <div class="inspector-header">
                         <h2>{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
                         <button
@@ -501,6 +500,9 @@
 
                         <app-widget-inspector-fields
                           [widget]="selectedPracticeWidget"
+                          [globalSettings]="editingSettings"
+                          [availableColumns]="availableColumns"
+                          [isPracticeMode]="true"
                           (change)="captureState()"
                         ></app-widget-inspector-fields>
                       </div>
@@ -509,17 +511,6 @@
                 </div>
               </div>
             </div>
-
-            <!-- Column Toolbox (inside the expander) -->
-            @if (hasPracticeLaneViewWidget) {
-              <app-column-toolbox
-                [availableColumns]="availableColumns"
-                [scale]="scale"
-                [settings]="editingSettings"
-                (settingsChanged)="onColumnsChanged()"
-                [isPracticeLayoutEditor]="true"
-              ></app-column-toolbox>
-            }
           </div>
         }
       </div>

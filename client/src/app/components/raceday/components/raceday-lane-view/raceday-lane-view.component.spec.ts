@@ -372,4 +372,14 @@ describe("RacedayLaneViewComponent", () => {
     );
     expect(centerCell.style.getPropertyValue("--custom-font-size")).toBe("");
   });
+
+  it("should return custom column label if provided, else fallback to parent", () => {
+    const col = { propertyName: "driver.nickname", labelKey: "RD_COL_DRIVER" };
+    expect(component.getColumnLabel(col)).toBe("RD_COL_DRIVER");
+
+    fixture.componentRef.setInput("widget", {
+      customSettings: { columnLabels: { "driver.nickname": "Custom Name" } },
+    });
+    expect(component.getColumnLabel(col)).toBe("Custom Name");
+  });
 });
