@@ -74,6 +74,11 @@ Name: "{commonappdata}\{#MyAppName}\mongodb_data"; Permissions: users-full
 Name: "{commonappdata}\{#MyAppName}\server_temp"; Permissions: users-full
 Name: "{app}\mongodb"; Permissions: users-full
 
+[Run]
+; Server
+Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"")"""; WorkingDir: "{app}"; Flags: nowait skipifsilent; Check: not IsRestartAppRequested
+Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"")"""; WorkingDir: "{app}"; Flags: nowait; Check: IsRestartAppRequested
+
 [Code]
 function KillProcesses: Boolean;
 var
@@ -99,6 +104,21 @@ begin
   GetWindowsVersionEx(Version);
   // Windows 10 is version 10.0
   Result := (Version.Major >= 10);
+end;
+
+function IsRestartAppRequested: Boolean;
+var
+  i: Integer;
+begin
+  Result := False;
+  for i := 1 to ParamCount do
+  begin
+    if CompareText(ParamStr(i), '/RESTARTAPP') = 0 then
+    begin
+      Result := True;
+      Exit;
+    end;
+  end;
 end;
 
 function InitializeSetup: Boolean;

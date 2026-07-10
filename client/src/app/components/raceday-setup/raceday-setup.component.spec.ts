@@ -25,6 +25,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { UpdateService } from "@app/services/update.service";
 
 import { RacedaySetupComponent } from "./raceday-setup.component";
 
@@ -43,6 +44,7 @@ describe("RacedaySetupComponent", () => {
   let mockAuthService: jasmine.SpyObj<AuthService>;
   let mockRouter: jasmine.SpyObj<Router>;
   let mockNavigationService: jasmine.SpyObj<NavigationService>;
+  let mockUpdateService: jasmine.SpyObj<UpdateService>;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
 
   beforeEach(() => {
@@ -128,6 +130,22 @@ describe("RacedaySetupComponent", () => {
     mockAuthService.getDirectorPassword.and.returnValue(of(""));
     mockAuthService.fetchRoleFromServer.and.returnValue(of(Role.ADMIN));
 
+    mockUpdateService = jasmine.createSpyObj("UpdateService", [
+      "checkForUpdates",
+      "installUpdate",
+      "skipUpdate",
+    ]);
+    mockUpdateService.checkForUpdates.and.returnValue(
+      of({
+        updateAvailable: false,
+        latestVersion: "",
+        downloadUrl: "",
+        releaseNotes: "",
+        releaseUrl: "",
+        isWindows: false,
+      }),
+    );
+
     connectionStateSubject = new BehaviorSubject<ConnectionState>(
       ConnectionState.CONNECTED,
     );
@@ -193,6 +211,7 @@ describe("RacedaySetupComponent", () => {
         { provide: LoggerService, useValue: mockLoggerService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: NavigationService, useValue: mockNavigationService },
+        { provide: UpdateService, useValue: mockUpdateService },
       ],
       imports: [RacedaySetupComponent],
     }).compileComponents();
@@ -656,5 +675,64 @@ describe("RacedaySetupComponent", () => {
 
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
     }));
+  });
+
+  describe("Update Banner", () => {
+    it("should format updateVersionHtml correctly when update is available", () => {
+      component.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: true,
+      };
+
+      const html = component.updateVersionHtml;
+      expect(html).toContain('href="http://example.com/release"');
+      expect(html).toContain("v1.2.3");
+      expect(html).toContain('target="_blank"');
+    });
+
+    it("should return empty string for updateVersionHtml when update is not available", () => {
+      component.updateResult = null;
+      expect(component.updateVersionHtml).toBe("");
+    });
+
+    it("should call updateService.installUpdate when installUpdate is called", () => {
+      component.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: true,
+      };
+
+      mockUpdateService.installUpdate.and.returnValue(of(true));
+      component.installUpdate();
+
+      expect(mockUpdateService.installUpdate).toHaveBeenCalledWith(
+        "http://example.com/dl",
+      );
+      expect(component.isUpdating).toBeTrue();
+    });
+
+    it("should call updateService.skipUpdate and clear result when skipVersion is called", () => {
+      component.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: true,
+      };
+
+      mockUpdateService.skipUpdate.and.returnValue(of(true));
+      component.skipVersion();
+
+      expect(mockUpdateService.skipUpdate).toHaveBeenCalledWith("v1.2.3");
+      expect(component.updateResult).toBeNull();
+    });
   });
 });

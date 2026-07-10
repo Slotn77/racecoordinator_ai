@@ -31,6 +31,7 @@ import { ParticipantValidationService } from "@app/services/participant-validati
 import { RaceService } from "@app/services/race.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { UpdateCheckResult, UpdateService } from "@app/services/update.service";
 
 import { DefaultRacedaySetupComponent } from "./default-raceday-setup.component";
 
@@ -112,6 +113,15 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   private hasLoadedSetupComponent = false;
   private systemStateSubscription?: Subscription;
 
+  public updateResult: UpdateCheckResult | null = null;
+  public isUpdating = false;
+  public updateBannerDismissed = false;
+
+  public get updateVersionHtml(): string {
+    if (!this.updateResult) return "";
+    return `<a href="${this.updateResult.releaseUrl}" target="_blank" style="color: inherit; text-decoration: underline;">${this.updateResult.latestVersion}</a>`;
+  }
+
   constructor(
     private fileSystem: FileSystemService,
     private compiler: Compiler,
@@ -126,6 +136,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     public authService: AuthService,
     private router: Router,
     private navigationService: NavigationService,
+    private updateService: UpdateService,
   ) {
     // Initialize quote keys
     for (let i = 1; i <= 29; i++) {
@@ -174,6 +185,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     this.container.clear();
 
     this.refreshServerInfo();
+    this.checkUpdates();
 
     // Start Splash Screen Logic ONLY when translations are ready
     // This prevents raw keys from showing
@@ -361,6 +373,43 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     if (this.systemStateSubscription) {
       this.systemStateSubscription.unsubscribe();
     }
+  }
+
+  private checkUpdates() {
+    this.updateService.checkForUpdates().subscribe({
+      next: (result) => {
+        this.updateResult = result;
+      },
+      error: (err) => this.logger.warn("Failed to check for updates", err),
+    });
+  }
+
+  public installUpdate() {
+    if (!this.updateResult || !this.updateResult.downloadUrl) return;
+    this.isUpdating = true;
+    this.updateService.installUpdate(this.updateResult.downloadUrl).subscribe({
+      next: () => {
+        this.logger.info("Update started");
+      },
+      error: (err) => {
+        this.logger.error("Failed to install update", err);
+        this.isUpdating = false;
+        this.error = "Update installation failed";
+        setTimeout(() => (this.error = null), 5000);
+      },
+    });
+  }
+
+  public skipVersion() {
+    if (!this.updateResult || !this.updateResult.latestVersion) return;
+    this.updateService.skipUpdate(this.updateResult.latestVersion).subscribe({
+      next: () => {
+        this.updateResult = null;
+      },
+      error: (err) => {
+        this.logger.error("Failed to skip update", err);
+      },
+    });
   }
 
   // Wrappers to match previous API if needed, or we implement logic directly

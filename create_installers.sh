@@ -346,7 +346,7 @@ create_scripts release/RaceCoordinator
 echo "Generating scripts for offline distribution..."
 create_scripts release/RaceCoordinator_Offline
 
-echo "Manual Step for Windows: Build installers using Inno Setup (installer_online.iss, installer_offline_legacy.iss)"
+echo "Manual Step for Windows: Build installers using Inno Setup (installer_online.iss, installer_offline.iss)"
 echo "Manual Step for Mac: Run create_mac_dmg.sh on a macOS machine to build the DMG."
 
 echo "Build Complete!"

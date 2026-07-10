@@ -119,6 +119,15 @@ public class ServerConfigService {
     saveConfig();
   }
 
+  public String getSkippedUpdateVersion() {
+    return config.skippedUpdateVersion;
+  }
+
+  public void setSkippedUpdateVersion(String version) {
+    config.skippedUpdateVersion = version;
+    saveConfig();
+  }
+
   private static class Config {
 
     public String lastActiveDatabase;
@@ -134,5 +143,6 @@ public class ServerConfigService {
     public double restartRandomizer = 0.0;
 
     public String directorPassword = "RC AI Director";
+    public String skippedUpdateVersion;
   }
 }

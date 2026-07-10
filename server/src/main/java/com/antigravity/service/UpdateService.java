@@ -1,0 +1,200 @@
+package com.antigravity.service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.stream.StreamSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class UpdateService {
+  private static final Logger logger = LoggerFactory.getLogger(UpdateService.class);
+  private static final String RELEASES_API_URL =
+      "https://api.github.com/repos/daufderheide/racecoordinator_ai/releases";
+
+  private final ObjectMapper mapper = new ObjectMapper();
+  private final String currentVersion;
+  private final ServerConfigService configService;
+  private UpdateCheckResult cachedResult = null;
+  private long lastCheckTime = 0;
+
+  public UpdateService(String currentVersion, ServerConfigService configService) {
+    this.currentVersion = currentVersion;
+    this.configService = configService;
+  }
+
+  public static class UpdateCheckResult {
+    public boolean updateAvailable;
+    public String latestVersion;
+    public String downloadUrl;
+    public String releaseNotes;
+    public String releaseUrl;
+    public boolean isWindows;
+  }
+
+  public UpdateCheckResult checkForUpdates() {
+    // Cache for 24 hours to avoid rate limiting
+    if (cachedResult != null && (System.currentTimeMillis() - lastCheckTime) < 86400000) {
+      return cachedResult;
+    }
+
+    UpdateCheckResult result = new UpdateCheckResult();
+    result.updateAvailable = false;
+
+    // Determine OS
+    String osName = System.getProperty("os.name").toLowerCase();
+    result.isWindows = osName.contains("win");
+
+    try {
+      JsonNode releases = fetchReleasesNode();
+      if (releases != null) {
+
+        // Find the latest alpha release by published date instead of tag string
+        JsonNode latestAlpha =
+            StreamSupport.stream(releases.spliterator(), false)
+                .filter(
+                    node ->
+                        node.has("tag_name") && node.get("tag_name").asText().contains("-alpha."))
+                .filter(node -> node.has("published_at") && !node.get("published_at").isNull())
+                .max(Comparator.comparing(node -> node.get("published_at").asText()))
+                .orElse(null);
+
+        if (latestAlpha != null) {
+          String tagVersion = latestAlpha.get("tag_name").asText();
+
+          boolean isNewer = false;
+          if (currentVersion.equals("0.0.0_dev")) {
+            isNewer = true;
+          } else {
+            // Find current release in the list to compare dates
+            JsonNode currentRelease =
+                StreamSupport.stream(releases.spliterator(), false)
+                    .filter(
+                        node ->
+                            node.has("tag_name")
+                                && node.get("tag_name").asText().equals(currentVersion))
+                    .findFirst()
+                    .orElse(null);
+
+            if (currentRelease != null
+                && currentRelease.has("published_at")
+                && !currentRelease.get("published_at").isNull()) {
+              String currentPublishedAt = currentRelease.get("published_at").asText();
+              String latestPublishedAt = latestAlpha.get("published_at").asText();
+              isNewer = latestPublishedAt.compareTo(currentPublishedAt) > 0;
+            } else {
+              // Fallback to string comparison if current release is not found in the list
+              isNewer = tagVersion.compareTo(currentVersion) > 0;
+            }
+          }
+
+          if (isNewer) {
+            String skipped = configService.getSkippedUpdateVersion();
+            if (skipped != null && skipped.equals(tagVersion)) {
+              // User skipped this version, do not prompt
+            } else {
+              result.updateAvailable = true;
+              result.latestVersion = tagVersion;
+              result.releaseNotes = latestAlpha.has("body") ? latestAlpha.get("body").asText() : "";
+              result.releaseUrl =
+                  latestAlpha.has("html_url") ? latestAlpha.get("html_url").asText() : "";
+
+              // Find the correct asset
+              String targetExtension = result.isWindows ? "_online_setup.exe" : ".dmg";
+              JsonNode assets = latestAlpha.get("assets");
+              if (assets != null && assets.isArray()) {
+                for (JsonNode asset : assets) {
+                  String assetName = asset.get("name").asText().toLowerCase();
+                  if (assetName.endsWith(targetExtension)) {
+                    result.downloadUrl = asset.get("browser_download_url").asText();
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      cachedResult = result;
+      lastCheckTime = System.currentTimeMillis();
+
+    } catch (Exception e) {
+      logger.warn("Failed to check for updates from GitHub: {}", e.getMessage());
+    }
+
+    return result;
+  }
+
+  // Helper method no longer needed as we do inline date comparison
+
+  // Protected for testing
+  protected JsonNode fetchReleasesNode() throws Exception {
+    URL url = new URL(RELEASES_API_URL);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.setRequestMethod("GET");
+    conn.setRequestProperty("Accept", "application/vnd.github.v3+json");
+
+    if (conn.getResponseCode() == 200) {
+      return mapper.readTree(conn.getInputStream());
+    }
+    return null;
+  }
+
+  public void downloadAndInstallUpdate(String downloadUrl) throws Exception {
+    String osName = System.getProperty("os.name").toLowerCase();
+    boolean isWindows = osName.contains("win");
+
+    if (!isWindows) {
+      throw new UnsupportedOperationException(
+          "Automatic installation is only supported on Windows.");
+    }
+
+    logger.info("Downloading update from: {}", downloadUrl);
+
+    Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "racecoordinator_updates");
+    if (!Files.exists(tempDir)) {
+      Files.createDirectories(tempDir);
+    }
+
+    File installerFile = new File(tempDir.toFile(), "RaceCoordinatorSetup_Update.exe");
+
+    URL url = new URL(downloadUrl);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.setRequestMethod("GET");
+
+    // Follow redirects
+    int status = conn.getResponseCode();
+    if (status == HttpURLConnection.HTTP_MOVED_TEMP
+        || status == HttpURLConnection.HTTP_MOVED_PERM
+        || status == HttpURLConnection.HTTP_SEE_OTHER) {
+      String newUrl = conn.getHeaderField("Location");
+      conn = (HttpURLConnection) new URL(newUrl).openConnection();
+    }
+
+    try (InputStream in = conn.getInputStream();
+        FileOutputStream out = new FileOutputStream(installerFile)) {
+      byte[] buffer = new byte[8192];
+      int bytesRead;
+      while ((bytesRead = in.read(buffer)) != -1) {
+        out.write(buffer, 0, bytesRead);
+      }
+    }
+
+    logger.info("Download complete. Launching installer...");
+
+    // Execute installer with silent and custom restart flag
+    ProcessBuilder pb =
+        new ProcessBuilder(
+            "cmd.exe", "/c", "start", installerFile.getAbsolutePath(), "/SILENT", "/RESTARTAPP");
+    pb.start();
+  }
+}

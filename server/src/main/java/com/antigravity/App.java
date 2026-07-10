@@ -18,6 +18,7 @@ import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.ServerConfigService;
+import com.antigravity.service.UpdateService;
 import com.antigravity.util.NetworkUtils;
 import com.antigravity.util.RobustBooleanCodec;
 import com.fasterxml.jackson.core.JsonParser;
@@ -574,6 +575,62 @@ public class App {
       new AssetTaskHandler(databaseContext, app);
       new ThemeTaskHandler(databaseContext, app);
       new SettingsTaskHandler(app, configService);
+
+      UpdateService updateService = new UpdateService(SERVER_VERSION, configService);
+
+      app.get(
+          "/api/update/check",
+          ctx -> {
+            ctx.json(updateService.checkForUpdates());
+          });
+
+      app.post(
+          "/api/update/skip",
+          ctx -> {
+            try {
+              String body = ctx.body();
+              ObjectMapper mapper = new ObjectMapper();
+              com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(body);
+              if (json.has("version")) {
+                String version = json.get("version").asText();
+                configService.setSkippedUpdateVersion(version);
+                ctx.status(200).result("Version skipped");
+              } else {
+                ctx.status(400).result("Missing version");
+              }
+            } catch (Exception e) {
+              logger.error("Failed to skip update", e);
+              ctx.status(500).result("Internal error");
+            }
+          });
+
+      app.post(
+          "/api/update/install",
+          ctx -> {
+            try {
+              String body = ctx.body();
+              ObjectMapper mapper = new ObjectMapper();
+              com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(body);
+              if (json.has("downloadUrl")) {
+                String downloadUrl = json.get("downloadUrl").asText();
+                // Run update async so we can return response immediately
+                new Thread(
+                        () -> {
+                          try {
+                            updateService.downloadAndInstallUpdate(downloadUrl);
+                          } catch (Exception e) {
+                            logger.error("Update failed", e);
+                          }
+                        })
+                    .start();
+                ctx.status(200).result("Update started");
+              } else {
+                ctx.status(400).result("Missing downloadUrl");
+              }
+            } catch (Exception e) {
+              ctx.status(500).result("Error: " + e.getMessage());
+            }
+          });
 
       app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
       app.get("/api/server-ip", ctx -> ctx.result(getLocalIpAddress()));

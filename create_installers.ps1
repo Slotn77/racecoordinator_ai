@@ -405,11 +405,11 @@ $ISCC = "${env:ProgramFiles(x86)}\Inno Setup 6\iscc.exe"
 if (Get-Command iscc -ErrorAction SilentlyContinue) {
     Write-Host "Creating Windows Installer (.exe) using Inno Setup..." -ForegroundColor Cyan
     Exec { iscc installer_online.iss }
-    Exec { iscc installer_offline_legacy.iss }
+    Exec { iscc installer_offline.iss }
 } elseif (Test-Path $ISCC) {
     Write-Host "Creating Windows Installer (.exe) using Inno Setup (found in default path)..." -ForegroundColor Cyan
     Exec { & $ISCC installer_online.iss }
-    Exec { & $ISCC installer_offline_legacy.iss }
+    Exec { & $ISCC installer_offline.iss }
 } else {
     Write-Warning "Inno Setup (iscc) not found. Skipping .exe installer creation."
     Write-Host "To build the .exe installer, install Inno Setup and run: iscc installer_online.iss, etc."

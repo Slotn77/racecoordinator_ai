@@ -1,5 +1,5 @@
 ; Race Coordinator AI Online Installer Script
-; Downloads Java 17 and MongoDB during installation only if they are not detected
+; Downloads dependencies (Java 17/Mongo 6 for Win10+, Java 8/Mongo 3.2 for Legacy) during installation
 
 #include "installer_base.iss"
 
@@ -10,20 +10,34 @@ OutputBaseFilename=RaceCoordinatorAI_Online_Setup
 var
   DownloadPage: TDownloadWizardPage;
 
-function IsJava17Installed: Boolean;
+function IsJavaInstalled(IsModernOS: Boolean): Boolean;
 begin
-  // Check common registry keys for Java 17 (Adoptium/Temurin or Oracle)
-  Result := RegKeyExists(HKLM, 'SOFTWARE\Eclipse Foundation\JDK\17\jre') or 
-            RegKeyExists(HKLM, 'SOFTWARE\JavaSoft\JDK\17') or
-            RegKeyExists(HKLM64, 'SOFTWARE\Eclipse Foundation\JDK\17\jre') or 
-            RegKeyExists(HKLM64, 'SOFTWARE\JavaSoft\JDK\17');
+  if IsModernOS then
+  begin
+    Result := RegKeyExists(HKLM, 'SOFTWARE\Eclipse Foundation\JDK\17\jre') or 
+              RegKeyExists(HKLM, 'SOFTWARE\JavaSoft\JDK\17') or
+              RegKeyExists(HKLM64, 'SOFTWARE\Eclipse Foundation\JDK\17\jre') or 
+              RegKeyExists(HKLM64, 'SOFTWARE\JavaSoft\JDK\17');
+  end
+  else
+  begin
+    Result := RegKeyExists(HKLM, 'SOFTWARE\JavaSoft\Java Runtime Environment\1.8') or
+              RegKeyExists(HKLM64, 'SOFTWARE\JavaSoft\Java Runtime Environment\1.8');
+  end;
 end;
 
-function IsMongo60Installed: Boolean;
+function IsMongoInstalled(IsModernOS: Boolean): Boolean;
 begin
-  // Check for MongoDB 6.0 service or installation path
-  Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\6.0') or
-            RegKeyExists(HKLM64, 'SOFTWARE\MongoDB\Server\6.0');
+  if IsModernOS then
+  begin
+    Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\6.0') or
+              RegKeyExists(HKLM64, 'SOFTWARE\MongoDB\Server\6.0');
+  end
+  else
+  begin
+    Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\3.2') or
+              RegKeyExists(HKLM64, 'SOFTWARE\MongoDB\Server\3.2');
+  end;
 end;
 
 procedure ExtractZip(const ZipFile, DestDir, StatusMsg: String);
@@ -101,23 +115,28 @@ end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
-  NeedsJava, NeedsMongo: Boolean;
+  NeedsJava, NeedsMongo, IsModernOS: Boolean;
 begin
   if CurPageID = wpReady then begin
-    NeedsJava := not IsJava17Installed();
-    NeedsMongo := not IsMongo60Installed();
+    IsModernOS := IsWindows10OrNewer();
+    NeedsJava := not IsJavaInstalled(IsModernOS);
+    NeedsMongo := not IsMongoInstalled(IsModernOS);
     
     if NeedsJava or NeedsMongo then begin
       DownloadPage.Clear;
       
       if NeedsJava then begin
-        // Java 17 JRE ZIP (Adoptium Temurin)
-        DownloadPage.Add('https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jre/hotspot/normal/eclipse', 'java_setup.zip', '');
+        if IsModernOS then
+          DownloadPage.Add('https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jre/hotspot/normal/eclipse', 'java_setup.zip', '')
+        else
+          DownloadPage.Add('https://api.adoptium.net/v3/binary/latest/8/ga/windows/x86/jre/hotspot/normal/eclipse', 'java_setup.zip', '');
       end;
       
       if NeedsMongo then begin
-        // MongoDB 6.0.21 ZIP (x64)
-        DownloadPage.Add('https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-6.0.21.zip', 'mongodb_setup.zip', '');
+        if IsModernOS then
+          DownloadPage.Add('https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-6.0.21.zip', 'mongodb_setup.zip', '')
+        else
+          DownloadPage.Add('https://fastdl.mongodb.org/win32/mongodb-win32-i386-3.2.22.zip', 'mongodb_setup.zip', '');
       end;
       
       DownloadPage.Show;
@@ -164,14 +183,14 @@ begin
 
     if FileExists(JavaZip) then
     begin
-      ExtractZip(JavaZip, ExpandConstant('{app}\jre'), 'Extracting Java 17 Runtime...');
+      ExtractZip(JavaZip, ExpandConstant('{app}\jre'), 'Extracting Java Runtime...');
       FlattenDirectory(ExpandConstant('{app}\jre'));
       DeleteFile(JavaZip);
     end;
 
     if FileExists(MongoZip) then
     begin
-      ExtractZip(MongoZip, ExpandConstant('{app}\mongodb'), 'Extracting MongoDB 6.0...');
+      ExtractZip(MongoZip, ExpandConstant('{app}\mongodb'), 'Extracting MongoDB...');
       FlattenDirectory(ExpandConstant('{app}\mongodb'));
       DeleteFile(MongoZip);
     end;

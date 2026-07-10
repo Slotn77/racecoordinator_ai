@@ -1,4 +1,51 @@
-<div class="shell-container">
+<div
+  class="shell-container"
+  [class.has-update-banner]="
+    updateResult?.updateAvailable && !updateBannerDismissed
+  "
+>
+  @if (updateResult?.updateAvailable && !updateBannerDismissed) {
+    <div class="update-banner">
+      <span
+        [innerHTML]="
+          'RDS_UPDATE_AVAILABLE' | translate: { version: updateVersionHtml }
+        "
+      ></span>
+      <div class="update-actions">
+        @if (updateResult?.isWindows) {
+          <button
+            (click)="installUpdate()"
+            [disabled]="isUpdating"
+            class="update-btn-primary"
+          >
+            {{
+              isUpdating
+                ? ("RDS_UPDATE_BTN_DOWNLOADING" | translate)
+                : ("RDS_UPDATE_BTN_INSTALL_NOW" | translate)
+            }}
+          </button>
+        }
+        @if (!updateResult?.isWindows) {
+          <a
+            [href]="updateResult?.downloadUrl"
+            target="_blank"
+            class="update-btn-primary"
+          >
+            {{ "RDS_UPDATE_BTN_DOWNLOAD" | translate }}
+          </a>
+        }
+        <button
+          (click)="updateBannerDismissed = true"
+          class="update-btn-secondary"
+        >
+          {{ "RDS_UPDATE_BTN_INSTALL_LATER" | translate }}
+        </button>
+        <button (click)="skipVersion()" class="update-btn-secondary">
+          {{ "RDS_UPDATE_BTN_SKIP_VERSION" | translate }}
+        </button>
+      </div>
+    </div>
+  }
   @if (showSplash) {
     <div class="splash-screen">
       <div class="splash-content" [style.transform]="'scale(' + scale + ')'">
