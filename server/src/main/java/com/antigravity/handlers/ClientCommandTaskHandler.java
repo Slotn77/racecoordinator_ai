@@ -360,6 +360,12 @@ public class ClientCommandTaskHandler {
 
       ClientSubscriptionManager.getInstance().setRace(runtimeRace);
       runtimeRace.init();
+
+      logger.info("Initialized race: {}", runtimeRace.getRaceModel().getName());
+      AnalyticsService.getInstance().trackRaceStart(runtimeRace);
+
+      RaceData raceDataSnapshot = runtimeRace.createSnapshot();
+      runtimeRace.broadcast(raceDataSnapshot);
     } catch (IllegalArgumentException e) {
       logger.error("Validation failed during race initialization", e);
       if (runtimeRace != null) {
@@ -387,14 +393,6 @@ public class ClientCommandTaskHandler {
           InitializeRaceResponse.newBuilder().setSuccess(false).setErrorCode(errorCode).build();
       return TaskResult.success(response.toByteArray());
     }
-
-    logger.info("Initialized race: {}", runtimeRace.getRaceModel().getName());
-    AnalyticsService.getInstance().trackRaceStart(runtimeRace);
-
-    // Track track = race.getTrack();
-
-    RaceData raceDataSnapshot = runtimeRace.createSnapshot();
-    runtimeRace.broadcast(raceDataSnapshot);
 
     InitializeRaceResponse response = InitializeRaceResponse.newBuilder().setSuccess(true).build();
     return TaskResult.success(response.toByteArray());

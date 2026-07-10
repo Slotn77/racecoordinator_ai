@@ -71,10 +71,12 @@ public class ArduinoConfigConverter {
             .setHardwareType(config.hardwareType);
 
     if (config.digitalIds != null) {
-      builder.addAllDigitalIds(config.digitalIds);
+      builder.addAllDigitalIds(
+          config.digitalIds.stream().map(id -> id == null ? 0 : id).collect(Collectors.toList()));
     }
     if (config.analogIds != null) {
-      builder.addAllAnalogIds(config.analogIds);
+      builder.addAllAnalogIds(
+          config.analogIds.stream().map(id -> id == null ? 0 : id).collect(Collectors.toList()));
     }
     if (config.lapPinPitBehavior != null) {
       builder.setLapPinPitBehaviorValue(config.lapPinPitBehavior.getValue());
