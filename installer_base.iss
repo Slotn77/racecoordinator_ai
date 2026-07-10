@@ -66,7 +66,7 @@ Name: "{app}\mongodb"; Permissions: users-full
 
 [Run]
 ; Server
-Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"")"""; WorkingDir: "{app}"; Flags: nowait skipifsilent; Check: not IsRestartAppRequested
+Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"")"""; WorkingDir: "{app}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent; Check: not IsRestartAppRequested
 Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"")"""; WorkingDir: "{app}"; Flags: nowait; Check: IsRestartAppRequested
 
 [Code]
