@@ -80,7 +80,8 @@ public class UpdateService {
                     .filter(
                         node ->
                             node.has("tag_name")
-                                && node.get("tag_name").asText().equals(currentVersion))
+                                && (node.get("tag_name").asText().equals(currentVersion)
+                                    || node.get("tag_name").asText().equals("v" + currentVersion)))
                     .findFirst()
                     .orElse(null);
 
@@ -92,7 +93,11 @@ public class UpdateService {
               isNewer = latestPublishedAt.compareTo(currentPublishedAt) > 0;
             } else {
               // Fallback to string comparison if current release is not found in the list
-              isNewer = tagVersion.compareTo(currentVersion) > 0;
+              String strippedTagVersion =
+                  tagVersion.startsWith("v") ? tagVersion.substring(1) : tagVersion;
+              String strippedCurrentVersion =
+                  currentVersion.startsWith("v") ? currentVersion.substring(1) : currentVersion;
+              isNewer = strippedTagVersion.compareTo(strippedCurrentVersion) > 0;
             }
           }
 
