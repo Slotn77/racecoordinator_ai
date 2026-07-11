@@ -1,4 +1,5 @@
-import { Injectable, OnDestroy } from "@angular/core";
+import { DOCUMENT } from "@angular/common";
+import { Inject, Injectable, OnDestroy } from "@angular/core";
 import { BehaviorSubject, interval, Observable, of, Subscription } from "rxjs";
 import { catchError, map, switchMap, timeout } from "rxjs/operators";
 import { DataService } from "@app/data.service";
@@ -29,6 +30,7 @@ export class ConnectionMonitorService implements OnDestroy {
   private readonly TIMEOUT_MS = 3000;
 
   constructor(
+    @Inject(DOCUMENT) private document: Document,
     private dataService: DataService,
     private logger: LoggerService,
   ) {}
@@ -72,6 +74,7 @@ export class ConnectionMonitorService implements OnDestroy {
         if (this.connectionStateSubject.value !== ConnectionState.CONNECTED) {
           this.logger.info("Connection restored!");
           this.connectionStateSubject.next(ConnectionState.CONNECTED);
+          this.document.location?.reload();
         }
         return true;
       }),

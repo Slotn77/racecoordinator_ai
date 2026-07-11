@@ -1,3 +1,4 @@
+import { DOCUMENT } from "@angular/common";
 import {
   discardPeriodicTasks,
   fakeAsync,
@@ -16,6 +17,7 @@ import { LoggerService } from "./logger.service";
 
 describe("ConnectionMonitorService", () => {
   let service: ConnectionMonitorService;
+  let mockDocument: any;
 
   beforeEach(() => {
     // Reset mock calls
@@ -29,11 +31,18 @@ describe("ConnectionMonitorService", () => {
       debug: jasmine.createSpy("debug"),
     };
 
+    mockDocument = {
+      location: {
+        reload: jasmine.createSpy("reload"),
+      },
+    };
+
     TestBed.configureTestingModule({
       providers: [
         ConnectionMonitorService,
         { provide: DataService, useValue: mockDataService },
         { provide: LoggerService, useValue: mockLogger },
+        { provide: DOCUMENT, useValue: mockDocument },
       ],
     });
     service = TestBed.inject(ConnectionMonitorService);
@@ -44,16 +53,27 @@ describe("ConnectionMonitorService", () => {
   });
 
   describe("checkConnection", () => {
-    it("should return true and update state to CONNECTED on success", (done) => {
-      // Set initial state to something else to verify change (or verify no change if already connected)
+    it("should return true and update state to CONNECTED on success, and reload the page", (done) => {
+      // Set initial state to something else to verify change
       service.setConnectionState(ConnectionState.DISCONNECTED);
 
       service.checkConnection().subscribe((isConnected) => {
         expect(isConnected).toBeTrue();
+        expect(mockDocument.location.reload).toHaveBeenCalled();
         service.connectionState$.subscribe((state) => {
           expect(state).toBe(ConnectionState.CONNECTED);
           done();
         });
+      });
+    });
+
+    it("should not reload the page if already connected", (done) => {
+      service.setConnectionState(ConnectionState.CONNECTED);
+
+      service.checkConnection().subscribe((isConnected) => {
+        expect(isConnected).toBeTrue();
+        expect(mockDocument.location.reload).not.toHaveBeenCalled();
+        done();
       });
     });
 
