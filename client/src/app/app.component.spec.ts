@@ -131,6 +131,9 @@ describe("AppComponent", () => {
     mockSettingsService.getSettings.and.returnValue({
       pageTransition: "slide",
     });
+    // Consume initial navigation
+    routerEvents.next(new NavigationEnd(0, "/initial", "/initial"));
+
     const firstData = component.calculateRouteAnimationData();
     const firstCounter = parseInt(firstData!.split(":")[3]);
 
@@ -146,6 +149,9 @@ describe("AppComponent", () => {
     mockSettingsService.getSettings.and.returnValue({
       pageTransition: "random",
     });
+
+    // Consume initial navigation
+    routerEvents.next(new NavigationEnd(0, "/initial", "/initial"));
 
     const firstCall = component.calculateRouteAnimationData();
     const secondCall = component.calculateRouteAnimationData();
@@ -166,6 +172,9 @@ describe("AppComponent", () => {
     mockSettingsService.getSettings.and.returnValue({
       pageTransition: "slide",
     });
+    // Consume initial navigation
+    routerEvents.next(new NavigationEnd(0, "/initial", "/initial"));
+
     mockRouter.url = "/new-page";
     routerEvents.next(new NavigationEnd(1, "/new-page", "/new-page"));
 
@@ -177,6 +186,9 @@ describe("AppComponent", () => {
     mockSettingsService.getSettings.and.returnValue({
       pageTransition: "slide",
     });
+    // Consume initial navigation
+    routerEvents.next(new NavigationEnd(0, "/initial", "/initial"));
+
     mockRouter.url = "/some-page";
     routerEvents.next(new NavigationEnd(1, "/some-page", "/some-page"));
     const initialAnimData = component["routeAnimationData"];
@@ -195,5 +207,30 @@ describe("AppComponent", () => {
     mockNavigationService.getDirection.and.returnValue("backward");
     const data = component.calculateRouteAnimationData();
     expect(data).toContain(":backward:");
+  });
+
+  it("should NOT update routeAnimationData on initial navigation to prevent double transition on splash screen", () => {
+    mockSettingsService.getSettings.and.returnValue({
+      pageTransition: "slide",
+    });
+
+    // Initial state before any navigation should be null
+    expect(component["routeAnimationData"]).toBeNull();
+
+    // Fire the first navigation event
+    routerEvents.next(new NavigationEnd(0, "/initial", "/initial"));
+
+    // State should still be null to prevent animation
+    expect(component["routeAnimationData"]).toBeNull();
+
+    // Fire a subsequent navigation event
+    mockRouter.url = "/new-page";
+    routerEvents.next(new NavigationEnd(1, "/new-page", "/new-page"));
+
+    // State should now be updated to trigger the animation
+    expect(component["routeAnimationData"]).not.toBeNull();
+    expect(component["routeAnimationData"]).toMatch(
+      /^slide:forward:new-page:\d+$/,
+    );
   });
 });

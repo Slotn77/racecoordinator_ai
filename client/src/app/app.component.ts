@@ -116,11 +116,8 @@ export class AppComponent implements OnInit {
       // Removed forced navigation to /raceday to allow other components to handle updates
     });
 
-    // Initial random selection and animation state
-    this.selectRandomTransition();
-    this.routeAnimationData = this.calculateRouteAnimationData();
-
     // Pick a random transition once per navigation to stabilize the animation
+    let isInitialNavigation = true;
     let lastPath = this.router.url.split("?")[0];
     this.router.events
       .pipe(
@@ -130,6 +127,13 @@ export class AppComponent implements OnInit {
       )
       .subscribe((event) => {
         const newPath = event.urlAfterRedirects.split("?")[0];
+
+        if (isInitialNavigation) {
+          isInitialNavigation = false;
+          lastPath = newPath;
+          return;
+        }
+
         if (newPath !== lastPath) {
           lastPath = newPath;
           this.navigationCounter++;

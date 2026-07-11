@@ -53,15 +53,32 @@ describe("ConnectionMonitorService", () => {
   });
 
   describe("checkConnection", () => {
-    it("should return true and update state to CONNECTED on success, and reload the page", (done) => {
+    it("should return true and update state to CONNECTED on success, but not reload the page on initial connection", (done) => {
       // Set initial state to something else to verify change
       service.setConnectionState(ConnectionState.DISCONNECTED);
 
       service.checkConnection().subscribe((isConnected) => {
         expect(isConnected).toBeTrue();
-        expect(mockDocument.location.reload).toHaveBeenCalled();
+        expect(mockDocument.location.reload).not.toHaveBeenCalled();
         service.connectionState$.subscribe((state) => {
           expect(state).toBe(ConnectionState.CONNECTED);
+          done();
+        });
+      });
+    });
+
+    it("should reload the page if connection is lost and restored after initial connection", (done) => {
+      // 1. Establish initial connection
+      service.checkConnection().subscribe(() => {
+        expect(mockDocument.location.reload).not.toHaveBeenCalled();
+
+        // 2. Connection is lost
+        service.setConnectionState(ConnectionState.DISCONNECTED);
+
+        // 3. Connection is restored
+        service.checkConnection().subscribe((isConnected) => {
+          expect(isConnected).toBeTrue();
+          expect(mockDocument.location.reload).toHaveBeenCalled();
           done();
         });
       });

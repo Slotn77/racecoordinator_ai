@@ -62,6 +62,8 @@ export class ConnectionMonitorService implements OnDestroy {
     }
   }
 
+  private hasInitialConnectionBeenEstablished = false;
+
   /**
    * Manually check connection status.
    * Returns observable that completes with true (connected) or false (disconnected).
@@ -74,8 +76,11 @@ export class ConnectionMonitorService implements OnDestroy {
         if (this.connectionStateSubject.value !== ConnectionState.CONNECTED) {
           this.logger.info("Connection restored!");
           this.connectionStateSubject.next(ConnectionState.CONNECTED);
-          this.document.location?.reload();
+          if (this.hasInitialConnectionBeenEstablished) {
+            this.document.location?.reload();
+          }
         }
+        this.hasInitialConnectionBeenEstablished = true;
         return true;
       }),
       catchError((err) => {
