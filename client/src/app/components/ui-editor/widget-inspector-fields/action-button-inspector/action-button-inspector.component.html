@@ -47,7 +47,7 @@
   <div class="color-picker-wrapper" [class.is-null]="!settings['textColor']">
     <input
       type="color"
-      [value]="settings['textColor'] || '#ffffff'"
+      [value]="settings['textColor'] || '#000000'"
       (change)="onColorChange('textColor', $event)"
       class="color-picker-input"
     />
