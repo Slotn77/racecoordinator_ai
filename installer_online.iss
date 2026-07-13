@@ -10,8 +10,32 @@ OutputBaseFilename=RaceCoordinatorAI_Online_Setup
 var
   DownloadPage: TDownloadWizardPage;
 
-function IsJavaInstalled(IsModernOS: Boolean): Boolean;
+function GetRequiredJavaVersion(IsModernOS: Boolean): String;
 begin
+  if IsModernOS then Result := '17' else Result := '8';
+end;
+
+function GetRequiredMongoVersion(IsModernOS: Boolean): String;
+begin
+  if IsModernOS then Result := '6.0.21' else Result := '3.2.22';
+end;
+
+function IsJavaInstalled(IsModernOS: Boolean): Boolean;
+var
+  VersionFile: String;
+  InstalledVersion: String;
+begin
+  VersionFile := ExpandConstant('{app}\jre\.rcai_version');
+  if FileExists(VersionFile) then
+  begin
+    LoadStringFromFile(VersionFile, InstalledVersion);
+    if Trim(InstalledVersion) = GetRequiredJavaVersion(IsModernOS) then
+    begin
+      Result := True;
+      Exit;
+    end;
+  end;
+
   if IsModernOS then
   begin
     Result := RegKeyExists(HKLM, 'SOFTWARE\Eclipse Foundation\JDK\17\jre') or 
@@ -27,7 +51,21 @@ begin
 end;
 
 function IsMongoInstalled(IsModernOS: Boolean): Boolean;
+var
+  VersionFile: String;
+  InstalledVersion: String;
 begin
+  VersionFile := ExpandConstant('{app}\mongodb\.rcai_version');
+  if FileExists(VersionFile) then
+  begin
+    LoadStringFromFile(VersionFile, InstalledVersion);
+    if Trim(InstalledVersion) = GetRequiredMongoVersion(IsModernOS) then
+    begin
+      Result := True;
+      Exit;
+    end;
+  end;
+
   if IsModernOS then
   begin
     Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\6.0') or
@@ -202,6 +240,7 @@ begin
       ExtractZip(JavaZip, ExpandConstant('{app}\jre'), 'Extracting Java Runtime...');
       FlattenDirectory(ExpandConstant('{app}\jre'));
       DeleteFile(JavaZip);
+      SaveStringToFile(ExpandConstant('{app}\jre\.rcai_version'), GetRequiredJavaVersion(IsWindows10OrNewer()), False);
     end;
 
     if FileExists(MongoZip) then
@@ -209,6 +248,7 @@ begin
       ExtractZip(MongoZip, ExpandConstant('{app}\mongodb'), 'Extracting MongoDB...');
       FlattenDirectory(ExpandConstant('{app}\mongodb'));
       DeleteFile(MongoZip);
+      SaveStringToFile(ExpandConstant('{app}\mongodb\.rcai_version'), GetRequiredMongoVersion(IsWindows10OrNewer()), False);
     end;
   end;
 end;

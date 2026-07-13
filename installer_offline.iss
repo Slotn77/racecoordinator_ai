@@ -17,6 +17,16 @@ Source: "release\RaceCoordinator\jre8\*"; DestDir: "{app}\jre"; Flags: ignorever
 Source: "release\RaceCoordinator\mongodb32\*"; DestDir: "{app}\mongodb"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: not IsWindows10OrNewer
 
 [Code]
+function GetRequiredJavaVersion(IsModernOS: Boolean): String;
+begin
+  if IsModernOS then Result := '17' else Result := '8';
+end;
+
+function GetRequiredMongoVersion(IsModernOS: Boolean): String;
+begin
+  if IsModernOS then Result := '6.0.21' else Result := '3.2.22';
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   MongoSource, MongoDest: String;
@@ -34,5 +44,14 @@ begin
       Log('Backing up legacy MongoDB executable for potential migration...');
       FileCopy(MongoSource, MongoDest, False);
     end;
+  end;
+
+  if CurStep = ssPostInstall then
+  begin
+    if DirExists(ExpandConstant('{app}\jre')) then
+      SaveStringToFile(ExpandConstant('{app}\jre\.rcai_version'), GetRequiredJavaVersion(IsWindows10OrNewer()), False);
+
+    if DirExists(ExpandConstant('{app}\mongodb')) then
+      SaveStringToFile(ExpandConstant('{app}\mongodb\.rcai_version'), GetRequiredMongoVersion(IsWindows10OrNewer()), False);
   end;
 end;
