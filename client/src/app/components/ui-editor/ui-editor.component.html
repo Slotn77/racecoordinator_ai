@@ -136,10 +136,35 @@
                               [value]="option.width + 'x' + option.height"
                             >
                               {{ option.label | translate }}
+                              @if (
+                                option.label ===
+                                "UI_EDITOR_RESOLUTION_CURRENT_DISPLAY"
+                              ) {
+                                ({{ option.width }}x{{ option.height }})
+                              }
                             </option>
                           }
                         </select>
                       </div>
+                      <input
+                        type="number"
+                        class="input-sm"
+                        style="width: 70px"
+                        [ngModel]="editingSettings.racedayLayout?.baseWidth"
+                        (change)="
+                          onCustomResolutionChange(false, 'width', $event)
+                        "
+                      />
+                      <span style="color: #94a3b8">x</span>
+                      <input
+                        type="number"
+                        class="input-sm"
+                        style="width: 70px"
+                        [ngModel]="editingSettings.racedayLayout?.baseHeight"
+                        (change)="
+                          onCustomResolutionChange(false, 'height', $event)
+                        "
+                      />
                     </div>
                   </div>
 
@@ -387,10 +412,39 @@
                               [value]="option.width + 'x' + option.height"
                             >
                               {{ option.label | translate }}
+                              @if (
+                                option.label ===
+                                "UI_EDITOR_RESOLUTION_CURRENT_DISPLAY"
+                              ) {
+                                ({{ option.width }}x{{ option.height }})
+                              }
                             </option>
                           }
                         </select>
                       </div>
+                      <input
+                        type="number"
+                        class="input-sm"
+                        style="width: 70px"
+                        [ngModel]="
+                          editingSettings.practiceRacedayLayout?.baseWidth
+                        "
+                        (change)="
+                          onCustomResolutionChange(true, 'width', $event)
+                        "
+                      />
+                      <span style="color: #94a3b8">x</span>
+                      <input
+                        type="number"
+                        class="input-sm"
+                        style="width: 70px"
+                        [ngModel]="
+                          editingSettings.practiceRacedayLayout?.baseHeight
+                        "
+                        (change)="
+                          onCustomResolutionChange(true, 'height', $event)
+                        "
+                      />
                     </div>
                   </div>
 

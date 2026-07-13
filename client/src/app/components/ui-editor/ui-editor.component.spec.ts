@@ -2180,6 +2180,39 @@ describe("UIEditorComponent", () => {
       expect(options[1].label).toEqual("1440x900");
     });
 
+    it("should handle onCustomResolutionChange correctly", () => {
+      component.editingSettings.racedayLayout = {
+        baseWidth: 1000,
+        baseHeight: 1000,
+        widgets: [{ x: 10, y: 10, width: 100, height: 100 }],
+      } as any;
+      spyOn(component as any, "captureState");
+
+      // Mock Event target
+      const mockEvent = { target: { value: "1500" } } as unknown as Event;
+
+      component.onCustomResolutionChange(false, "width", mockEvent);
+
+      expect(component.editingSettings.racedayLayout?.baseWidth).toEqual(1500);
+      expect(component.editingSettings.racedayLayout?.baseHeight).toEqual(1000);
+      // X and Width should scale by 1.5
+      expect(component.editingSettings.racedayLayout!.widgets![0].x).toEqual(
+        15,
+      );
+      expect(
+        component.editingSettings.racedayLayout!.widgets![0].width,
+      ).toEqual(150);
+      // Y and Height should not scale (1.0)
+      expect(component.editingSettings.racedayLayout!.widgets![0].y).toEqual(
+        10,
+      );
+      expect(
+        component.editingSettings.racedayLayout!.widgets![0].height,
+      ).toEqual(100);
+
+      expect((component as any).captureState).toHaveBeenCalled();
+    });
+
     describe("Layout Import/Export", () => {
       it("should export raceday layout", () => {
         spyOn(component as any, "downloadJson");

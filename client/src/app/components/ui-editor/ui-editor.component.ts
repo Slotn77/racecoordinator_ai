@@ -670,6 +670,13 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   @HostListener("window:resize")
   onResize() {
     this.updateScale();
+    const currentDisplayOption = this.layoutResolutionOptions.find(
+      (o) => o.label === "UI_EDITOR_RESOLUTION_CURRENT_DISPLAY",
+    );
+    if (currentDisplayOption) {
+      currentDisplayOption.width = window.innerWidth;
+      currentDisplayOption.height = window.innerHeight;
+    }
   }
 
   @HostListener("window:keydown", ["$event"])
@@ -1607,6 +1614,45 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const newHeight = parseInt(heightStr, 10);
     const oldWidth = layout.baseWidth || 1920;
     const oldHeight = layout.baseHeight || 1080;
+
+    const scaleX = newWidth / oldWidth;
+    const scaleY = newHeight / oldHeight;
+
+    layout.baseWidth = newWidth;
+    layout.baseHeight = newHeight;
+
+    if (layout.widgets) {
+      layout.widgets.forEach((widget) => {
+        widget.x = Math.round(widget.x * scaleX);
+        widget.y = Math.round(widget.y * scaleY);
+        widget.width = Math.round(widget.width * scaleX);
+        widget.height = Math.round(widget.height * scaleY);
+      });
+    }
+
+    this.captureState();
+  }
+
+  onCustomResolutionChange(
+    isPractice: boolean,
+    dimension: "width" | "height",
+    event: Event,
+  ) {
+    const input = event.target as HTMLInputElement;
+    const newValue = parseInt(input.value, 10);
+    if (isNaN(newValue) || newValue <= 0) return;
+
+    const layout = isPractice
+      ? this.editingSettings?.practiceRacedayLayout
+      : this.editingSettings?.racedayLayout;
+
+    if (!layout) return;
+
+    const oldWidth = layout.baseWidth || 1920;
+    const oldHeight = layout.baseHeight || 1080;
+
+    const newWidth = dimension === "width" ? newValue : oldWidth;
+    const newHeight = dimension === "height" ? newValue : oldHeight;
 
     const scaleX = newWidth / oldWidth;
     const scaleY = newHeight / oldHeight;
