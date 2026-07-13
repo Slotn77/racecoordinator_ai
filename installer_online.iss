@@ -10,73 +10,7 @@ OutputBaseFilename=RaceCoordinatorAI_Online_Setup
 var
   DownloadPage: TDownloadWizardPage;
 
-function GetRequiredJavaVersion(IsModernOS: Boolean): String;
-begin
-  if IsModernOS then Result := '17' else Result := '8';
-end;
 
-function GetRequiredMongoVersion(IsModernOS: Boolean): String;
-begin
-  if IsModernOS then Result := '6.0.21' else Result := '3.2.22';
-end;
-
-function IsJavaInstalled(IsModernOS: Boolean): Boolean;
-var
-  VersionFile: String;
-  InstalledVersion: String;
-begin
-  VersionFile := ExpandConstant('{app}\jre\.rcai_version');
-  if FileExists(VersionFile) then
-  begin
-    LoadStringFromFile(VersionFile, InstalledVersion);
-    if Trim(InstalledVersion) = GetRequiredJavaVersion(IsModernOS) then
-    begin
-      Result := True;
-      Exit;
-    end;
-  end;
-
-  if IsModernOS then
-  begin
-    Result := RegKeyExists(HKLM, 'SOFTWARE\Eclipse Foundation\JDK\17\jre') or 
-              RegKeyExists(HKLM, 'SOFTWARE\JavaSoft\JDK\17') or
-              RegKeyExists(HKLM64, 'SOFTWARE\Eclipse Foundation\JDK\17\jre') or 
-              RegKeyExists(HKLM64, 'SOFTWARE\JavaSoft\JDK\17');
-  end
-  else
-  begin
-    Result := RegKeyExists(HKLM, 'SOFTWARE\JavaSoft\Java Runtime Environment\1.8') or
-              RegKeyExists(HKLM64, 'SOFTWARE\JavaSoft\Java Runtime Environment\1.8');
-  end;
-end;
-
-function IsMongoInstalled(IsModernOS: Boolean): Boolean;
-var
-  VersionFile: String;
-  InstalledVersion: String;
-begin
-  VersionFile := ExpandConstant('{app}\mongodb\.rcai_version');
-  if FileExists(VersionFile) then
-  begin
-    LoadStringFromFile(VersionFile, InstalledVersion);
-    if Trim(InstalledVersion) = GetRequiredMongoVersion(IsModernOS) then
-    begin
-      Result := True;
-      Exit;
-    end;
-  end;
-
-  if IsModernOS then
-  begin
-    Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\6.0') or
-              RegKeyExists(HKLM64, 'SOFTWARE\MongoDB\Server\6.0');
-  end
-  else
-  begin
-    Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\3.2') or
-              RegKeyExists(HKLM64, 'SOFTWARE\MongoDB\Server\3.2');
-  end;
-end;
 
 procedure ExtractZip(const ZipFile, DestDir, StatusMsg: String);
 var

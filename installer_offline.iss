@@ -9,23 +9,14 @@ OutputBaseFilename=RaceCoordinatorAI_Offline_Setup
 
 [Files]
 ; Modern OS (Win10+)
-Source: "release\RaceCoordinator\jre17\*"; DestDir: "{app}\jre"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: IsWindows10OrNewer
-Source: "release\RaceCoordinator\mongodb60\*"; DestDir: "{app}\mongodb"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: IsWindows10OrNewer
+Source: "release\RaceCoordinator\jre17\*"; DestDir: "{app}\jre"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: NeedsModernJava
+Source: "release\RaceCoordinator\mongodb60\*"; DestDir: "{app}\mongodb"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: NeedsModernMongo
 
 ; Legacy OS
-Source: "release\RaceCoordinator\jre8\*"; DestDir: "{app}\jre"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: not IsWindows10OrNewer
-Source: "release\RaceCoordinator\mongodb32\*"; DestDir: "{app}\mongodb"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: not IsWindows10OrNewer
+Source: "release\RaceCoordinator\jre8\*"; DestDir: "{app}\jre"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: NeedsLegacyJava
+Source: "release\RaceCoordinator\mongodb32\*"; DestDir: "{app}\mongodb"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: NeedsLegacyMongo
 
 [Code]
-function GetRequiredJavaVersion(IsModernOS: Boolean): String;
-begin
-  if IsModernOS then Result := '17' else Result := '8';
-end;
-
-function GetRequiredMongoVersion(IsModernOS: Boolean): String;
-begin
-  if IsModernOS then Result := '6.0.21' else Result := '3.2.22';
-end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
