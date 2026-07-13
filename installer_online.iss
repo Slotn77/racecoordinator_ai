@@ -127,7 +127,7 @@ begin
           Exec('powershell.exe', Format('-NoProfile -ExecutionPolicy Bypass -Command "Move-Item -Path ''%s\*'' -Destination ''%s'' -Force"', [SubPath, BasePath]), '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
           
           // Remove the now empty subfolder
-          DelTree(SubPath, True, True, True);
+          DelTree(SubPath, True, False, False);
           break; // Only flatten the first subfolder found
         end;
       until not FindNext(FindRec);
@@ -237,6 +237,7 @@ begin
 
     if FileExists(JavaZip) then
     begin
+      DelTree(ExpandConstant('{app}\jre'), True, False, False);
       ExtractZip(JavaZip, ExpandConstant('{app}\jre'), 'Extracting Java Runtime...');
       FlattenDirectory(ExpandConstant('{app}\jre'));
       DeleteFile(JavaZip);
@@ -245,6 +246,7 @@ begin
 
     if FileExists(MongoZip) then
     begin
+      DelTree(ExpandConstant('{app}\mongodb'), True, False, False);
       ExtractZip(MongoZip, ExpandConstant('{app}\mongodb'), 'Extracting MongoDB...');
       FlattenDirectory(ExpandConstant('{app}\mongodb'));
       DeleteFile(MongoZip);
