@@ -101,7 +101,11 @@ export class AuthService {
         return response.role;
       }),
       catchError((err) => {
-        this.logger.warn("Error fetching role from server: " + err.message);
+        if (err.status !== 0) {
+          this.logger.warn("Error fetching role from server: " + err.message);
+        } else {
+          this.logger.debug("Server offline, assuming VIEWER role.");
+        }
         return of(Role.VIEWER);
       }),
       tap((role) => {

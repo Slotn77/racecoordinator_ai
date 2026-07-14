@@ -11,6 +11,7 @@ import {
   ViewContainerRef,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
@@ -117,9 +118,11 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   public isUpdating = false;
   public updateBannerDismissed = false;
 
-  public get updateVersionHtml(): string {
+  public get updateVersionHtml(): SafeHtml {
     if (!this.updateResult) return "";
-    return `<a href="${this.updateResult.releaseUrl}" target="_blank" style="color: inherit; text-decoration: underline;">${this.updateResult.latestVersion}</a>`;
+    return this.sanitizer.bypassSecurityTrustHtml(
+      `<a href="${this.updateResult.releaseUrl}" target="_blank" style="color: inherit; text-decoration: underline;">${this.updateResult.latestVersion}</a>`,
+    );
   }
 
   constructor(
@@ -137,6 +140,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     private router: Router,
     private navigationService: NavigationService,
     private updateService: UpdateService,
+    private sanitizer: DomSanitizer,
   ) {
     // Initialize quote keys
     for (let i = 1; i <= 29; i++) {
@@ -380,7 +384,11 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       next: (result) => {
         this.updateResult = result;
       },
-      error: (err) => this.logger.warn("Failed to check for updates", err),
+      error: (err) => {
+        if (err.status !== 0) {
+          this.logger.warn("Failed to check for updates", err);
+        }
+      },
     });
   }
 
@@ -491,7 +499,9 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        this.logger.warn("Failed to fetch server version", err);
+        if (err.status !== 0) {
+          this.logger.warn("Failed to fetch server version", err);
+        }
       },
     });
 
@@ -501,7 +511,9 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        this.logger.warn("Failed to fetch server IP", err);
+        if (err.status !== 0) {
+          this.logger.warn("Failed to fetch server IP", err);
+        }
       },
     });
   }

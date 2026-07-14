@@ -88,8 +88,15 @@ export class AppComponent implements OnInit {
     }
     if (settings.serverLogLevel && !(window as any).isPlaywright) {
       this.dataService.setServerLogLevel(settings.serverLogLevel).subscribe({
-        error: (err) =>
-          this.logger.error("Failed to initialize server log level", err),
+        error: (err) => {
+          if (err.status !== 0) {
+            this.logger.error("Failed to initialize server log level", err);
+          } else {
+            this.logger.debug(
+              "Failed to initialize server log level: server offline",
+            );
+          }
+        },
       });
     }
 
