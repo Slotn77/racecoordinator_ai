@@ -970,6 +970,19 @@ describe("UIEditorComponent", () => {
 
       expect(component.showDeleteConfirm).toBeTrue();
       expect(component.themeToDelete).toBe(theme);
+      expect(component.deleteThemeParams).toEqual({ name: "Custom" });
+    });
+
+    it("should handle cancellation of theme deletion", () => {
+      component.showDeleteConfirm = true;
+      component.themeToDelete = { name: "Custom" } as Theme;
+      component.deleteThemeParams = { name: "Custom" };
+
+      component.onCancelDeleteTheme();
+
+      expect(component.showDeleteConfirm).toBeFalse();
+      expect(component.themeToDelete).toBeNull();
+      expect(component.deleteThemeParams).toEqual({});
     });
 
     it("should handle deletion confirmation and select default if deleted theme was active", fakeAsync(() => {

@@ -127,6 +127,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   showDeleteConfirm = false;
   themeToDelete: Theme | null = null;
+  deleteThemeParams: any = {};
 
   showDiscardConfirm = false;
   private pendingDeactivate: ((result: boolean) => void) | null = null;
@@ -1372,11 +1373,13 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     // Fallback: If it's in the old slots map, convert it on the fly (though backfill should handle this)
     const legacyAssetId = theme.slots?.[slot];
+    let fallbackConfig: AudioConfig = { type: "preset" };
     if (legacyAssetId) {
-      return { type: "preset", url: legacyAssetId };
+      fallbackConfig = { type: "preset", url: legacyAssetId };
     }
 
-    return { type: "preset" };
+    theme.audio_slots[slot] = fallbackConfig;
+    return fallbackConfig;
   }
 
   onAudioConfigChanged(
@@ -1494,6 +1497,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   onDeleteTheme(theme: Theme) {
     if (!theme.is_default) {
       this.themeToDelete = theme;
+      this.deleteThemeParams = { name: theme.name };
       this.showDeleteConfirm = true;
     }
   }
@@ -1542,6 +1546,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   onCancelDeleteTheme() {
     this.showDeleteConfirm = false;
     this.themeToDelete = null;
+    this.deleteThemeParams = {};
   }
 
   onSuccessModalAcknowledge() {
@@ -1579,25 +1584,73 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return "1920x1080";
   }
 
+  // Cached custom options
+  private customRacedayLayoutOption: any = null;
+  private customPracticeLayoutOption: any = null;
+
+  private cachedPracticeLayoutOptions: any[] | null = null;
+  private cachedRacedayLayoutOptions: any[] | null = null;
+
   getLayoutResolutionOptions(isPractice: boolean) {
     const layout = isPractice
       ? this.editingSettings?.practiceRacedayLayout
       : this.editingSettings?.racedayLayout;
 
-    const options = [...this.layoutResolutionOptions];
     if (layout && layout.baseWidth && layout.baseHeight) {
-      const found = options.find(
+      const found = this.layoutResolutionOptions.find(
         (o) => o.width === layout.baseWidth && o.height === layout.baseHeight,
       );
       if (!found) {
-        options.push({
-          label: `${layout.baseWidth}x${layout.baseHeight}`,
-          width: layout.baseWidth,
-          height: layout.baseHeight,
-        });
+        if (isPractice) {
+          if (
+            !this.customPracticeLayoutOption ||
+            this.customPracticeLayoutOption.width !== layout.baseWidth ||
+            this.customPracticeLayoutOption.height !== layout.baseHeight
+          ) {
+            this.customPracticeLayoutOption = {
+              label: `${layout.baseWidth}x${layout.baseHeight}`,
+              width: layout.baseWidth,
+              height: layout.baseHeight,
+            };
+            this.cachedPracticeLayoutOptions = [
+              ...this.layoutResolutionOptions,
+              this.customPracticeLayoutOption,
+            ];
+          }
+          if (!this.cachedPracticeLayoutOptions) {
+            this.cachedPracticeLayoutOptions = [
+              ...this.layoutResolutionOptions,
+              this.customPracticeLayoutOption,
+            ];
+          }
+          return this.cachedPracticeLayoutOptions;
+        } else {
+          if (
+            !this.customRacedayLayoutOption ||
+            this.customRacedayLayoutOption.width !== layout.baseWidth ||
+            this.customRacedayLayoutOption.height !== layout.baseHeight
+          ) {
+            this.customRacedayLayoutOption = {
+              label: `${layout.baseWidth}x${layout.baseHeight}`,
+              width: layout.baseWidth,
+              height: layout.baseHeight,
+            };
+            this.cachedRacedayLayoutOptions = [
+              ...this.layoutResolutionOptions,
+              this.customRacedayLayoutOption,
+            ];
+          }
+          if (!this.cachedRacedayLayoutOptions) {
+            this.cachedRacedayLayoutOptions = [
+              ...this.layoutResolutionOptions,
+              this.customRacedayLayoutOption,
+            ];
+          }
+          return this.cachedRacedayLayoutOptions;
+        }
       }
     }
-    return options;
+    return this.layoutResolutionOptions;
   }
 
   setLayoutResolution(isPractice: boolean, event: Event) {
