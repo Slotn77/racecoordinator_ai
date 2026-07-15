@@ -54,6 +54,11 @@
                 "glob": "**/*.css",
                 "input": "src/app/components",
                 "output": "/assets/default-styles/"
+              },
+              {
+                "glob": "typescript.js",
+                "input": "node_modules/typescript/lib",
+                "output": "/assets/"
               }
             ],
             "styles": [
@@ -138,6 +143,11 @@
                 "glob": "**/*.css",
                 "input": "src/app/components",
                 "output": "/assets/default-styles/"
+              },
+              {
+                "glob": "typescript.js",
+                "input": "node_modules/typescript/lib",
+                "output": "/assets/"
               }
             ],
             "styles": [

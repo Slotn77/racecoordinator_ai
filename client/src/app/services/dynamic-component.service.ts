@@ -33,8 +33,27 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 })
 export class DynamicComponentService {
   private componentCount = 0;
+  private tsLoaded = false;
 
   constructor() {}
+
+  private async loadTypeScript(): Promise<any> {
+    if (this.tsLoaded) {
+      return (window as any).ts;
+    }
+    return new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "assets/typescript.js";
+      script.onload = () => {
+        this.tsLoaded = true;
+        resolve((window as any).ts);
+      };
+      script.onerror = () => {
+        reject(new Error("Failed to load typescript.js"));
+      };
+      document.head.appendChild(script);
+    });
+  }
 
   async createDynamicComponent(
     baseClass: Type<any>,
@@ -51,7 +70,7 @@ export class DynamicComponentService {
 
     if (tsCode && tsCode.trim().length > 0) {
       try {
-        const ts = await import("typescript");
+        const ts = await this.loadTypeScript();
         const jsCode = ts.transpile(tsCode, { target: ts.ScriptTarget.ES2022 });
         const createClass = new Function("baseClass", jsCode);
         const UserComponent = createClass(baseClass);
