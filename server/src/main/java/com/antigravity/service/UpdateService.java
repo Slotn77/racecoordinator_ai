@@ -264,6 +264,13 @@ public class UpdateService {
     downloadStatus = "RDS_UPDATE_STATUS_LAUNCHING";
     logger.info("Download complete. Launching installer...");
 
+    // Give the client time to poll the "Launching" status before UAC suspends the OS desktop
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+
     // Execute installer with silent and custom restart flag
     ProcessBuilder pb =
         new ProcessBuilder(

@@ -417,10 +417,11 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     this.updateService.installUpdate(this.updateResult.downloadUrl).subscribe({
       next: () => {
         this.logger.info("Update started");
-        this.progressSubscription = interval(500).subscribe(() => {
+        this.progressSubscription = interval(100).subscribe(() => {
           this.updateService.getUpdateProgress().subscribe({
             next: (prog) => {
               this.updateProgress = prog;
+              this.cdr.detectChanges();
               if (
                 prog.progress === 100 &&
                 prog.status === "RDS_UPDATE_STATUS_LAUNCHING"
