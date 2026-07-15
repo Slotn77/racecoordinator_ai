@@ -110,7 +110,9 @@ function createMockHeatDrivers(
     if (hd.participant) {
       (hd.participant as any).fuelLevel = p.fuelLevel || 50;
       (hd.participant as any).seed = p.seed || index + 1;
-      (hd.participant as any).team = p.team || { name: `Team ${index + 1}` };
+      if (p.team) {
+        (hd.participant as any).team = p.team;
+      }
     }
 
     // Add mock segment times
@@ -327,7 +329,10 @@ function createMockRaceParticipants(): RaceParticipant[] {
       gap_position: index === 0 ? 0 : 1.5,
       fuelLevel: Math.max(0, 100 - index * 4),
       seed: rank,
-      team: { name: char.team, driverIds: [`d${rank}`] },
+      team:
+        index === 0
+          ? { name: char.team, driverIds: [`d${rank}`, "d2", "d3"] }
+          : undefined,
     } as unknown as RaceParticipant;
   });
 }
@@ -356,7 +361,7 @@ function createMockNextHeatParticipants(): RaceParticipant[] {
       gap_position: 0,
       fuelLevel: 100,
       seed: 5,
-      team: { name: "Yoshi Island", driverIds: ["d5"] },
+      team: undefined,
     } as unknown as RaceParticipant,
     {
       id: "p6",
