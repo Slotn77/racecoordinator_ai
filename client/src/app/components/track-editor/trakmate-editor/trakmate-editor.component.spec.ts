@@ -148,11 +148,25 @@ describe("TrakmateEditorComponent", () => {
     expect(component.readBadges[1]).toBeFalse();
   }));
 
-  it("should update callbuttonStatus on callbutton event", fakeAsync(() => {
+  it("should update callbuttonStatus on callbutton event with explicit interfaceIndex", fakeAsync(() => {
     expect(component.callbuttonStatus).toBeFalse();
 
     getInterfaceEventsSubject.next({
       callbutton: { interfaceIndex: 0 },
+    });
+    expect(component.callbuttonStatus).toBeTrue();
+
+    tick(500);
+    expect(component.callbuttonStatus).toBeFalse();
+  }));
+
+  it("should update callbuttonStatus on callbutton event with undefined interfaceIndex defaulting to 0", fakeAsync(() => {
+    expect(component.callbuttonStatus).toBeFalse();
+
+    // Protobuf JSON serialization omits zero values.
+    // Ensure that an omitted interfaceIndex defaults to 0 and correctly matches this interface.
+    getInterfaceEventsSubject.next({
+      callbutton: {},
     });
     expect(component.callbuttonStatus).toBeTrue();
 

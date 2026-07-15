@@ -114,19 +114,21 @@ export class TrakmateEditorComponent implements OnInit, OnDestroy, OnChanges {
       this.dataService.getInterfaceEvents().subscribe({
         next: (event) => {
           if (event.lap) {
-            if (event.lap.interfaceIndex === this.interfaceIndex()) {
+            if ((event.lap.interfaceIndex ?? 0) === this.interfaceIndex()) {
               this.triggerPinActivity(event.lap.interfaceId ?? -1);
             }
           } else if (event.segment) {
-            if (event.segment.interfaceIndex === this.interfaceIndex()) {
+            if ((event.segment.interfaceIndex ?? 0) === this.interfaceIndex()) {
               this.triggerPinActivity(event.segment.interfaceId ?? -1);
             }
           } else if (event.callbutton) {
-            if (event.callbutton.interfaceIndex === this.interfaceIndex()) {
+            if (
+              (event.callbutton.interfaceIndex ?? 0) === this.interfaceIndex()
+            ) {
               this.triggerCallbuttonActivity();
             }
           } else if (event.status) {
-            if (event.status.interfaceIndex === this.interfaceIndex()) {
+            if ((event.status.interfaceIndex ?? 0) === this.interfaceIndex()) {
               const statusCode = event.status.status as number;
               if (statusCode === InterfaceStatus.CONNECTED) {
                 this.status = "CONNECTED";

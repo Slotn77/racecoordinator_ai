@@ -200,15 +200,15 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (event) => {
           if (event.lap) {
-            if (event.lap.interfaceIndex === this.index()) {
+            if ((event.lap.interfaceIndex ?? 0) === this.index()) {
               this.triggerPinActivity(event.lap.interfaceId ?? -1);
             }
           } else if (event.segment) {
-            if (event.segment.interfaceIndex === this.index()) {
+            if ((event.segment.interfaceIndex ?? 0) === this.index()) {
               this.triggerPinActivity(event.segment.interfaceId ?? -1);
             }
           } else if (event.callbutton) {
-            if (event.callbutton.interfaceIndex === this.index()) {
+            if ((event.callbutton.interfaceIndex ?? 0) === this.index()) {
               const lane = event.callbutton.lane;
               // Trigger activity for master call button or specific lane call button
               const config = this.config();
@@ -234,12 +234,12 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
               checkPin(false, analogCount);
             }
           } else if (event.status) {
-            if (event.status.interfaceIndex === this.index()) {
+            if ((event.status.interfaceIndex ?? 0) === this.index()) {
               this.interfaceStatus = event.status.status as number;
               this.cdr.detectChanges();
             }
           } else if (event.analogData) {
-            if (event.analogData.interfaceIndex === this.index()) {
+            if ((event.analogData.interfaceIndex ?? 0) === this.index()) {
               const pin = event.analogData.pin ?? -1;
               const value = event.analogData.value ?? 0;
               this.liveVoltages[pin] = value;
@@ -254,7 +254,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
               this.cdr.detectChanges();
             }
           } else if (event.digitalPin) {
-            if (event.digitalPin.interfaceIndex === this.index()) {
+            if ((event.digitalPin.interfaceIndex ?? 0) === this.index()) {
               const pin = event.digitalPin.pin ?? -1;
               const isDigital = event.digitalPin.isDigital ?? false;
               const state = event.digitalPin.state ?? 0;

@@ -856,6 +856,38 @@ describe("ArduinoEditorComponent", () => {
       // Ensure timer didn't fire and turn it back on/off unexpectedly
       expect(component.isPinActive(true, 2)).toBeFalse();
     }));
+
+    it("should process callbutton event with explicit interfaceIndex", fakeAsync(() => {
+      // First, configure a pin as a callbutton so it can trigger activity
+      const config = makeConfig();
+      config.digitalIds[2] = PinBehavior.BEHAVIOR_CALL_BUTTON;
+      fixture.componentRef.setInput("config", config);
+      fixture.detectChanges();
+
+      mockDataService.interfaceEvents$.next({
+        callbutton: { interfaceIndex: 0, lane: 0 },
+      });
+      expect(component.isPinActive(true, 2)).toBeTrue();
+
+      tick(500);
+      expect(component.isPinActive(true, 2)).toBeFalse();
+    }));
+
+    it("should process callbutton event with undefined interfaceIndex defaulting to 0", fakeAsync(() => {
+      const config = makeConfig();
+      config.digitalIds[2] = PinBehavior.BEHAVIOR_CALL_BUTTON;
+      fixture.componentRef.setInput("config", config);
+      fixture.detectChanges();
+
+      // Protobuf JSON serialization omits zero values.
+      mockDataService.interfaceEvents$.next({
+        callbutton: { lane: 0 },
+      });
+      expect(component.isPinActive(true, 2)).toBeTrue();
+
+      tick(500);
+      expect(component.isPinActive(true, 2)).toBeFalse();
+    }));
   });
 
   describe("LED Hardware Constraints", () => {
