@@ -42,6 +42,7 @@ public class UpdateService {
     public String releaseNotes;
     public String releaseUrl;
     public boolean isWindows;
+    public long downloadSize;
   }
 
   public static class UpdateProgress {
@@ -122,6 +123,9 @@ public class UpdateService {
 
                 if (matchesWindows || matchesMac) {
                   result.downloadUrl = asset.get("browser_download_url").asText();
+                  if (asset.has("size")) {
+                    result.downloadSize = asset.get("size").asLong();
+                  }
                   break;
                 }
               }
@@ -201,9 +205,14 @@ public class UpdateService {
 
     cancelDownload = false;
     downloadProgress = 0;
-    downloadStatus = "RDS_UPDATE_STATUS_CONNECTING";
+    downloadStatus = "RDS_UPDATE_STATUS_DOWNLOADING";
 
     logger.info("Downloading update from: {}", downloadUrl);
+
+    long expectedSize = -1;
+    if (cachedResult != null && downloadUrl.equals(cachedResult.downloadUrl)) {
+      expectedSize = cachedResult.downloadSize;
+    }
 
     Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "racecoordinator_updates");
     if (!Files.exists(tempDir)) {
@@ -225,8 +234,11 @@ public class UpdateService {
       conn = (HttpURLConnection) new URL(newUrl).openConnection();
     }
 
-    downloadStatus = "RDS_UPDATE_STATUS_DOWNLOADING";
-    int contentLength = conn.getContentLength();
+    long contentLength = conn.getContentLengthLong();
+    if (contentLength <= 0 && expectedSize > 0) {
+      contentLength = expectedSize;
+    }
+
     long downloaded = 0;
 
     try (InputStream in = conn.getInputStream();
@@ -259,7 +271,7 @@ public class UpdateService {
     pb.start();
   }
 
-  static int calculateDownloadProgress(long downloaded, int contentLength) {
+  static int calculateDownloadProgress(long downloaded, long contentLength) {
     if (contentLength > 0) {
       return (int) ((downloaded * 100L) / contentLength);
     } else {

@@ -158,10 +158,12 @@ public class UpdateServiceTest {
             + "    \"assets\": [\n"
             + "      {\n"
             + "        \"name\": \"RaceCoordinatorAI_Online_Setup_v1.0.0-alpha.123.exe\",\n"
+            + "        \"size\": 50000000,\n"
             + "        \"browser_download_url\": \"https://github.com/win-setup.exe\"\n"
             + "      },\n"
             + "      {\n"
             + "        \"name\": \"RaceCoordinator_Mac_v1.0.0-alpha.123.dmg\",\n"
+            + "        \"size\": 25000000,\n"
             + "        \"browser_download_url\": \"https://github.com/mac-setup.dmg\"\n"
             + "      }\n"
             + "    ]\n"
@@ -176,8 +178,10 @@ public class UpdateServiceTest {
 
     if (result.isWindows) {
       assertEquals("https://github.com/win-setup.exe", result.downloadUrl);
+      assertEquals(50000000L, result.downloadSize);
     } else {
       assertEquals("https://github.com/mac-setup.dmg", result.downloadUrl);
+      assertEquals(25000000L, result.downloadSize);
     }
   }
 
