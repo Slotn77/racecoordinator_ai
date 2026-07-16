@@ -4330,7 +4330,7 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isLayoutEditorMinimized).toBeTrue();
       expect(mockSettings.layoutEditorMinimized).toBeTrue();
       expect((component as any).columnsChanged.emit).toHaveBeenCalled();
-      expect(settingsService.saveSettings).not.toHaveBeenCalled();
+      expect(settingsService.saveSettings).toHaveBeenCalled();
 
       // Test when isUIEditorMode is false
       fixture.componentRef.setInput("isUIEditorMode", false);
@@ -4361,7 +4361,7 @@ describe("DefaultRacedayComponent", () => {
       expect(mockSettings.layoutEditorPositionX).toBe(10);
       expect(mockSettings.layoutEditorPositionY).toBe(10);
       expect((component as any).columnsChanged.emit).toHaveBeenCalled();
-      expect(settingsService.saveSettings).not.toHaveBeenCalled();
+      expect(settingsService.saveSettings).toHaveBeenCalled();
 
       // Test when isUIEditorMode is false
       fixture.componentRef.setInput("isUIEditorMode", false);

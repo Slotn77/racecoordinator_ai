@@ -2076,7 +2076,6 @@ export class DefaultRacedayComponent
 
     if (this.isUIEditorMode()) {
       this.scale = 1;
-      let resolutionChanged = false;
       if (
         this.dashboardWidth !== targetWidth ||
         this.dashboardHeight !== targetHeight
@@ -2084,12 +2083,8 @@ export class DefaultRacedayComponent
         this.dashboardWidth = targetWidth;
         this.dashboardHeight = targetHeight;
         this.loadColumns();
-        resolutionChanged = true;
       }
 
-      if (resolutionChanged) {
-        this.layoutEditorPosition = { x: 10, y: 10 };
-      }
       return;
     }
 
