@@ -193,14 +193,16 @@ begin
   if IsModernOS then
   begin
     Result := RegKeyExists(HKLM, 'SOFTWARE\Eclipse Foundation\JDK\17\jre') or 
-              RegKeyExists(HKLM, 'SOFTWARE\JavaSoft\JDK\17') or
-              RegKeyExists(HKLM64, 'SOFTWARE\Eclipse Foundation\JDK\17\jre') or 
-              RegKeyExists(HKLM64, 'SOFTWARE\JavaSoft\JDK\17');
+              RegKeyExists(HKLM, 'SOFTWARE\JavaSoft\JDK\17');
+    if (not Result) and IsWin64 then
+      Result := RegKeyExists(HKLM64, 'SOFTWARE\Eclipse Foundation\JDK\17\jre') or 
+                RegKeyExists(HKLM64, 'SOFTWARE\JavaSoft\JDK\17');
   end
   else
   begin
-    Result := RegKeyExists(HKLM, 'SOFTWARE\JavaSoft\Java Runtime Environment\1.8') or
-              RegKeyExists(HKLM64, 'SOFTWARE\JavaSoft\Java Runtime Environment\1.8');
+    Result := RegKeyExists(HKLM, 'SOFTWARE\JavaSoft\Java Runtime Environment\1.8');
+    if (not Result) and IsWin64 then
+      Result := RegKeyExists(HKLM64, 'SOFTWARE\JavaSoft\Java Runtime Environment\1.8');
   end;
 end;
 
@@ -222,13 +224,15 @@ begin
 
   if IsModernOS then
   begin
-    Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\6.0') or
-              RegKeyExists(HKLM64, 'SOFTWARE\MongoDB\Server\6.0');
+    Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\6.0');
+    if (not Result) and IsWin64 then
+      Result := RegKeyExists(HKLM64, 'SOFTWARE\MongoDB\Server\6.0');
   end
   else
   begin
-    Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\3.2') or
-              RegKeyExists(HKLM64, 'SOFTWARE\MongoDB\Server\3.2');
+    Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\3.2');
+    if (not Result) and IsWin64 then
+      Result := RegKeyExists(HKLM64, 'SOFTWARE\MongoDB\Server\3.2');
   end;
 end;
 
