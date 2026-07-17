@@ -548,6 +548,8 @@
   "RDS_MENU_HELP": "Ayuda",
   "RDS_MENU_HELP_CENTER": "Centro de ayuda",
   "RDS_MENU_LOAD_RACE": "Cargar carrera",
+  "RDS_MENU_EXPORT_SETTINGS": "Exportar ajustes",
+  "RDS_MENU_IMPORT_SETTINGS": "Importar ajustes",
   "RDS_MENU_LOCALIZATION": "Idioma",
   "RDS_MENU_LOG_LEVELS": "Niveles de log",
   "RDS_MENU_OPTIONS": "Opciones",

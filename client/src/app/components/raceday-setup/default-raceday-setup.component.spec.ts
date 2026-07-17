@@ -297,6 +297,52 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(unselectedIds).not.toContain("t1");
   }));
 
+  describe("Settings Export/Import", () => {
+    it("should export settings", () => {
+      const anchorSpy = jasmine.createSpyObj("a", ["setAttribute", "click"]);
+      spyOn(document, "createElement").and.returnValue(anchorSpy as any);
+
+      component.exportSettings();
+
+      expect(mockSettingsService.getSettings).toHaveBeenCalled();
+      expect(document.createElement).toHaveBeenCalledWith("a");
+      expect(anchorSpy.setAttribute).toHaveBeenCalledWith(
+        "download",
+        "racecoordinator_settings.json",
+      );
+      expect(anchorSpy.click).toHaveBeenCalled();
+    });
+
+    it("should import settings", () => {
+      const mockSettings = { serverIp: "1.2.3.4" };
+      const jsonContent = JSON.stringify(mockSettings);
+
+      const mockEvent = {
+        target: {
+          files: [new File([""], "settings.json")],
+        },
+      } as unknown as Event;
+
+      const fileReaderSpy = jasmine.createSpyObj("FileReader", ["readAsText"]);
+      spyOn(window, "FileReader").and.returnValue(fileReaderSpy);
+
+      spyOn(component, "reloadWindow");
+
+      component.importSettings(mockEvent);
+
+      // Trigger the onload callback manually
+      fileReaderSpy.onload({
+        target: { result: jsonContent },
+      } as any);
+
+      expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+      const savedArgs =
+        mockSettingsService.saveSettings.calls.mostRecent().args[0];
+      expect(savedArgs.serverIp).toBe("1.2.3.4");
+      expect(component.reloadWindow).toHaveBeenCalled();
+    });
+  });
+
   it("should search races", () => {
     expect(component.filteredRaces.length).toBe(3);
     component.raceSearchQuery = "Endurance";

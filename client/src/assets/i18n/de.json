@@ -548,6 +548,8 @@
   "RDS_MENU_HELP": "Hilfe",
   "RDS_MENU_HELP_CENTER": "Hilfezentrum",
   "RDS_MENU_LOAD_RACE": "Rennen laden",
+  "RDS_MENU_EXPORT_SETTINGS": "Einstellungen exportieren",
+  "RDS_MENU_IMPORT_SETTINGS": "Einstellungen importieren",
   "RDS_MENU_LOCALIZATION": "Sprache",
   "RDS_MENU_LOG_LEVELS": "Protokollebenen",
   "RDS_MENU_OPTIONS": "Optionen",

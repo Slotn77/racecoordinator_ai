@@ -28,6 +28,7 @@ import { LanguageSelectorComponent } from "@app/components/shared/language-selec
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
+import { Settings } from "@app/models/settings";
 import { Team } from "@app/models/team";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IDemoConfig } from "@app/proto/antigravity";
@@ -70,6 +71,8 @@ type Participant = Driver | Team;
 export class DefaultRacedaySetupComponent implements OnInit {
   requestServerConfig = output<void>();
   @ViewChild("scrollContainer") scrollContainer?: ElementRef;
+  @ViewChild("importSettingsInput")
+  importSettingsInput?: ElementRef<HTMLInputElement>;
 
   private helpLinkService = inject(HelpLinkService);
 
@@ -1093,6 +1096,57 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   closeFileDropdown() {
     this.isFileDropdownOpen = false;
+  }
+
+  exportSettings() {
+    this.closeFileDropdown();
+    const settings = this.settingsService.getSettings();
+    const dataStr =
+      "data:text/json;charset=utf-8," +
+      encodeURIComponent(JSON.stringify(settings, null, 2));
+    const dlAnchorElem = document.createElement("a");
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", "racecoordinator_settings.json");
+    dlAnchorElem.click();
+  }
+
+  triggerImportSettings() {
+    this.closeFileDropdown();
+    if (this.importSettingsInput) {
+      this.importSettingsInput.nativeElement.click();
+    }
+  }
+
+  importSettings(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const contents = e.target?.result as string;
+          const parsed = JSON.parse(contents);
+
+          const settingsToSave = Object.assign(new Settings(), parsed);
+          this.settingsService.saveSettings(settingsToSave);
+
+          // Reload the window to apply all imported settings
+          this.reloadWindow();
+        } catch (err) {
+          this.logger.error("Failed to parse settings file", err);
+          this.showErrorModal = true;
+          this.errorTitle = "Import Failed";
+          this.errorMessage =
+            "Failed to parse settings file. Make sure it is a valid JSON exported from Race Coordinator.";
+        }
+        input.value = "";
+      };
+      reader.readAsText(file);
+    }
+  }
+
+  reloadWindow() {
+    window.location.reload();
   }
 
   openAssetManager() {
