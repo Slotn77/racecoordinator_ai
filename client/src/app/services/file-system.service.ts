@@ -194,6 +194,26 @@ export class FileSystemService {
     }
   }
 
+  async deleteFile(filename: string, subfolder?: string): Promise<void> {
+    const handle = await this.getCustomDirectoryHandle();
+    if (!handle) return;
+
+    const permission = await this.verifyPermission(handle, true);
+    if (!permission) return;
+
+    try {
+      let targetDir = handle;
+      if (subfolder) {
+        targetDir = await handle.getDirectoryHandle(subfolder);
+      }
+      await targetDir.removeEntry(filename);
+    } catch (err: any) {
+      if (err.name !== "NotFoundError") {
+        console.error(`Error deleting file ${filename}:`, err);
+      }
+    }
+  }
+
   private async verifyPermission(
     handle: FileSystemDirectoryHandle,
     readWrite: boolean,

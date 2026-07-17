@@ -122,6 +122,7 @@ public class App {
 
   @SuppressWarnings("checkstyle:MethodLength")
   public static void main(String[] args) {
+    triggerLogRollover(); // Roll log to capture this new session
     try {
       logger.info("Race Coordinator AI Server {}", SERVER_VERSION);
       String projectDir = System.getProperty("user.dir");
@@ -225,6 +226,7 @@ public class App {
                       logger.info("Manual MongoDB process handling complete.");
                     }
                     logger.info("Server stopped.");
+                    triggerLogRollover(); // Roll log at shutdown to separate sessions
                   }));
 
       // MongoDB Setup
@@ -1183,6 +1185,36 @@ public class App {
       } catch (Exception e) {
         logger.error("Failed to free port {} on Unix: {}", port, e.getMessage());
       }
+    }
+  }
+
+  private static void triggerLogRollover() {
+    try {
+      org.slf4j.ILoggerFactory factory = org.slf4j.LoggerFactory.getILoggerFactory();
+      if (factory instanceof ch.qos.logback.classic.LoggerContext) {
+        ch.qos.logback.classic.LoggerContext loggerContext =
+            (ch.qos.logback.classic.LoggerContext) factory;
+        for (ch.qos.logback.classic.Logger logger : loggerContext.getLoggerList()) {
+          for (java.util.Iterator<
+                      ch.qos.logback.core.Appender<ch.qos.logback.classic.spi.ILoggingEvent>>
+                  index = logger.iteratorForAppenders();
+              index.hasNext(); ) {
+            ch.qos.logback.core.Appender<ch.qos.logback.classic.spi.ILoggingEvent> appender =
+                index.next();
+            if (appender instanceof ch.qos.logback.core.rolling.RollingFileAppender) {
+              ch.qos.logback.core.rolling.RollingFileAppender<
+                      ch.qos.logback.classic.spi.ILoggingEvent>
+                  rfa =
+                      (ch.qos.logback.core.rolling.RollingFileAppender<
+                              ch.qos.logback.classic.spi.ILoggingEvent>)
+                          appender;
+              rfa.rollover();
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      System.err.println("Failed to trigger log rollover: " + e.getMessage());
     }
   }
 }

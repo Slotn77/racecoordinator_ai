@@ -6,8 +6,35 @@ export class FileAppender implements LogAppender {
   private readonly LOG_FILENAME = "race_coordinator_client.log";
   private buffer: string[] = [];
   private isProcessing = false;
+  private channel: BroadcastChannel;
+  private initialized = false;
 
-  constructor(private fileSystemService: FileSystemService) {}
+  constructor(private fileSystemService: FileSystemService) {
+    this.channel = new BroadcastChannel("rc_logging_channel");
+    this.checkIfFirstTab();
+  }
+
+  private checkIfFirstTab(): void {
+    let peerResponded = false;
+
+    this.channel.onmessage = (event) => {
+      if (event.data === "PING") {
+        this.channel.postMessage("PONG");
+      } else if (event.data === "PONG") {
+        peerResponded = true;
+      }
+    };
+
+    this.channel.postMessage("PING");
+
+    setTimeout(async () => {
+      if (!peerResponded) {
+        await this.fileSystemService.deleteFile(this.LOG_FILENAME);
+      }
+      this.initialized = true;
+      this.processBuffer();
+    }, 100);
+  }
 
   append(entry: LogEntry): void {
     const timestampStr = entry.timestamp.toISOString();
@@ -22,7 +49,9 @@ export class FileAppender implements LogAppender {
     const logLine = `[${timestampStr}] [${levelStr}] ${entry.message}${argsStr}\n`;
 
     this.buffer.push(logLine);
-    this.processBuffer();
+    if (this.initialized) {
+      this.processBuffer();
+    }
   }
 
   private async processBuffer(): Promise<void> {

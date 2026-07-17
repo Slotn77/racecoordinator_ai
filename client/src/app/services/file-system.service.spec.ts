@@ -113,4 +113,24 @@ describe("FileSystemService", () => {
       );
     });
   });
+
+  describe("deleteFile", () => {
+    it("should remove entry from subfolder if provided", async () => {
+      mockSubfolderHandle.removeEntry = jasmine
+        .createSpy("removeEntry")
+        .and.returnValue(Promise.resolve());
+      await service.deleteFile("log.txt", "logs");
+      expect(mockHandle.getDirectoryHandle).toHaveBeenCalledWith("logs");
+      expect(mockSubfolderHandle.removeEntry).toHaveBeenCalledWith("log.txt");
+    });
+
+    it("should remove entry from root if subfolder not provided", async () => {
+      mockHandle.removeEntry = jasmine
+        .createSpy("removeEntry")
+        .and.returnValue(Promise.resolve());
+      await service.deleteFile("log.txt");
+      expect(mockHandle.getDirectoryHandle).not.toHaveBeenCalled();
+      expect(mockHandle.removeEntry).toHaveBeenCalledWith("log.txt");
+    });
+  });
 });
