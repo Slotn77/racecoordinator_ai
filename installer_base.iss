@@ -33,6 +33,11 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 ; Server JAR
 Source: "release\RaceCoordinator\RaceCoordinator.jar"; DestDir: "{app}"; Flags: ignoreversion
+; Scripts
+Source: "release\RaceCoordinator\start_win.vbs"; DestDir: "{app}"; Flags: ignoreversion
+Source: "release\RaceCoordinator\start_win.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "release\RaceCoordinator\setup_windows.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "release\RaceCoordinator\install_dependencies.ps1"; DestDir: "{app}"; Flags: ignoreversion
 ; Web Client Files
 Source: "release\RaceCoordinator\web\*"; DestDir: "{app}\server\web"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Arduino Resources
