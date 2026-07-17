@@ -209,6 +209,28 @@ EOF
 @echo off
 setlocal
 pushd "%~dp0"
+if exist "%~dp0jre\bin\javaw.exe" (
+    set "JAVA_CMD=%~dp0jre\bin\javaw.exe"
+    goto :RunApp
+)
+java -version >nul 2>&1
+if %errorlevel% equ 0 (
+    set "JAVA_CMD=javaw"
+    goto :RunApp
+)
+echo Java is not installed.
+echo Please run setup_windows.bat to automatically install dependencies.
+echo.
+pause
+popd
+exit /b
+:RunApp
+start "" "%JAVA_CMD%" -jar RaceCoordinator.jar %*
+popd
+EOF'
+@echo off
+setlocal
+pushd "%~dp0"
 if exist "%~dp0jre\bin\java.exe" (
     set "JAVA_CMD=%~dp0jre\bin\java.exe"
     goto :RunApp

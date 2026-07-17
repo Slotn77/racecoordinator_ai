@@ -69,6 +69,14 @@ jobs:
           echo "ga.measurement.id=${{ secrets.GA_MEASUREMENT_ID }}" > server/src/main/resources/analytics.properties
           echo "ga.api.secret=${{ secrets.GA_API_SECRET }}" >> server/src/main/resources/analytics.properties
 
+      - name: Cache Build Dependencies
+        uses: actions/cache@v4
+        with:
+          path: build_cache
+          key: ${{ runner.os }}-build-cache-${{ hashFiles('create_installers.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-build-cache-
+
       - name: Build Artifacts
         run: ./create_installers.sh
 

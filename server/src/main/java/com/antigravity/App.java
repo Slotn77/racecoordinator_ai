@@ -46,7 +46,15 @@ import de.flapdoodle.reverse.transitions.Start;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.plugin.json.JavalinJackson;
+import java.awt.Color;
 import java.awt.Desktop;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -674,13 +682,57 @@ public class App {
       // Open Browser after successful start
       if (!headless) {
         openBrowser("http://localhost:7070");
+        setupSystemTray(7070);
       } else {
         logger.info("Headless mode: Browser will not be opened automatically.");
         logger.info("Server is running at http://localhost:7070");
+        setupSystemTray(7070);
       }
     } catch (Exception e) {
       logger.error("Fatal error during startup", e);
       System.exit(1);
+    }
+  }
+
+  private static void setupSystemTray(int port) {
+    if (!SystemTray.isSupported()) {
+      logger.warn("SystemTray is not supported on this platform.");
+      return;
+    }
+    System.setProperty("java.awt.headless", "false");
+    try {
+      SystemTray tray = SystemTray.getSystemTray();
+      Image image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g2d = (Graphics2D) image.getGraphics();
+      g2d.setColor(Color.RED);
+      g2d.fillRect(0, 0, 16, 16);
+      g2d.setColor(Color.WHITE);
+      g2d.drawString("RC", 1, 12);
+      g2d.dispose();
+
+      TrayIcon trayIcon = new TrayIcon(image, "Race Coordinator AI");
+      trayIcon.setImageAutoSize(true);
+
+      PopupMenu popup = new PopupMenu();
+      MenuItem openItem = new MenuItem("Open in Browser");
+      openItem.addActionListener(e -> openBrowser("http://localhost:" + port));
+
+      MenuItem exitItem = new MenuItem("Quit Server");
+      exitItem.addActionListener(
+          e -> {
+            logger.info("Exiting from System Tray");
+            System.exit(0);
+          });
+
+      popup.add(openItem);
+      popup.addSeparator();
+      popup.add(exitItem);
+
+      trayIcon.setPopupMenu(popup);
+      tray.add(trayIcon);
+      logger.info("SystemTray icon added.");
+    } catch (Exception e) {
+      logger.error("Failed to setup SystemTray", e);
     }
   }
 

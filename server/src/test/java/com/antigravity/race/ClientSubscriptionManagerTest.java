@@ -499,4 +499,54 @@ public class ClientSubscriptionManagerTest {
     assertFalse("Should not have main relay", sentData.getSystemState().getHasMainRelay());
     assertTrue("Should have per lane relays", sentData.getSystemState().getHasPerLaneRelays());
   }
+
+  @Test
+  public void testAutoShutdownTriggersWhenAllSessionsClosed() throws Exception {
+    manager.setAutoShutdownDelaySeconds(0);
+    java.util.concurrent.atomic.AtomicBoolean shutdownCalled =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    manager.setAutoShutdownAction(() -> shutdownCalled.set(true));
+
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    manager.addSession(mockContext);
+    manager.removeSession(mockContext);
+
+    // Wait a little for the scheduler
+    Thread.sleep(200);
+    assertTrue("Auto-shutdown should be called", shutdownCalled.get());
+  }
+
+  @Test
+  public void testAutoShutdownCancelledIfSessionReconnects() throws Exception {
+    manager.setAutoShutdownDelaySeconds(1);
+    java.util.concurrent.atomic.AtomicBoolean shutdownCalled =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    manager.setAutoShutdownAction(() -> shutdownCalled.set(true));
+
+    WsContext mockContext1 = mock(WsContext.class);
+    WsContext mockContext2 = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext1, mockSession);
+    sessionField.set(mockContext2, mockSession);
+
+    manager.addSession(mockContext1);
+    manager.removeSession(mockContext1);
+
+    // It should schedule shutdown, but before it runs, add another session
+    manager.addSession(mockContext2);
+
+    // Wait for the original 1-second delay to pass
+    Thread.sleep(1200);
+    assertFalse("Auto-shutdown should be cancelled due to reconnect", shutdownCalled.get());
+  }
 }

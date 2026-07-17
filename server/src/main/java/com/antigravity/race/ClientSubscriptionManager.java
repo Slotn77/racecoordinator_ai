@@ -37,6 +37,18 @@ public class ClientSubscriptionManager {
   private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
   private ScheduledFuture<?> cleanupFuture;
   private long cleanupGracePeriodSeconds = 10;
+  private boolean hasEverHadClient = false;
+  private ScheduledFuture<?> autoShutdownFuture;
+  private int autoShutdownDelaySeconds = 5;
+  private Runnable autoShutdownAction = () -> System.exit(0);
+
+  void setAutoShutdownAction(Runnable action) {
+    this.autoShutdownAction = action;
+  }
+
+  void setAutoShutdownDelaySeconds(int seconds) {
+    this.autoShutdownDelaySeconds = seconds;
+  }
 
   private ClientSubscriptionManager() {
     // Start periodic ping task to detect and clean up dead/orphaned connections
@@ -148,6 +160,11 @@ public class ClientSubscriptionManager {
       logger.warn("Failed to set idle timeout on session: {}", e.getMessage());
     }
     sessions.add(ctx);
+    hasEverHadClient = true;
+    if (autoShutdownFuture != null) {
+      autoShutdownFuture.cancel(false);
+      autoShutdownFuture = null;
+    }
     // Remove auto-subscription: clients must call subscribe() explicitly
     // raceDataSubscribers.add(ctx);
     logger.info("New WebSocket session added. Total sessions: {}", sessions.size());
@@ -181,6 +198,7 @@ public class ClientSubscriptionManager {
   public void removeSession(WsContext ctx) {
     sessions.remove(ctx);
     raceDataSubscribers.remove(ctx);
+    checkAutoShutdown();
     logger.info(
         "WebSocket session removed. Total sessions: {}, Subscribers: {}",
         sessions.size(),
@@ -197,6 +215,11 @@ public class ClientSubscriptionManager {
       logger.warn("Failed to set idle timeout on interface session: {}", e.getMessage());
     }
     sessions.add(ctx);
+    hasEverHadClient = true;
+    if (autoShutdownFuture != null) {
+      autoShutdownFuture.cancel(false);
+      autoShutdownFuture = null;
+    }
     interfaceSubscribers.add(ctx);
     logger.info(
         "New Interface WebSocket session added. Total sessions: {}, Interface Subscribers: {}",
@@ -207,12 +230,35 @@ public class ClientSubscriptionManager {
   public synchronized void removeInterfaceSession(WsContext ctx) {
     sessions.remove(ctx);
     interfaceSubscribers.remove(ctx);
+    checkAutoShutdown();
     logger.info(
         "Interface WebSocket session removed. Total sessions: {}, Interface Subscribers: {}",
         sessions.size(),
         interfaceSubscribers.size());
     checkAndCloseProtocol();
     checkAndStopRace(false);
+  }
+
+  private synchronized void checkAutoShutdown() {
+    if (sessions.isEmpty() && hasEverHadClient) {
+      if (autoShutdownFuture == null || autoShutdownFuture.isDone()) {
+        logger.info(
+            "No active sessions. Scheduling auto-shutdown in {} seconds...",
+            autoShutdownDelaySeconds);
+        autoShutdownFuture =
+            scheduler.schedule(
+                () -> {
+                  if (sessions.isEmpty()) {
+                    logger.info("Auto-shutting down server due to 0 connected clients.");
+                    if (autoShutdownAction != null) {
+                      autoShutdownAction.run();
+                    }
+                  }
+                },
+                autoShutdownDelaySeconds,
+                java.util.concurrent.TimeUnit.SECONDS);
+      }
+    }
   }
 
   private synchronized void checkAndCloseProtocol() {
