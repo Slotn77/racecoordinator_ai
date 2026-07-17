@@ -43,13 +43,11 @@ Source: "release\RaceCoordinator\vcredist_x86.exe"; DestDir: "{tmp}"; Flags: ign
 
 [Icons]
 ; Desktop Icons
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{cmd}"; \
-    Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") || pause"""; \
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\start_win.vbs"; \
     IconFilename: "{app}\server\web\favicon.ico"; WorkingDir: "{app}"
 
 ; Start Menu Icons
-Name: "{group}\{#MyAppName}"; Filename: "{cmd}"; \
-    Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") || pause"""; \
+Name: "{group}\{#MyAppName}"; Filename: "{app}\start_win.vbs"; \
     IconFilename: "{app}\server\web\favicon.ico"; WorkingDir: "{app}"
 
 Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
@@ -73,8 +71,8 @@ Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; C
 Filename: "{tmp}\vcredist_x86.exe"; Parameters: "/install /quiet /norestart"; Check: NeedsVCRedist86; StatusMsg: "Installing Visual C++ 2013 Redistributable..."; Flags: waituntilterminated skipifdoesntexist
 
 ; Server
-Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"")"""; WorkingDir: "{app}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent 64bit; Check: not IsRestartAppRequested
-Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless) else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless)"""; WorkingDir: "{app}"; Flags: nowait 64bit; Check: IsRestartAppRequested
+Filename: "{app}\start_win.vbs"; WorkingDir: "{app}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent 64bit; Check: not IsRestartAppRequested
+Filename: "{app}\start_win.vbs"; Parameters: "--headless"; WorkingDir: "{app}"; Flags: nowait 64bit; Check: IsRestartAppRequested
 
 [Code]
 function KillProcesses: Boolean;

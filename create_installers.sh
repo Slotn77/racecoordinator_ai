@@ -227,28 +227,19 @@ exit /b
 :RunApp
 start "" "%JAVA_CMD%" -jar RaceCoordinator.jar %*
 popd
-EOF'
-@echo off
-setlocal
-pushd "%~dp0"
-if exist "%~dp0jre\bin\java.exe" (
-    set "JAVA_CMD=%~dp0jre\bin\java.exe"
-    goto :RunApp
-)
-java -version >nul 2>&1
-if %errorlevel% equ 0 (
-    set "JAVA_CMD=java"
-    goto :RunApp
-)
-echo Java is not installed.
-echo Please run setup_windows.bat to automatically install dependencies.
-echo.
-pause
-popd
-exit /b
-:RunApp
-"%JAVA_CMD%" -jar RaceCoordinator.jar %*
-popd
+EOF
+
+    cat > "$DEST_DIR/start_win.vbs" << 'EOF'
+Set WshShell = CreateObject("WScript.Shell")
+Dim args, i
+args = ""
+If WScript.Arguments.Count > 0 Then
+    For i = 0 To WScript.Arguments.Count - 1
+        args = args & " " & Chr(34) & WScript.Arguments(i) & Chr(34)
+    Next
+End If
+WshShell.Run Chr(34) & CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName) & "\start_win.bat" & Chr(34) & args, 0, False
+Set WshShell = Nothing
 EOF
 
     # Windows Setup Script

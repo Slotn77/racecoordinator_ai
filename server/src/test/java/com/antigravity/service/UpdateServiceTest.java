@@ -219,6 +219,29 @@ public class UpdateServiceTest {
   }
 
   @Test
+  public void testCheckForUpdates_BaseVersionNotFound() throws Exception {
+    // Current version is "v0.0.0-alpha.xyz123" which is NOT in the releases JSON
+    UpdateService service = spy(new UpdateService("v0.0.0-alpha.xyz123", mockConfigService));
+
+    String json =
+        "[\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v0.0.0-alpha.20260710\",\n"
+            + "    \"published_at\": \"2026-07-10T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  }\n"
+            + "]";
+    JsonNode releases = mapper.readTree(json);
+    doReturn(releases).when(service).fetchReleasesNode();
+
+    UpdateService.UpdateCheckResult result = service.checkForUpdates();
+    assertTrue(
+        "Update should be available because the base version is completely missing from github releases",
+        result.updateAvailable);
+    assertEquals("v0.0.0-alpha.20260710", result.latestVersion);
+  }
+
+  @Test
   public void testClearCache() throws Exception {
     UpdateService service = spy(new UpdateService("v0.0.0-alpha.20260701", mockConfigService));
 

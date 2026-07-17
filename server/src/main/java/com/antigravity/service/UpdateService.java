@@ -94,13 +94,12 @@ public class UpdateService {
         if (latestAlpha != null) {
           String tagVersion = latestAlpha.get("tag_name").asText();
 
-          boolean isNewerThanCurrent =
-              isVersionNewer(releases, currentVersion, latestAlpha, tagVersion);
+          boolean isNewerThanCurrent = isVersionNewer(releases, currentVersion, latestAlpha);
 
           boolean isNewerThanSkipped = true;
           String skipped = configService.getSkippedUpdateVersion();
           if (skipped != null && !skipped.isEmpty()) {
-            isNewerThanSkipped = isVersionNewer(releases, skipped, latestAlpha, tagVersion);
+            isNewerThanSkipped = isVersionNewer(releases, skipped, latestAlpha);
           }
 
           if (isNewerThanCurrent && isNewerThanSkipped) {
@@ -149,8 +148,7 @@ public class UpdateService {
     this.lastCheckTime = 0;
   }
 
-  private boolean isVersionNewer(
-      JsonNode releases, String baseVersion, JsonNode latestAlpha, String tagVersion) {
+  private boolean isVersionNewer(JsonNode releases, String baseVersion, JsonNode latestAlpha) {
     if (baseVersion.equals("0.0.0_dev")) {
       return true;
     }
@@ -172,10 +170,10 @@ public class UpdateService {
       String latestPublishedAt = latestAlpha.get("published_at").asText();
       return latestPublishedAt.compareTo(basePublishedAt) > 0;
     } else {
-      String strippedTagVersion = tagVersion.startsWith("v") ? tagVersion.substring(1) : tagVersion;
-      String strippedBaseVersion =
-          baseVersion.startsWith("v") ? baseVersion.substring(1) : baseVersion;
-      return strippedTagVersion.compareTo(strippedBaseVersion) > 0;
+      // If the base version is not found in the recent releases (e.g. it was deleted),
+      // we assume the latest GitHub release is newer and offer the update.
+      // (Note: "0.0.0_dev" is already handled at the top of this method).
+      return true;
     }
   }
 
